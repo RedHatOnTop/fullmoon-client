@@ -1,0 +1,335 @@
+/* Turning an installed instance into a running game.
+
+   The command line is built from the version JSON's own argument lists —
+   nothing is hardcoded, because Mojang moves flags between releases and a
+   launcher that hardcodes 1.20's arguments breaks on 26.x. Rules are honoured
+   (an arg for another OS never appears), placeholders are substituted from one
+   table, and anything still unsubstituted is dropped rather than passed to the
+   game as a literal `${…}`.
+
+   stdout and stderr are streamed to the UI as they arrive. The process is
+   owned by the launcher: closing the window kills nothing, but 게임 종료 does. */
+use std::{collections::HashMap, path::PathBuf, process::Stdio, sync::Arc};
+
+use tauri::{AppHandle, Emitter};
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
+    sync::Mutex,
+};
+
+use crate::{
+    error::{Error, Result},
+    install,
+    model::{Account, GameState, GameStateValue, Instance, LogEvent, Settings, StateEvent},
+    paths,
+    version::{allowed, Arg, ArgValue, VersionJson},
+};
+
+pub const LAUNCHER_NAME: &str = env!("PINION_NAME");
+pub const LAUNCHER_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+fn sep() -> &'static str {
+    if cfg!(windows) {
+        ";"
+    } else {
+        ":"
+    }
+}
+
+/// `${placeholder}` → value. Unknown placeholders make the argument disappear;
+/// the game handles a missing flag far better than a literal `${auth_xuid}`.
+fn substitute(raw: &str, vars: &HashMap<&str, String>) -> Option<String> {
+    let mut out = String::with_capacity(raw.len());
+    let mut rest = raw;
+    while let Some(start) = rest.find("${") {
+        let (head, tail) = rest.split_at(start);
+        out.push_str(head);
+        let end = tail.find('}')?;
+        let key = &tail[2..end];
+        out.push_str(vars.get(key)?);
+        rest = &tail[end + 1..];
+    }
+    out.push_str(rest);
+    Some(out)
+}
+
+fn expand(args: &[Arg], vars: &HashMap<&str, String>) -> Vec<String> {
+    let mut out = Vec::new();
+    for arg in args {
+        match arg {
+            Arg::Plain(v) => {
+                if let Some(s) = substitute(v, vars) {
+                    out.push(s);
+                }
+            }
+            Arg::Conditional { rules, value } => {
+                if !allowed(&Some(rules.clone())) {
+                    continue;
+                }
+                let values = match value {
+                    ArgValue::One(v) => vec![v.clone()],
+                    ArgValue::Many(v) => v.clone(),
+                };
+                for v in values {
+                    if let Some(s) = substitute(&v, vars) {
+                        out.push(s);
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
+pub fn classpath(v: &VersionJson) -> String {
+    let root = paths::libraries_dir();
+    let mut entries: Vec<String> = v
+        .usable_libraries()
+        .filter(|l| !l.is_native())
+        .filter_map(|l| l.rel_path())
+        .map(|p| root.join(p).to_string_lossy().into_owned())
+        .collect();
+    entries.dedup();
+    entries.push(
+        crate::version::client_jar_file(&v.id)
+            .to_string_lossy()
+            .into_owned(),
+    );
+    entries.join(sep())
+}
+
+pub struct Plan {
+    pub program: PathBuf,
+    pub args: Vec<String>,
+    pub cwd: PathBuf,
+}
+
+/// Everything needed to spawn, assembled without touching the network.
+pub fn plan(
+    v: &VersionJson,
+    inst: &Instance,
+    settings: &Settings,
+    account: &Account,
+    quick_play: Option<&str>,
+) -> Result<Plan> {
+    let java = settings
+        .java_path
+        .clone()
+        .ok_or_else(|| Error::Invalid("no Java runtime is selected in settings".into()))?;
+
+    let game_dir = paths::instance_minecraft_dir(&inst.id);
+    let natives = install::natives_dir(&inst.id);
+    let assets_root = paths::assets_dir();
+    let asset_index = v
+        .asset_index
+        .as_ref()
+        .map(|a| a.id.clone())
+        .or_else(|| v.assets.clone())
+        .unwrap_or_else(|| "legacy".into());
+
+    let mut vars: HashMap<&str, String> = HashMap::new();
+    vars.insert("auth_player_name", account.username.clone());
+    vars.insert("auth_uuid", account.uuid.replace('-', ""));
+    vars.insert("auth_access_token", account.access_token.clone().unwrap_or_else(|| "0".into()));
+    vars.insert("auth_xuid", account.xuid.clone().unwrap_or_default());
+    vars.insert("clientid", String::new());
+    vars.insert(
+        "user_type",
+        if account.source == "microsoft" { "msa".into() } else { "legacy".into() },
+    );
+    vars.insert("version_name", v.id.clone());
+    vars.insert("version_type", LAUNCHER_NAME.to_lowercase());
+    vars.insert("game_directory", game_dir.to_string_lossy().into_owned());
+    vars.insert("assets_root", assets_root.to_string_lossy().into_owned());
+    vars.insert("game_assets", assets_root.to_string_lossy().into_owned());
+    vars.insert("assets_index_name", asset_index);
+    vars.insert("natives_directory", natives.to_string_lossy().into_owned());
+    vars.insert("launcher_name", LAUNCHER_NAME.to_string());
+    vars.insert("launcher_version", LAUNCHER_VERSION.to_string());
+    vars.insert("classpath", classpath(v));
+    vars.insert("classpath_separator", sep().to_string());
+    vars.insert(
+        "library_directory",
+        paths::libraries_dir().to_string_lossy().into_owned(),
+    );
+
+    let arguments = v
+        .arguments
+        .clone()
+        .ok_or_else(|| Error::Invalid(format!("version {} carries no argument lists", v.id)))?;
+
+    let mut args = Vec::new();
+    // memory first so a user arg can still override it
+    args.push(format!("-Xmx{}M", inst.memory_mb));
+    args.push(format!("-Xms{}M", (inst.memory_mb / 2).max(512)));
+    args.extend(
+        settings
+            .java_args
+            .split_whitespace()
+            .filter(|s| !s.is_empty())
+            .map(str::to_string),
+    );
+    args.extend(expand(&arguments.jvm, &vars));
+    args.push(
+        v.main_class
+            .clone()
+            .ok_or_else(|| Error::Invalid(format!("version {} has no mainClass", v.id)))?,
+    );
+    args.extend(expand(&arguments.game, &vars));
+
+    if let Some(server) = quick_play {
+        args.push("--quickPlayMultiplayer".into());
+        args.push(server.to_string());
+    }
+
+    Ok(Plan { program: PathBuf::from(java), args, cwd: game_dir })
+}
+
+fn level_of(line: &str) -> &'static str {
+    // "[19:57:12] [Render thread/INFO]: …" — the tag is what the game means
+    let upper = line.to_ascii_uppercase();
+    if upper.contains("/ERROR") || upper.contains("EXCEPTION") || upper.contains("\tAT ") {
+        "ERROR"
+    } else if upper.contains("/WARN") {
+        "WARN"
+    } else if upper.contains("/DEBUG") {
+        "DEBUG"
+    } else {
+        "INFO"
+    }
+}
+
+/// Spawn, wire the log pumps, and own the child until it exits. The caller
+/// keeps only a kill switch, so nothing else can leave a zombie behind.
+/// Exit is reported on `game://state`, including the code.
+pub fn spawn(
+    app: &AppHandle,
+    game: Arc<Mutex<GameState>>,
+    plan: Plan,
+    session_id: String,
+) -> Result<tokio::sync::oneshot::Sender<()>> {
+    let mut cmd = tokio::process::Command::new(&plan.program);
+    cmd.args(&plan.args)
+        .current_dir(&plan.cwd)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(false);
+    #[cfg(windows)]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    let mut child = cmd.spawn()?;
+
+    if let Some(out) = child.stdout.take() {
+        pump(app.clone(), Arc::clone(&game), session_id.clone(), out, false);
+    }
+    if let Some(err) = child.stderr.take() {
+        pump(app.clone(), Arc::clone(&game), session_id.clone(), err, true);
+    }
+
+    let (kill_tx, kill_rx) = tokio::sync::oneshot::channel::<()>();
+    watch(app.clone(), game, session_id, child, kill_rx);
+    Ok(kill_tx)
+}
+
+/// The event and the state the UI polls have to agree, so both are written
+/// here — a `game://state` the store never sees would make a stale HUD.
+async fn emit_state(
+    app: &AppHandle,
+    game: &Mutex<GameState>,
+    session_id: &str,
+    state: GameStateValue,
+    exit_code: Option<i32>,
+) {
+    let _ = app.emit(
+        "game://state",
+        StateEvent { session_id: session_id.to_string(), state, exit_code },
+    );
+    let mut guard = game.lock().await;
+    if guard.session_id.as_deref() == Some(session_id) {
+        guard.state = state;
+        guard.exit_code = exit_code;
+    }
+}
+
+fn pump<R>(
+    app: AppHandle,
+    game: Arc<Mutex<GameState>>,
+    session_id: String,
+    stream: R,
+    is_err: bool,
+) where
+    R: tokio::io::AsyncRead + Unpin + Send + 'static,
+{
+    tokio::spawn(async move {
+        let mut lines = BufReader::new(stream).lines();
+        let mut first = true;
+        while let Ok(Some(line)) = lines.next_line().await {
+            if first && !is_err {
+                // the game printing anything at all means the JVM came up
+                first = false;
+                emit_state(&app, &game, &session_id, GameStateValue::Running, None).await;
+            }
+            let level = if is_err { "ERROR" } else { level_of(&line) };
+            let _ = app.emit(
+                "game://log",
+                LogEvent { session_id: session_id.clone(), level: level.into(), line },
+            );
+        }
+    });
+}
+
+/// Wait for exit — or for the kill switch — off the command path.
+fn watch(
+    app: AppHandle,
+    game: Arc<Mutex<GameState>>,
+    session_id: String,
+    mut child: tokio::process::Child,
+    kill: tokio::sync::oneshot::Receiver<()>,
+) {
+    tokio::spawn(async move {
+        let mut asked_to_stop = false;
+        let status = tokio::select! {
+            s = child.wait() => s,
+            _ = kill => {
+                asked_to_stop = true;
+                let _ = child.start_kill();
+                child.wait().await
+            }
+        };
+        // a killed process exits non-zero; that is the kill working, not a crash
+        let (state, code) = match status {
+            Ok(s) if s.success() || asked_to_stop => (GameStateValue::Closed, s.code()),
+            Ok(s) => (GameStateValue::Crashed, s.code()),
+            Err(_) if asked_to_stop => (GameStateValue::Closed, None),
+            Err(_) => (GameStateValue::Crashed, None),
+        };
+        emit_state(&app, &game, &session_id, state, code).await;
+    });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn substitutes_known_keys() {
+        let vars = HashMap::from([("a", "1".to_string())]);
+        assert_eq!(substitute("x${a}y", &vars).unwrap(), "x1y");
+    }
+
+    #[test]
+    fn drops_args_with_unknown_placeholders() {
+        let vars: HashMap<&str, String> = HashMap::new();
+        assert!(substitute("--width ${resolution_width}", &vars).is_none());
+    }
+
+    #[test]
+    fn error_lines_are_classified() {
+        assert_eq!(level_of("[12:00:00] [main/ERROR]: boom"), "ERROR");
+        assert_eq!(level_of("[12:00:00] [main/WARN]: hmm"), "WARN");
+        assert_eq!(level_of("[12:00:00] [main/INFO]: fine"), "INFO");
+    }
+}

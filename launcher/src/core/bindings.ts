@@ -230,6 +230,8 @@ export interface PinionCore {
   auth_select(uuid: string): Promise<void>;
   auth_remove(uuid: string): Promise<void>;
   auth_refresh(uuid: string): Promise<Account>;
+  /** offline profile — real core only, see `addOfflineAccount` in client.ts */
+  auth_add_offline?(username: string): Promise<Account>;
 
   // versions / instances
   versions_manifest(): Promise<VersionSummary[]>;

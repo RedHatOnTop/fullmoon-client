@@ -32,14 +32,9 @@ import type {
 } from "./bindings";
 
 type Invoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
-type Listen = <T>(
-  event: string,
-  handler: (e: { payload: T }) => void,
-) => Promise<() => void>;
 
 interface TauriInternals {
   invoke: Invoke;
-  event?: { listen: Listen };
 }
 
 export function hasTauri(): boolean {
@@ -62,6 +57,7 @@ export class TauriCore implements PinionCore {
   auth_poll = (session: string) => this.call<AuthStatus>("auth_poll", { session });
   auth_login_authcode = () => this.call<Account>("auth_login_authcode");
   auth_import_official = () => this.call<Account[]>("auth_import_official");
+
   /* the active account lives in Rust state; cache it here so the store can
      read it synchronously right after the list it always awaits first */
   private activeUuid: string | null = null;
@@ -81,6 +77,7 @@ export class TauriCore implements PinionCore {
   };
   auth_remove = (uuid: string) => this.call<void>("auth_remove", { uuid });
   auth_refresh = (uuid: string) => this.call<Account>("auth_refresh", { uuid });
+  auth_add_offline = (username: string) => this.call<Account>("auth_add_offline", { username });
 
   // versions / instances
   versions_manifest = () => this.call<VersionSummary[]>("versions_manifest");
@@ -125,13 +122,14 @@ export class TauriCore implements PinionCore {
   servers_list = () => this.call<ServerEntry[]>("servers_list");
   servers_save = (list: ServerEntry[]) => this.call<void>("servers_save", { list });
 
-  /* Tauri's listen is async but the store's subscribe API is not; unsubscribing
-     before the listener registers has to still take effect, hence the flag. */
+  /* Events go through the event plugin, not the raw internals object — the
+     internals only carry `invoke`. Registration is async while the store's
+     subscribe API is not, so unsubscribing before it lands must still take. */
   on<E extends CoreEventName>(event: E, cb: (payload: CoreEvents[E]) => void): () => void {
     let stop: (() => void) | null = null;
     let cancelled = false;
-    void this.api.event
-      ?.listen<CoreEvents[E]>(event, (e) => cb(e.payload))
+    void import("@tauri-apps/api/event")
+      .then(({ listen }) => listen<CoreEvents[E]>(event, (e) => cb(e.payload)))
       .then((un) => {
         if (cancelled) un();
         else stop = un;

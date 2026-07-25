@@ -3,13 +3,18 @@
 
 mod catalog;
 mod commands;
+mod download;
 mod error;
+mod fabric;
+mod install;
 mod java;
+mod launch;
 mod meta;
 mod model;
 mod paths;
 mod state;
 mod store;
+mod version;
 
 use tauri::Manager;
 
@@ -51,6 +56,7 @@ fn main() {
             commands::servers_save,
             commands::auth_list,
             commands::auth_active,
+            commands::auth_add_offline,
             commands::auth_select,
             commands::auth_remove,
             commands::auth_begin_device_code,

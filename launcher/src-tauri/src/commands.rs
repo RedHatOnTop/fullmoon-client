@@ -4,12 +4,12 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::{
     catalog,
     error::{Error, Result},
-    java,
+    install, java,
     meta,
     model::*,
     paths, store,
@@ -164,9 +164,65 @@ pub async fn instance_delete(state: State<'_, AppState>, id: String) -> Result<(
     Ok(())
 }
 
+/// Runs the install to completion before answering. The UI follows along on
+/// `install://stage`; the returned id is what a later cancel would name.
 #[tauri::command]
-pub async fn instance_install(_state: State<'_, AppState>, _id: String) -> Result<String> {
-    Err(Error::Unimplemented("instance_install (download engine lands next)"))
+pub async fn instance_install(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<String> {
+    let (game, loader) = {
+        let instances = state.instances.lock().await;
+        let inst = instances
+            .iter()
+            .find(|i| i.id == id)
+            .ok_or_else(|| Error::NotFound(format!("instance {id}")))?;
+        (inst.version_id.clone(), inst.loader.clone())
+    };
+    let concurrency = state.settings.lock().await.concurrency as usize;
+
+    set_installing(
+        &state,
+        &id,
+        Some(InstallProgress { stage: InstallStage::Manifest, pct: 0.0 }),
+    )
+    .await?;
+
+    let outcome = install::run(&app, &state.http, &id, &game, &loader, concurrency).await;
+
+    match outcome {
+        Ok(_) => {
+            let mut instances = state.instances.lock().await;
+            if let Some(inst) = instances.iter_mut().find(|i| i.id == id) {
+                inst.installed = true;
+                inst.installing = None;
+            }
+            let snapshot = instances.clone();
+            drop(instances);
+            store::write(&paths::instances_file(), &snapshot).await?;
+            Ok(id)
+        }
+        Err(e) => {
+            // a failed install leaves the instance exactly as un-installed as it was
+            set_installing(&state, &id, None).await?;
+            Err(e)
+        }
+    }
+}
+
+async fn set_installing(
+    state: &State<'_, AppState>,
+    id: &str,
+    progress: Option<InstallProgress>,
+) -> Result<()> {
+    let mut instances = state.instances.lock().await;
+    if let Some(inst) = instances.iter_mut().find(|i| i.id == id) {
+        inst.installing = progress;
+    }
+    let snapshot = instances.clone();
+    drop(instances);
+    store::write(&paths::instances_file(), &snapshot).await
 }
 
 // ── mods ──────────────────────────────────────────────────────
@@ -346,6 +402,48 @@ pub async fn auth_remove(state: State<'_, AppState>, uuid: String) -> Result<()>
     Ok(())
 }
 
+/// An offline profile: no session, no entitlement, singleplayer and LAN only.
+/// The uuid is derived the way every launcher derives it — from the name —
+/// so worlds keep their player data across launchers.
+#[tauri::command]
+pub async fn auth_add_offline(state: State<'_, AppState>, username: String) -> Result<Account> {
+    let name = username.trim();
+    if name.is_empty() || name.len() > 16 || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+    {
+        return Err(Error::Invalid(
+            "a Minecraft name is 1-16 characters of letters, digits or underscore".into(),
+        ));
+    }
+
+    let uuid = uuid::Uuid::new_v3(
+        &uuid::Uuid::NAMESPACE_OID,
+        format!("OfflinePlayer:{name}").as_bytes(),
+    );
+    let account = Account {
+        uuid: uuid.to_string(),
+        username: name.to_string(),
+        skin_hue: (uuid.as_u128() % 360) as u16,
+        skin_url: None,
+        source: "offline".into(),
+        capes: Vec::new(),
+        access_token: None,
+        xuid: None,
+    };
+
+    let mut accounts: Vec<Account> = store::read_or(&paths::accounts_file(), Vec::new).await;
+    if accounts.iter().any(|a| a.uuid == account.uuid) {
+        return Err(Error::Invalid(format!("{name} is already added")));
+    }
+    accounts.push(account.clone());
+    store::write(&paths::accounts_file(), &accounts).await?;
+
+    let mut active = state.active_account.lock().await;
+    if active.is_none() {
+        *active = Some(account.uuid.clone());
+    }
+    Ok(account)
+}
+
 #[tauri::command]
 pub async fn auth_begin_device_code() -> Result<serde_json::Value> {
     Err(Error::Unimplemented("auth_begin_device_code (Microsoft OAuth lands with launch)"))
@@ -373,24 +471,133 @@ pub async fn auth_refresh(_uuid: String) -> Result<Account> {
 
 // ── launch ────────────────────────────────────────────────────
 
-#[tauri::command]
-pub async fn launch(_instance_id: String, _opts: Option<serde_json::Value>) -> Result<String> {
-    Err(Error::Unimplemented("launch (needs the install engine and auth first)"))
+#[derive(Debug, Default, Deserialize)]
+pub struct LaunchOpts {
+    pub server: Option<String>,
+}
+
+async fn start_game(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    server: Option<String>,
+) -> Result<String> {
+    if state.game.lock().await.state.is_live() {
+        return Err(Error::Invalid("a game is already running".into()));
+    }
+
+    let inst = {
+        let instances = state.instances.lock().await;
+        instances
+            .iter()
+            .find(|i| i.id == instance_id)
+            .cloned()
+            .ok_or_else(|| Error::NotFound(format!("instance {instance_id}")))?
+    };
+    if !inst.installed {
+        return Err(Error::Invalid(format!("{} is not installed yet", inst.name)));
+    }
+
+    let account = {
+        let accounts: Vec<Account> = store::read_or(&paths::accounts_file(), Vec::new).await;
+        let active = state.active_account.lock().await.clone();
+        active
+            .and_then(|uuid| accounts.iter().find(|a| a.uuid == uuid).cloned())
+            .or_else(|| accounts.first().cloned())
+            .ok_or_else(|| Error::Invalid("no account is selected".into()))?
+    };
+
+    let settings = state.settings.lock().await.clone();
+    let version: crate::version::VersionJson = {
+        let file = install::resolved_file(&instance_id);
+        let bytes = tokio::fs::read(&file).await.map_err(|_| {
+            Error::Invalid(format!("{} has no resolved version — reinstall it", inst.name))
+        })?;
+        serde_json::from_slice(&bytes)?
+    };
+
+    let server = server.or_else(|| inst.quick_play_server.clone());
+    let plan = crate::launch::plan(&version, &inst, &settings, &account, server.as_deref())?;
+
+    let session_id = format!("run-{}", uuid::Uuid::new_v4().simple());
+
+    {
+        let mut game = state.game.lock().await;
+        *game = GameState {
+            state: GameStateValue::Starting,
+            session_id: Some(session_id.clone()),
+            instance_id: Some(instance_id.clone()),
+            server: server.clone(),
+            started_at: Some(now_millis()),
+            exit_code: None,
+        };
+    }
+
+    let kill = crate::launch::spawn(
+        &app,
+        std::sync::Arc::clone(&state.game),
+        plan,
+        session_id.clone(),
+    )?;
+    *state.kill.lock().await = Some(kill);
+
+    // last played is only true once the process actually exists
+    {
+        let mut instances = state.instances.lock().await;
+        if let Some(i) = instances.iter_mut().find(|i| i.id == instance_id) {
+            i.last_played_at = Some(now_iso());
+        }
+        let snapshot = instances.clone();
+        drop(instances);
+        store::write(&paths::instances_file(), &snapshot).await?;
+    }
+
+    Ok(session_id)
 }
 
 #[tauri::command]
-pub async fn launch_quickplay(_instance_id: String, _server: String) -> Result<String> {
-    Err(Error::Unimplemented("launch_quickplay"))
+pub async fn launch(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    opts: Option<LaunchOpts>,
+) -> Result<String> {
+    let server = opts.and_then(|o| o.server);
+    start_game(app, state, instance_id, server).await
 }
 
 #[tauri::command]
-pub async fn game_kill(_session_id: String) -> Result<()> {
-    Err(Error::Unimplemented("game_kill"))
+pub async fn launch_quickplay(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    server: String,
+) -> Result<String> {
+    start_game(app, state, instance_id, Some(server)).await
+}
+
+#[tauri::command]
+pub async fn game_kill(state: State<'_, AppState>, session_id: String) -> Result<()> {
+    let current = state.game.lock().await.session_id.clone();
+    if current.as_deref() != Some(session_id.as_str()) {
+        return Err(Error::NotFound(format!("session {session_id}")));
+    }
+    match state.kill.lock().await.take() {
+        Some(tx) => {
+            let _ = tx.send(());
+            Ok(())
+        }
+        None => Err(Error::NotFound(format!("process for session {session_id}"))),
+    }
 }
 
 #[tauri::command]
 pub async fn game_status(state: State<'_, AppState>) -> Result<GameState> {
     Ok(state.game.lock().await.clone())
+}
+
+fn now_millis() -> i64 {
+    (time::OffsetDateTime::now_utc().unix_timestamp_nanos() / 1_000_000) as i64
 }
 
 fn now_iso() -> String {

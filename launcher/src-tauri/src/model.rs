@@ -11,6 +11,12 @@ pub struct Account {
     pub skin_url: Option<String>,
     pub source: String,
     pub capes: Vec<String>,
+    /// Only a Microsoft account carries a session; an offline profile has none
+    /// and the game is told so rather than handed a fake-looking token.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub access_token: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub xuid: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +46,34 @@ pub enum InstallStage {
 pub struct InstallProgress {
     pub stage: InstallStage,
     pub pct: f32,
+}
+
+/// `game://log`
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LogEvent {
+    pub session_id: String,
+    pub level: String,
+    pub line: String,
+}
+
+/// `game://state`
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StateEvent {
+    pub session_id: String,
+    pub state: GameStateValue,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exit_code: Option<i32>,
+}
+
+/// `install://stage` — the same shape the UI's bindings declare.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InstallStageEvent {
+    pub instance_id: String,
+    pub stage: InstallStage,
+    pub pct: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -122,6 +156,14 @@ pub enum GameStateValue {
     Running,
     Crashed,
     Closed,
+}
+
+impl GameStateValue {
+    /// A process exists — a second launch would fight the first for the
+    /// instance directory.
+    pub fn is_live(self) -> bool {
+        matches!(self, Self::Starting | Self::Running)
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

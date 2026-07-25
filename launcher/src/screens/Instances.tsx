@@ -15,7 +15,7 @@ function relTime(iso: string | null, t: (p: string, v?: Record<string, string | 
 }
 
 function InstanceCard({ inst }: { inst: Instance }) {
-  const { selectInstance, selectedInstanceId, installInstance, deleteInstance, launch, setScreen, modCatalog, versions } = useStore();
+  const { selectInstance, selectedInstanceId, installInstance, deleteInstance, launch, modCatalog, versions } = useStore();
   const { t } = useT();
   const [confirmDel, setConfirmDel] = useState(false);
   const selected = inst.id === selectedInstanceId;
@@ -84,7 +84,11 @@ function InstanceCard({ inst }: { inst: Instance }) {
                 <Button size="sm" variant="soft" icon="play" onClick={() => void launch(inst.id)}>
                   {t("common.play")}
                 </Button>
-                <IconButton icon="folder" label="open folder" onClick={() => setScreen("settings")} />
+                <IconButton
+                  icon="refresh"
+                  label={t("instances.repair")}
+                  onClick={() => void installInstance(inst.id)}
+                />
                 <IconButton icon="trash" label={t("common.delete")} danger onClick={() => setConfirmDel(true)} />
               </>
             ) : (

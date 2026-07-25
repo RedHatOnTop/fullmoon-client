@@ -1,4 +1,6 @@
-use tokio::sync::Mutex;
+use std::sync::Arc;
+
+use tokio::sync::{oneshot, Mutex};
 
 use crate::{
     model::{Account, GameState, GameStateValue, Instance, Settings},
@@ -10,7 +12,10 @@ pub struct AppState {
     pub settings: Mutex<Settings>,
     pub instances: Mutex<Vec<Instance>>,
     pub active_account: Mutex<Option<String>>,
-    pub game: Mutex<GameState>,
+    /// Shared with the process watcher, which updates it from its own task.
+    pub game: Arc<Mutex<GameState>>,
+    /// Dropping this sender is harmless; sending on it kills the game.
+    pub kill: Mutex<Option<oneshot::Sender<()>>>,
 }
 
 impl AppState {
@@ -36,14 +41,15 @@ impl AppState {
             settings: Mutex::new(settings),
             instances: Mutex::new(instances),
             active_account: Mutex::new(accounts.first().map(|a| a.uuid.clone())),
-            game: Mutex::new(GameState {
+            game: Arc::new(Mutex::new(GameState {
                 state: GameStateValue::Idle,
                 session_id: None,
                 instance_id: None,
                 server: None,
                 started_at: None,
                 exit_code: None,
-            }),
+            })),
+            kill: Mutex::new(None),
         }
     }
 }

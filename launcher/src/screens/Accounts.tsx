@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, Button, ConfirmModal, IconButton, Modal, SkinFace } from "../components/ui";
-import { core } from "../core/client";
+import { addOfflineAccount, core, errText } from "../core/client";
 import type { Account, DeviceCodePrompt } from "../core/bindings";
 import { useStore } from "../state/store";
 import { useT } from "../i18n";
@@ -92,13 +92,37 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
   const [deviceOpen, setDeviceOpen] = useState(false);
   const [busyBrowser, setBusyBrowser] = useState(false);
 
+  const [offlineName, setOfflineName] = useState("");
+  const [busyOffline, setBusyOffline] = useState(false);
+
   const browserLogin = async () => {
     setBusyBrowser(true);
-    const acc = await core.auth_login_authcode();
-    await syncAccounts();
-    setBusyBrowser(false);
-    toast("success", t("accounts.loggedIn", { name: acc.username }));
-    onClose();
+    try {
+      const acc = await core.auth_login_authcode();
+      await syncAccounts();
+      toast("success", t("accounts.loggedIn", { name: acc.username }));
+      onClose();
+    } catch (e) {
+      toast("error", errText(e));
+    } finally {
+      setBusyBrowser(false);
+    }
+  };
+
+  const addOffline = async () => {
+    if (!offlineName.trim()) return;
+    setBusyOffline(true);
+    try {
+      const acc = await addOfflineAccount(offlineName.trim());
+      await syncAccounts();
+      toast("success", t("accounts.loggedIn", { name: acc.username }));
+      setOfflineName("");
+      onClose();
+    } catch (e) {
+      toast("error", errText(e));
+    } finally {
+      setBusyOffline(false);
+    }
   };
 
   return (
@@ -135,6 +159,32 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
             </span>
             <Icon name="chevronRight" size={16} />
           </button>
+        </div>
+
+        {/* offline is a real mode, not a placeholder: singleplayer and LAN
+            work, online servers do not, and the card says so */}
+        <div className="add-offline">
+          <label className="field-label">{t("accounts.offline")}</label>
+          <div className="add-offline-row">
+            <input
+              className="input"
+              value={offlineName}
+              onChange={(e) => setOfflineName(e.target.value)}
+              placeholder={t("accounts.offlinePlaceholder")}
+              maxLength={16}
+              onKeyDown={(e) => e.key === "Enter" && void addOffline()}
+            />
+            <Button
+              variant="outline"
+              icon="plus"
+              loading={busyOffline}
+              disabled={!offlineName.trim()}
+              onClick={() => void addOffline()}
+            >
+              {t("accounts.add")}
+            </Button>
+          </div>
+          <p className="set-hint">{t("accounts.offlineDesc")}</p>
         </div>
       </Modal>
       <DeviceCodeModal open={deviceOpen} onClose={() => { setDeviceOpen(false); onClose(); }} />

@@ -26,7 +26,7 @@ futures = "0.3"
 sha1 = "0.10"
 hex = "0.4"
 zip = { version = "2", default-features = false, features = ["deflate"] }
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v3", "v4", "md5", "serde"] }
 time = { version = "0.3", features = ["formatting", "parsing", "serde"] }
 dirs = "5"
 

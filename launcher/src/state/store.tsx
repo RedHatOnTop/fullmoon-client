@@ -360,19 +360,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const selectInstance = useCallback((id: string) => setSelectedInstanceId(id), []);
 
+  /* Install runs to completion inside the command, so it is never awaited by a
+     caller that owns UI state — the dialog closes, the card shows the bar. */
+  const runInstall = useCallback(
+    async (id: string) => {
+      try {
+        await core.instance_install(id);
+        setInstances(await core.instances_list());
+      } catch (e) {
+        toast("error", errText(e));
+        setInstances(await core.instances_list().catch(() => []));
+      }
+    },
+    [toast],
+  );
+
   const createInstance = useCallback(
     async (spec: InstanceSpec) => {
       const inst = await core.instance_create(spec);
       setInstances((l) => [...l, inst]);
       setSelectedInstanceId(inst.id);
       toast("success", t("instances.created"));
-      try {
-        await core.instance_install(inst.id);
-      } catch (e) {
-        toast("error", errText(e));
-      }
+      void runInstall(inst.id);
     },
-    [toast, t],
+    [toast, t, runInstall],
   );
 
   const deleteInstance = useCallback(
@@ -387,14 +398,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const installInstance = useCallback(
     async (id: string) => {
-      try {
-        await core.instance_install(id);
-        toast("info", t("instances.installStarted"));
-      } catch (e) {
-        toast("error", errText(e));
-      }
+      toast("info", t("instances.installStarted"));
+      void runInstall(id);
     },
-    [toast, t],
+    [toast, t, runInstall],
   );
 
   const rescanJava = useCallback(async () => {

@@ -5,7 +5,7 @@
    stays developable without the shell. Every consumer imports `core` from
    here and nothing else changes (PLAN §2 seam). */
 
-import type { PinionCore } from "./bindings";
+import type { Account, PinionCore } from "./bindings";
 import { MockCore } from "./mockCore";
 import { TauriCore, hasTauri } from "./tauriCore";
 
@@ -18,6 +18,14 @@ export function getActiveAccountUuid(): string | null {
 
 /** true when the real core is answering — used to gate "not implemented yet" copy */
 export const isRealCore = hasTauri();
+
+/** Offline profiles exist only in the real core; the mock has fixed accounts. */
+export async function addOfflineAccount(username: string): Promise<Account> {
+  if (!(core instanceof TauriCore)) {
+    throw new Error("오프라인 계정은 데스크톱 빌드에서만 추가할 수 있습니다");
+  }
+  return core.auth_add_offline(username);
+}
 
 /** IPC rejects with a plain string, never an Error — unwrap either shape */
 export function errText(e: unknown): string {
