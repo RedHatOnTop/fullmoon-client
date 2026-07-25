@@ -1,0 +1,30 @@
+{
+  "name": "pinion-launcher",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Pinion — custom Minecraft Java client launcher (UI build over the core contract)",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4173 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "verify": "node scripts/verify.mjs",
+    "assets": "node scripts/generate-assets.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "skinview3d": "^3.4.2",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.185.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "pngjs": "^7.0.0",
+    "puppeteer-core": "^25.3.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

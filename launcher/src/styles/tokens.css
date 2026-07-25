@@ -1,0 +1,221 @@
+/* ============================================================
+   Pinion tokens — the Imprint design language (new-design-system)
+   carried to desktop density. Pine ink on cool vellum, one
+   verdigris plate. Korean text falls back to Noto Serif KR
+   (display) and Pretendard (interface).
+   ============================================================ */
+
+:root {
+  /* ---------- Neutral ramp: "sage" ---------- */
+  --sage-0:   #FFFFFF;
+  --sage-25:  #F7F8F5;
+  --sage-50:  #F1F3EE;
+  --sage-100: #E8EAE3;
+  --sage-200: #D9DCD2;
+  --sage-300: #C2C7B9;
+  --sage-400: #9BA38F;
+  --sage-500: #79816F;
+  --sage-600: #5C6453;
+  --sage-700: #42483B;
+  --sage-800: #2C3128;
+  --sage-900: #1B201A;
+  --sage-950: #111511;
+
+  /* ---------- Accent: "ember" — fired clay, not safety orange ---------- */
+  --ember-50:  #FBEEE6;
+  --ember-100: #F6DCCB;
+  --ember-200: #EBB794;
+  --ember-300: #DE9160;
+  --ember-400: #CF6E33;
+  --ember-500: #C4551F;
+  --ember-600: #B0481A;
+  --ember-700: #8E3813;
+  --ember-800: #6B2A0E;
+  --ember-900: #481C09;
+
+  /* ---------- Alternate accent: "verdigris" ---------- */
+  --verdigris-50:  #E9F3EF;
+  --verdigris-100: #D2E8E0;
+  --verdigris-200: #A6D1C3;
+  --verdigris-300: #6FB29F;
+  --verdigris-400: #38937D;
+  --verdigris-500: #16775F;
+  --verdigris-600: #0E6B57;
+  --verdigris-700: #0B5445;
+  --verdigris-800: #083F35;
+  --verdigris-900: #062B24;
+
+  /* ---------- Semantic ramps ---------- */
+  --moss-50:  #EFF3EA;
+  --moss-200: #C9D6BC;
+  --moss-400: #7A9A64;
+  --moss-600: #4A6B3E;
+  --moss-700: #3B5632;
+
+  --ochre-50:  #FAF2DC;
+  --ochre-200: #E9D8A4;
+  --ochre-400: #C9A33F;
+  --ochre-600: #8F6B12;
+  --ochre-700: #75570D;
+
+  --slate-50:  #EDF1F4;
+  --slate-200: #C7D3DB;
+  --slate-400: #6E93AC;
+  --slate-600: #3E5C72;
+  --slate-700: #314A5C;
+
+  --poppy-50:  #FAECEA;
+  --poppy-200: #EAB5AE;
+  --poppy-300: #D97D72;
+  --poppy-500: #CE4834;
+  --poppy-600: #BE3B2E;
+  --poppy-700: #9E2F24;
+  --poppy-800: #7E261D;
+
+  /* ---------- Semantic surfaces (light: "vellum") ---------- */
+  --bg:        var(--sage-25);
+  --surface:   var(--sage-0);
+  --sunken:    var(--sage-50);
+  --overlay:   var(--sage-0);
+  --scrim:     rgb(17 21 17 / 0.44);
+
+  --line:        var(--sage-200);
+  --line-strong: var(--sage-300);
+  --line-ink:    var(--sage-900);
+
+  --text:        var(--sage-900);
+  --text-2:      var(--sage-600);
+  --text-3:      var(--sage-500);
+  --text-invert: var(--sage-25);
+
+  --accent:            var(--ember-700);
+  --accent-hover:      var(--ember-800);
+  --accent-fill:       var(--ember-600);
+  --accent-fill-hover: var(--ember-700);
+  --accent-soft:       rgb(176 72 26 / 0.10);
+  --accent-line:       rgb(176 72 26 / 0.30);
+  /* the hero backdrop only — thinner than -soft, since it lies over a whole
+     panel rather than a chip and has to stay a hint of weather, not a tint */
+  --accent-wash:       rgb(176 72 26 / 0.07);
+  --on-accent:         #FFFFFF;
+
+  --success:      var(--moss-600);
+  --success-soft: var(--moss-50);
+  --success-line: var(--moss-200);
+  --warning:      var(--ochre-700);
+  --warning-soft: var(--ochre-50);
+  --warning-line: var(--ochre-200);
+  --danger:       var(--poppy-700);
+  --danger-soft:  var(--poppy-50);
+  --danger-line:  var(--poppy-200);
+  --danger-fill:  var(--poppy-600);
+  --danger-fill-hover: var(--poppy-700);
+  --info:         var(--slate-600);
+  --info-soft:    var(--slate-50);
+  --info-line:    var(--slate-200);
+
+  --selection-bg:   var(--ember-100);
+  --selection-text: var(--sage-900);
+
+  /* ---------- Typography ----------
+     Display = Space Grotesk (techy grotesque, English headlines); Korean
+     falls to Pretendard so the KR/EN tonal jump stays small (both sans).
+     UI/body = Pretendard for one KR+Latin family. Data = JetBrains Mono. */
+  --font-display: "Space Grotesk", "Pretendard Variable", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Pretendard Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
+
+  --text-display-md: 2.4375rem;  /* 39px */
+  --text-display-sm: 1.9375rem;  /* 31px */
+  --text-title:      1.5625rem;  /* 25px */
+  --text-heading:    1.25rem;    /* 20px */
+  --text-body-lg:    1rem;       /* 16px */
+  --text-body:       0.875rem;   /* 14px */
+  --text-small:      0.8125rem;  /* 13px */
+  --text-caption:    0.75rem;    /* 12px */
+  --text-overline:   0.6875rem;  /* 11px */
+
+  --leading-display: 1.06;
+  --leading-title:   1.2;
+  --leading-body:    1.55;
+  --leading-ui:      1.45;
+
+  --ls-tight:   -0.022em;
+  --ls-snug:    -0.011em;
+  --ls-wide:     0.01em;
+  --ls-overline: 0.14em;
+
+  /* ---------- Radius: 4/6/8 ladder ---------- */
+  --radius-1: 4px;   /* controls  */
+  --radius-2: 6px;   /* surfaces  */
+  --radius-3: 8px;   /* floaters  */
+  --radius-round: 999px; /* geometry only */
+
+  /* ---------- Elevation: borders first ---------- */
+  --shadow-1: 0 1px 2px rgb(17 21 17 / 0.05);
+  --shadow-2: 0 1px 2px rgb(17 21 17 / 0.06), 0 8px 24px -12px rgb(17 21 17 / 0.18);
+  --shadow-3: 0 2px 4px rgb(17 21 17 / 0.06), 0 20px 48px -16px rgb(17 21 17 / 0.28);
+
+  /* ---------- Motion ---------- */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---------- Density: compact (desktop software) ---------- */
+  --control-h: 32px;
+  --control-h-lg: 40px;
+}
+
+/* ---------- Dark theme: "Ink" ----------
+   Neutral graphite, not sage-tinted: a Minecraft client sits on a near-black
+   charcoal so the verdigris accent is the only real colour on screen. The
+   green cast was muddying it. */
+[data-theme="dark"] {
+  --bg:        #0F100F;
+  --surface:   #191A19;
+  --sunken:    #141514;
+  --overlay:   #1E201E;
+  --scrim:     rgb(0 0 0 / 0.62);
+
+  --line:        #2A2C2A;
+  --line-strong: #3D403D;
+  --line-ink:    var(--sage-100);
+
+  --text:        var(--sage-100);
+  --text-2:      var(--sage-400);
+  --text-3:      var(--sage-500);
+  --text-invert: var(--sage-950);
+
+  --accent:            var(--ember-300);
+  --accent-hover:      var(--ember-200);
+  --accent-fill:       var(--ember-600);
+  --accent-fill-hover: var(--ember-500);
+  --accent-soft:       rgb(176 72 26 / 0.16);
+  --accent-line:       rgb(176 72 26 / 0.42);
+  --accent-wash:       rgb(176 72 26 / 0.13);
+  --on-accent:         #FFFFFF;
+
+  --success:      var(--moss-400);
+  --success-soft: #182012;
+  --success-line: #2E4024;
+  --warning:      var(--ochre-400);
+  --warning-soft: #241E10;
+  --warning-line: #4A3D1C;
+  --danger:       var(--poppy-300);
+  --danger-soft:  #2A1713;
+  --danger-line:  #4E241D;
+  --danger-fill:  var(--poppy-600);
+  --danger-fill-hover: var(--poppy-500);
+  --info:         var(--slate-400);
+  --info-soft:    #161D22;
+  --info-line:    #2B3B47;
+
+  --selection-bg:   var(--ember-800);
+  --selection-text: var(--sage-100);
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --shadow-3: 0 2px 4px rgb(0 0 0 / 0.4), 0 20px 48px -16px rgb(0 0 0 / 0.7);
+}

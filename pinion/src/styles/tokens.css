@@ -1,0 +1,88 @@
+/* ─────────────────────────────────────────────────────────────
+   Pinion design tokens (PLAN §6) — v2 "Noir Aurora"
+
+   Single swap layer for the whole skin. --accent / --accent-dim
+   are injected from brand.json at boot (main.tsx) — these are
+   the fallback values only.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  /* surfaces — deep space navy */
+  --bg: #04060c;
+  --bg-elev: #080b14;
+  --surface: rgba(148, 178, 255, 0.045);
+  --surface-2: rgba(148, 178, 255, 0.08);
+  --surface-3: rgba(148, 178, 255, 0.13);
+  --glass: rgba(10, 14, 24, 0.6);
+  --border: rgba(148, 178, 255, 0.09);
+  --border-strong: rgba(148, 178, 255, 0.17);
+
+  /* text */
+  --text: #eef2fc;
+  --text-dim: #929db6;
+  --text-faint: #5d6780;
+
+  /* brand (overridden by brand.json at runtime) */
+  --accent: #6ea8ff;
+  --accent-dim: #3d6bd6;
+  --accent-soft: rgba(110, 168, 255, 0.12);
+  --accent-glow: rgba(110, 168, 255, 0.35);
+  --on-accent: #050f1f;
+
+  /* ambient secondaries for the aurora */
+  --h2: #8b5cf6;
+  --h3: #22d3ee;
+
+  /* semantic */
+  --ok: #3fe0a0;
+  --ok-soft: rgba(63, 224, 160, 0.13);
+  --warn: #ffb454;
+  --warn-soft: rgba(255, 180, 84, 0.13);
+  --err: #ff6470;
+  --err-soft: rgba(255, 100, 112, 0.13);
+
+  /* rarity */
+  --r-common: #9aa7bd;
+  --r-rare: #5ea0ff;
+  --r-epic: #b07cff;
+  --r-legendary: #ffb454;
+
+  /* shape */
+  --radius: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* elevation — deep, colored */
+  --shadow-1: 0 1px 2px rgba(0, 2, 8, 0.55), 0 6px 24px rgba(0, 2, 8, 0.4);
+  --shadow-2: 0 2px 8px rgba(0, 2, 8, 0.6), 0 24px 64px rgba(0, 2, 8, 0.55);
+  --inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* type — Pretendard for Korean, Space Grotesk for display latin */
+  --font-ui: "Inter", "Pretendard Variable", Pretendard, "Malgun Gothic", system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Pretendard Variable", Pretendard, "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.21, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.45, 0.44, 1);
+  --dur: 0.18s;
+  --dur-2: 0.32s;
+  --dur-3: 0.6s;
+
+  /* layout */
+  --titlebar-h: 48px;
+  --sidebar-w: 224px;
+  --dock-h: 110px;
+}
+
+/* amoled — true black variant, aurora dims down */
+:root[data-theme="amoled"] {
+  --bg: #000000;
+  --bg-elev: #050608;
+  --surface: rgba(148, 178, 255, 0.05);
+  --surface-2: rgba(148, 178, 255, 0.09);
+  --surface-3: rgba(148, 178, 255, 0.14);
+  --glass: rgba(4, 6, 9, 0.7);
+  --border: rgba(148, 178, 255, 0.11);
+}

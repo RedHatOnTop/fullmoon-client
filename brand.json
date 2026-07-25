@@ -1,0 +1,10 @@
+{
+  "name": "Pinion",
+  "slug": "pinion",
+  "bin": "pinion",
+  "appId": "dev.pinion.launcher",
+  "scheme": "pinion",
+  "tagline": "Flight-feather. Gear-tight.",
+  "accent": "#B0481A",
+  "accentDim": "#8E3813"
+}

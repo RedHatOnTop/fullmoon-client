@@ -1,0 +1,91 @@
+import { useEffect, useState } from "react";
+import { TitleBar } from "./components/TitleBar";
+import { Sidebar } from "./components/Sidebar";
+import { TopBar } from "./components/TopBar";
+import { CommandPalette } from "./components/CommandPalette";
+import { PlayDock } from "./components/PlayDock";
+import { ProgressDock, Toasts } from "./components/Docks";
+import { LaunchOverlay } from "./widgets/LaunchOverlay";
+import { Logo } from "./components/Logo";
+import { HomeScreen } from "./screens/Home";
+import { InstancesScreen } from "./screens/Instances";
+import { ModsScreen } from "./screens/Mods";
+import { CosmeticsScreen } from "./screens/Cosmetics";
+import { AccountsScreen } from "./screens/Accounts";
+import { SettingsScreen } from "./screens/Settings";
+import { ConsoleScreen } from "./screens/Console";
+import { useStore } from "./state/store";
+import { useT } from "./i18n";
+
+const SCREENS = {
+  home: HomeScreen,
+  instances: InstancesScreen,
+  mods: ModsScreen,
+  cosmetics: CosmeticsScreen,
+  accounts: AccountsScreen,
+  settings: SettingsScreen,
+  console: ConsoleScreen,
+} as const;
+
+export default function App() {
+  const { ready, screen, settings, game } = useStore();
+  const { setLang } = useT();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  /* the overlay shows once per session; hiding it pins that sessionId */
+  const [overlayHiddenFor, setOverlayHiddenFor] = useState<string | null>(null);
+  const overlayOn =
+    (game.state === "starting" || game.state === "running") &&
+    game.sessionId !== null &&
+    overlayHiddenFor !== game.sessionId &&
+    screen !== "console";
+
+  /* keep the i18n provider in sync with the persisted setting */
+  useEffect(() => {
+    if (settings) setLang(settings.language);
+  }, [settings, setLang]);
+
+  /* global command palette hotkey */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  if (!ready) {
+    return (
+      <div className="app-splash">
+        <Logo size={44} withWord={false} />
+      </div>
+    );
+  }
+
+  const Screen = SCREENS[screen];
+
+  return (
+    <div className="app">
+      <TitleBar />
+      <div className="grain" aria-hidden />
+      <div className="shell">
+        <Sidebar />
+        <div className="main">
+          <TopBar onPalette={() => setPaletteOpen(true)} />
+          <main className="content">
+            <div className="content-inner screen-enter" key={screen}>
+              <Screen />
+            </div>
+          </main>
+          <PlayDock />
+        </div>
+      </div>
+      <Toasts />
+      <ProgressDock />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      {overlayOn && <LaunchOverlay onHide={() => setOverlayHiddenFor(game.sessionId)} />}
+    </div>
+  );
+}
