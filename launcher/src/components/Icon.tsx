@@ -98,6 +98,12 @@ const P = {
   ),
   minus: <path d="M5.5 12h13" />,
   maximize: <rect x="5.5" y="5.5" width="13" height="13" rx="2.2" />,
+  restore: (
+    <>
+      <rect x="4.5" y="8.5" width="11" height="11" rx="2.2" />
+      <path d="M8.6 5.5h8a2.4 2.4 0 0 1 2.4 2.4v8" />
+    </>
+  ),
   stop: <rect x="6.5" y="6.5" width="11" height="11" rx="1.6" />,
   signal: (
     <>

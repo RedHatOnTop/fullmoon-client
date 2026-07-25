@@ -310,7 +310,7 @@
 
 /* ═══ Instances ═══ */
 
-.inst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.inst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(324px, 1fr)); gap: 16px; }
 
 /* the numbers that were only ever visible one card at a time, read as a row */
 .inst-summary {
@@ -344,11 +344,14 @@
   color: var(--text-3);
 }
 .inst-summary-java {
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  font-weight: 400;
-  color: var(--text-2);
-  padding-top: 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.inst-summary-java small {
+  margin-left: 0;
+  font-family: var(--font-ui);
+  letter-spacing: 0.01em;
 }
 
 .inst-card {
@@ -412,12 +415,14 @@
 .inst-badges { display: flex; gap: 6px; flex-wrap: wrap; }
 .inst-meta {
   display: flex;
-  gap: 14px;
+  flex-wrap: wrap;              /* a long "never played" wraps as a unit, not mid-word */
+  column-gap: 14px;
+  row-gap: 6px;
   font-family: var(--font-mono);
   font-size: var(--text-caption);
   color: var(--text-3);
 }
-.inst-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.inst-meta span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .inst-actions { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px; }
 .inst-actions-spacer { flex: 1; }
 .inst-installing { display: flex; flex-direction: column; gap: 6px; }

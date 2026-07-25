@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, Button, Segmented, Slider, Toggle } from "../components/ui";
-import { core } from "../core/client";
-import type { JavaRuntime } from "../core/bindings";
 import { HudEditor } from "../widgets/HudEditor";
 import { useStore, type SettingsTab } from "../state/store";
 import { useT } from "../i18n";
@@ -11,17 +9,10 @@ import brand from "../brand";
 const ACCENTS = ["#B0481A", "#0E6B57", "#3E5C72", "#4A6B3E", "#75570D", "#9E2F24"];
 
 function JavaSection() {
-  const { settings, patchSettings } = useStore();
+  const { settings, patchSettings, javaRuntimes: runtimes, scanningJava: scanning, rescanJava } =
+    useStore();
   const { t } = useT();
-  const [runtimes, setRuntimes] = useState<JavaRuntime[]>([]);
-  const [scanning, setScanning] = useState(false);
-
-  const scan = async () => {
-    setScanning(true);
-    setRuntimes(await core.java_detect());
-    setScanning(false);
-  };
-  if (runtimes.length === 0 && !scanning) void scan();
+  const scan = rescanJava;
 
   return (
     <section className="set-section" id="set-java">

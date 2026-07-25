@@ -17,13 +17,14 @@ import {
   type ReactNode,
 } from "react";
 import { flushSync } from "react-dom";
-import { core, getActiveAccountUuid } from "../core/client";
+import { core, errText, getActiveAccountUuid } from "../core/client";
 import type {
   Account,
   Cosmetic,
   GameState,
   Instance,
   InstanceSpec,
+  JavaRuntime,
   Loadout,
   LogLevel,
   ModCatalog,
@@ -88,6 +89,11 @@ interface Store {
   settings: Settings | null;
   patchSettings: (patch: Partial<Settings>) => Promise<void>;
 
+  /** detected once at boot, shared by the settings picker and the summary strip */
+  javaRuntimes: JavaRuntime[];
+  scanningJava: boolean;
+  rescanJava: () => Promise<void>;
+
   news: NewsItem[];
   servers: ServerEntry[];
   removeServer: (id: string) => Promise<void>;
@@ -110,6 +116,31 @@ interface Store {
 const Ctx = createContext<Store | null>(null);
 let toastSeq = 0;
 let logSeq = 0;
+
+/* boot fallbacks — only reached when a core call fails outright */
+const BOOT_SETTINGS: Settings = {
+  javaPath: null,
+  javaArgs: "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200",
+  memoryMb: 4096,
+  concurrency: 8,
+  theme: "dark",
+  accent: "#B0481A",
+  language: "ko",
+  telemetry: false,
+};
+
+const IDLE_GAME: GameState = {
+  state: "idle", sessionId: null, instanceId: null, server: null, startedAt: null, exitCode: null,
+};
+
+/* a core answering over IPC fails per command — an offline manifest must not
+   sink the whole boot and leave the splash up forever */
+function soft<T>(p: Promise<T>, fallback: T, failed: string[]): Promise<T> {
+  return p.catch((e) => {
+    failed.push(errText(e));
+    return fallback;
+  });
+}
 
 const now = () =>
   new Date().toLocaleTimeString("en-GB", { hour12: false }) +
@@ -149,6 +180,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loadout, setLoadout] = useState<Loadout | null>(null);
+  const [javaRuntimes, setJavaRuntimes] = useState<JavaRuntime[]>([]);
+  const [scanningJava, setScanningJava] = useState(false);
   const [downloads, setDownloads] = useState<DownloadInfo[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const settingsRef = useRef<Settings | null>(null);
@@ -171,16 +204,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     (async () => {
+      const failed: string[] = [];
       const [accs, vers, insts, mods, cos, st, nw, sv, gs] = await Promise.all([
-        core.auth_list(),
-        core.versions_manifest(),
-        core.instances_list(),
-        core.mods_available(),
-        core.cosmetics_catalog(),
-        core.settings_get(),
-        core.news_feed(),
-        core.servers_list(),
-        core.game_status(),
+        soft(core.auth_list(), [], failed),
+        soft(core.versions_manifest(), [], failed),
+        soft(core.instances_list(), [], failed),
+        soft(core.mods_available(), { mods: [] }, failed),
+        soft(core.cosmetics_catalog(), [], failed),
+        soft(core.settings_get(), BOOT_SETTINGS, failed),
+        soft(core.news_feed(), [], failed),
+        soft(core.servers_list(), [], failed),
+        soft(core.game_status(), IDLE_GAME, failed),
       ]);
       if (!alive) return;
       setAccounts(accs);
@@ -198,6 +232,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         sel && insts.some((i) => i.id === sel) ? sel : insts[0]?.id ?? null,
       );
       setReady(true);
+      if (failed.length > 0) toast("error", failed[0]);
+      /* probing every JDK on the box takes a second — never hold up the boot */
+      core.java_detect().then(
+        (rs) => alive && setJavaRuntimes(rs),
+        () => {},
+      );
     })();
 
     const offInstall = core.on("install://stage", ({ instanceId, stage, pct }) => {
@@ -326,7 +366,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setInstances((l) => [...l, inst]);
       setSelectedInstanceId(inst.id);
       toast("success", t("instances.created"));
-      void core.instance_install(inst.id);
+      try {
+        await core.instance_install(inst.id);
+      } catch (e) {
+        toast("error", errText(e));
+      }
     },
     [toast, t],
   );
@@ -343,11 +387,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const installInstance = useCallback(
     async (id: string) => {
-      toast("info", t("instances.installStarted"));
-      await core.instance_install(id);
+      try {
+        await core.instance_install(id);
+        toast("info", t("instances.installStarted"));
+      } catch (e) {
+        toast("error", errText(e));
+      }
     },
     [toast, t],
   );
+
+  const rescanJava = useCallback(async () => {
+    setScanningJava(true);
+    try {
+      setJavaRuntimes(await core.java_detect());
+    } catch (e) {
+      toast("error", errText(e));
+    } finally {
+      setScanningJava(false);
+    }
+  }, [toast]);
 
   const patchSettings = useCallback(async (patch: Partial<Settings>) => {
     const next = await core.settings_set(patch);
@@ -379,7 +438,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           startedAt: Date.now(),
         }));
       } catch (e) {
-        toast("error", t("toast.launchFail", { reason: e instanceof Error ? e.message : "unknown" }));
+        toast("error", t("toast.launchFail", { reason: errText(e) }));
       }
     },
     [toast, t],
@@ -421,6 +480,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     createInstance, deleteInstance, installInstance,
     modCatalog, cosmetics,
     settings, patchSettings,
+    javaRuntimes, scanningJava, rescanJava,
     news, servers, removeServer,
     game, logs, launch, killGame, clearLogs,
     loadout, equip,

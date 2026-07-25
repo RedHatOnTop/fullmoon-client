@@ -157,7 +157,7 @@ const en: Dict = {
     sumJava: "Java runtime",
     deleteTitle: "Delete instance",
     deleteConfirm: "Saves, resourcepacks and configs are all removed.",
-    created: "Instance created. Install starting.",
+    created: "Instance created.",
     deleted: "Instance deleted",
     installStarted: "Install started",
     installDone: "Install complete. Ready to play.",

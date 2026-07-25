@@ -1,0 +1,82 @@
+{
+  "mods": [
+    {
+      "id": "pinion-hud",
+      "name": "Pinion HUD",
+      "version": "1.0.0",
+      "description": "우리 Fabric 모드. FPS·CPS·키스트로크·좌표·장비·포션·핑 HUD와 인게임 설정 GUI, 줌, 풀브라이트, 코스메틱 렌더.",
+      "kind": "hud",
+      "ours": true,
+      "compatible": true,
+      "note": null
+    },
+    {
+      "id": "sodium",
+      "name": "Sodium",
+      "version": "0.7.2",
+      "description": "렌더 파이프라인 재작성. 청크 렌더링 최대 ~10배, 프레임 타임 안정화.",
+      "kind": "perf",
+      "ours": false,
+      "compatible": true,
+      "note": null
+    },
+    {
+      "id": "lithium",
+      "name": "Lithium",
+      "version": "0.15.1",
+      "description": "게임 로직 최적화 — 틱·AI·물리·청크 직렬화. 시각적 변화 없이 TPS 개선.",
+      "kind": "perf",
+      "ours": false,
+      "compatible": true,
+      "note": null
+    },
+    {
+      "id": "fabric-api",
+      "name": "Fabric API",
+      "version": "0.115.0",
+      "description": "Fabric 모드 공용 API. 번들 모드들의 필수 의존성.",
+      "kind": "lib",
+      "ours": false,
+      "compatible": true,
+      "note": null
+    }
+  ],
+  "cosmetics": [
+    { "id": "aero-cape", "slot": "cape", "name": "아에로 케이프", "rarity": "rare", "hue": 214, "desc": "비행 깃털 문양을 수놓은 Pinion 기본 케이프.", "capeUrl": "/capes/aero-cape.png" },
+    { "id": "ember-cape", "slot": "cape", "name": "엠버 케이프", "rarity": "epic", "hue": 22, "desc": "불씨가 낙엽처럼 흩날리는 자수.", "capeUrl": "/capes/ember-cape.png" },
+    { "id": "void-cape", "slot": "cape", "name": "보이드 케이프", "rarity": "legendary", "hue": 272, "desc": "끝없이 가라앉는 별먼지 그라데이션.", "capeUrl": "/capes/void-cape.png" },
+    { "id": "mint-cape", "slot": "cape", "name": "민트 케이프", "rarity": "common", "hue": 152, "desc": "산뜻한 단색. 조용한 취향.", "capeUrl": "/capes/mint-cape.png" },
+    { "id": "regal-cape", "slot": "cape", "name": "리갈 케이프", "rarity": "epic", "hue": 46, "desc": "금실 테두리의 의전용 케이프.", "capeUrl": "/capes/regal-cape.png" },
+    { "id": "gale-wings", "slot": "wings", "name": "질풍 날개", "rarity": "epic", "hue": 200, "desc": "바람을 가르는 6엽 깃털 날개.", "capeUrl": null },
+    { "id": "dusk-wings", "slot": "wings", "name": "황혼 날개", "rarity": "rare", "hue": 318, "desc": "노을빛으로 물든 겹깃.", "capeUrl": null },
+    { "id": "sprout-wings", "slot": "wings", "name": "새싹 날개", "rarity": "common", "hue": 110, "desc": "작지만 싱그럽게 파닥인다.", "capeUrl": null },
+    { "id": "eclipse-wings", "slot": "wings", "name": "이클립스 날개", "rarity": "legendary", "hue": 258, "desc": "일식의 코로나를 형상화한 광륜 날개.", "capeUrl": null },
+    { "id": "comet-trail", "slot": "trail", "name": "혜성 꼬리", "rarity": "rare", "hue": 190, "desc": "이동 경로에 푸른 입자를 남긴다.", "capeUrl": null },
+    { "id": "petal-trail", "slot": "trail", "name": "꽃잎 궤적", "rarity": "common", "hue": 340, "desc": "발걸음마다 꽃잎이 흩어진다.", "capeUrl": null },
+    { "id": "static-trail", "slot": "trail", "name": "스태틱 궤적", "rarity": "epic", "hue": 56, "desc": "전기 스파크가 튀는 잔광.", "capeUrl": null }
+  ],
+  "news": [
+    { "id": "n1", "tag": "update", "title": "Pinion 1.0 — 날개를 달다", "summary": "첫 정식 릴리스. 26.1.2 타겟, Fabric 번들, Pinion HUD 탑재. 깃털처럼 가볍게, 기어처럼 정확하게.", "date": "2026-07-20", "hue": 214, "featured": true },
+    { "id": "n2", "tag": "dev", "title": "개발 노트: 설치 파이프라인은 어떻게 3배 빨라졌나", "summary": "병렬 다운로드 + SHA1 사전검증 + JRE 프로비전 캐시. 코어 팀의 최적화 기록.", "date": "2026-07-17", "hue": 268, "featured": false },
+    { "id": "n3", "tag": "cosmetic", "title": "코스메틱 드롭: 이클립스 날개", "summary": "일식의 코로나에서 영감받은 레전더리 날개. 내 클라이언트에만 보이는, 나만의 과시.", "date": "2026-07-14", "hue": 258, "featured": false },
+    { "id": "n4", "tag": "event", "title": "여름 빌드 배틀 — 커뮤니티 인스턴스 콘테스트", "summary": "나만의 인스턴스 프리셋을 공유하고 투표받자. 우승 프리셋은 다음 릴리스에 기본 탑재.", "date": "2026-07-10", "hue": 152, "featured": false },
+    { "id": "n5", "tag": "update", "title": "Pinion HUD 프리뷰: 키스트로크 & 포션 타이머", "summary": "인게임 모듈 두 개가 런처 설정과 실시간 미러링된다. hud.json 계약 공개.", "date": "2026-07-06", "hue": 22, "featured": false }
+  ],
+  "servers": [
+    { "id": "s1", "name": "Ember SMP", "address": "play.embersmp.net", "motd": "시즌 4 — 불꽃의 섬", "players": 842, "maxPlayers": 1000, "pingMs": 23, "hue": 22 },
+    { "id": "s2", "name": "Crystal PvP", "address": "crystal.gg", "motd": "랭크 시즌 12 · 듀얼 오픈", "players": 3210, "maxPlayers": 5000, "pingMs": 41, "hue": 190 },
+    { "id": "s3", "name": "Moonrise", "address": "moonrise.network", "motd": "스카이블록 · 신규 차원 업데이트", "players": 12764, "maxPlayers": 20000, "pingMs": 57, "hue": 268 },
+    { "id": "s4", "name": "Skyfall", "address": "skyfall.gg", "motd": "베드워즈 · 듀오 토너먼트", "players": 534, "maxPlayers": 800, "pingMs": 12, "hue": 330 }
+  ],
+  "defaultHud": {
+    "modules": [
+      { "id": "fps", "enabled": true, "x": 4, "y": 5, "scale": 1 },
+      { "id": "cps", "enabled": true, "x": 4, "y": 16, "scale": 1 },
+      { "id": "coords", "enabled": true, "x": 4, "y": 27, "scale": 1 },
+      { "id": "ping", "enabled": true, "x": 93, "y": 6, "scale": 1 },
+      { "id": "keystrokes", "enabled": true, "x": 86, "y": 74, "scale": 1 },
+      { "id": "gear", "enabled": true, "x": 93, "y": 40, "scale": 1 },
+      { "id": "potion", "enabled": false, "x": 93, "y": 24, "scale": 1 }
+    ]
+  }
+}

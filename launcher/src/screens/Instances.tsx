@@ -229,13 +229,14 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
 }
 
 export function InstancesScreen() {
-  const { instances, versions, settings } = useStore();
+  const { instances, versions, settings, javaRuntimes } = useStore();
   const { t } = useT();
   const [createOpen, setCreateOpen] = useState(false);
 
   const installed = instances.filter((i) => i.installed).length;
   const totalGb = instances.reduce((sum, i) => sum + i.memoryMb, 0) / 1024;
   const target = versions.find((v) => v.isTarget);
+  const activeJava = javaRuntimes.find((j) => j.path === settings?.javaPath) ?? null;
 
   return (
     <div className="screen-pad">
@@ -278,7 +279,16 @@ export function InstancesScreen() {
         </div>
         <div>
           <dt>{t("instances.sumJava")}</dt>
-          <dd className="mono inst-summary-java">{settings?.javaPath?.split("\\").pop() ?? "—"}</dd>
+          <dd className="inst-summary-java">
+            {activeJava ? (
+              <>
+                <span className="num">{activeJava.version}</span>
+                <small>{activeJava.vendor}</small>
+              </>
+            ) : (
+              "—"
+            )}
+          </dd>
         </div>
       </dl>
 

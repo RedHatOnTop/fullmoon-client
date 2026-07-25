@@ -155,7 +155,7 @@ const ko = {
     sumJava: "자바 런타임",
     deleteTitle: "인스턴스 삭제",
     deleteConfirm: "세이브·리소스팩·설정이 모두 삭제됩니다.",
-    created: "인스턴스를 만들었습니다. 설치를 시작합니다.",
+    created: "인스턴스를 만들었습니다.",
     deleted: "인스턴스를 삭제했습니다",
     installStarted: "설치를 시작했습니다",
     installDone: "설치가 끝났습니다. 바로 플레이할 수 있습니다.",
