@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
-import { Badge, Empty, Toggle } from "../components/ui";
+import { Badge, Button, Empty, Toggle } from "../components/ui";
 import { core } from "../core/client";
 import type { InstalledMod } from "../core/bindings";
 import { useStore } from "../state/store";
@@ -22,7 +22,7 @@ const GLYPH_HUE: Record<string, number> = {
 type Filter = "all" | "fav" | "hud" | "perf" | "lib";
 
 export function ModsScreen() {
-  const { instances, selectedInstanceId, selectedInstance, selectInstance, toast } = useStore();
+  const { instances, selectedInstanceId, selectedInstance, selectInstance, toast, setScreen } = useStore();
   const { t } = useT();
   const [mods, setMods] = useState<InstalledMod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +53,7 @@ export function ModsScreen() {
 
   const onCount = mods.filter((m) => m.enabled).length;
   const favCount = mods.filter((m) => m.favorite).length;
+  const badCount = mods.filter((m) => !m.compatible).length;
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -124,6 +125,8 @@ export function ModsScreen() {
             </label>
           </div>
 
+          <div className="mod-layout">
+            <div className="mod-main">
           {shown.length === 0 && !loading ? (
             <Empty icon="search" title={t("mods.noMatch")} hint={t("mods.noMatchHint")} />
           ) : (
@@ -177,6 +180,51 @@ export function ModsScreen() {
           <p className="mod-note">
             <Icon name="info" size={13} /> {t("mods.bundleNote")}
           </p>
+            </div>
+
+            <aside className="mod-side">
+              <h3 className="mod-side-title">{t("mods.sideTitle")}</h3>
+
+              <div className="mod-side-block">
+                <div className="mod-mix" role="img" aria-label={t("mods.sideMix")}>
+                  {(["hud", "perf", "lib"] as const).map((k) => {
+                    const n = mods.filter((m) => m.kind === k && m.enabled).length;
+                    return n > 0 ? (
+                      <span key={k} className={`mod-mix-seg mod-mix-${k}`} style={{ flexGrow: n }} />
+                    ) : null;
+                  })}
+                </div>
+                <ul className="mod-legend">
+                  {(["hud", "perf", "lib"] as const).map((k) => (
+                    <li key={k}>
+                      <span className={`mod-mix-dot mod-mix-${k}`} />
+                      {t(`mods.${k}`)}
+                      <em className="num">{mods.filter((m) => m.kind === k && m.enabled).length}</em>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <dl className="mod-side-facts">
+                <div>
+                  <dt>{t("mods.sideLoader")}</dt>
+                  <dd>
+                    {selectedInstance.loader.toUpperCase()} <span className="num">{selectedInstance.versionId}</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t("mods.sideCompat")}</dt>
+                  <dd className={badCount > 0 ? "mod-side-bad" : "mod-side-ok"}>
+                    {badCount > 0 ? t("mods.conflictN", { n: badCount }) : t("mods.noConflict")}
+                  </dd>
+                </div>
+              </dl>
+
+              <Button variant="outline" icon="gamepad" onClick={() => setScreen("settings", "hud")}>
+                {t("mods.hudEdit")}
+              </Button>
+            </aside>
+          </div>
         </>
       )}
     </div>

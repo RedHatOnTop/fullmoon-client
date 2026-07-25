@@ -85,9 +85,9 @@ export function CosmeticsScreen() {
                 skin={activeAccount.skinUrl ?? "/skins/blackcow.png"}
                 cape={equippedCape?.capeUrl ?? null}
                 walk={walk}
-                width={218}
-                height={280}
-                zoom={0.85}
+                width={246}
+                height={344}
+                zoom={0.95}
               />
             </div>
             <div className="cos-stage-anim">
@@ -121,6 +121,13 @@ export function CosmeticsScreen() {
                   onClick={() => equipItem(item)}
                 >
                   <span className="cos-swatch" style={{ "--h": item.hue }}>
+                    {item.capeUrl ? (
+                      <span className="cos-cape" style={{ backgroundImage: `url(${item.capeUrl})` }} />
+                    ) : (
+                      <span className="cos-glyph">
+                        <Icon name={item.slot === "wings" ? "feather" : "zap"} size={30} strokeWidth={1.3} />
+                      </span>
+                    )}
                     {equipped && (
                       <span className="cos-equipped-mark">
                         <Icon name="check" size={12} strokeWidth={2.4} />

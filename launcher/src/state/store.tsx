@@ -35,6 +35,7 @@ import type {
 import { useT } from "../i18n";
 
 export type Screen = "home" | "instances" | "mods" | "cosmetics" | "accounts" | "settings" | "console";
+export type SettingsTab = "java" | "perf" | "look" | "hud" | "privacy" | "about";
 
 export interface Toast {
   id: number;
@@ -60,7 +61,9 @@ export interface LogEntry {
 interface Store {
   ready: boolean;
   screen: Screen;
-  setScreen: (s: Screen) => void;
+  /** `tab` deep-links into a settings section; ignored for every other screen */
+  setScreen: (s: Screen, tab?: SettingsTab) => void;
+  settingsTab: SettingsTab | null;
 
   accounts: Account[];
   activeAccount: Account | null;
@@ -117,9 +120,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const { t } = useT();
   const [ready, setReady] = useState(false);
   const [screen, setScreenState] = useState<Screen>("home");
+  const [settingsTab, setSettingsTab] = useState<SettingsTab | null>(null);
 
   /* screen switches ride the View Transitions API when available */
-  const setScreen = useCallback((s: Screen) => {
+  const setScreen = useCallback((s: Screen, tab?: SettingsTab) => {
+    setSettingsTab(tab ?? null);
     const doc = document as Document & { startViewTransition?: (cb: () => void) => void };
     if (doc.startViewTransition) {
       doc.startViewTransition(() => flushSync(() => setScreenState(s)));
@@ -410,7 +415,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const value: Store = {
-    ready, screen, setScreen,
+    ready, screen, setScreen, settingsTab,
     accounts, activeAccount, selectAccount, removeAccount, refreshAccount, importOfficial, syncAccounts,
     versions, instances, selectedInstanceId, selectInstance, selectedInstance,
     createInstance, deleteInstance, installInstance,

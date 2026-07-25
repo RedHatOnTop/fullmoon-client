@@ -229,9 +229,13 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
 }
 
 export function InstancesScreen() {
-  const { instances } = useStore();
+  const { instances, versions, settings } = useStore();
   const { t } = useT();
   const [createOpen, setCreateOpen] = useState(false);
+
+  const installed = instances.filter((i) => i.installed).length;
+  const totalGb = instances.reduce((sum, i) => sum + i.memoryMb, 0) / 1024;
+  const target = versions.find((v) => v.isTarget);
 
   return (
     <div className="screen-pad">
@@ -252,6 +256,31 @@ export function InstancesScreen() {
           <span>{t("instances.new")}</span>
         </button>
       </div>
+
+      <dl className="inst-summary">
+        <div>
+          <dt>{t("instances.sumInstalled")}</dt>
+          <dd className="num">
+            {installed}
+            <small>/{instances.length}</small>
+          </dd>
+        </div>
+        <div>
+          <dt>{t("instances.sumMemory")}</dt>
+          <dd className="num">
+            {totalGb.toFixed(0)}
+            <small>GB</small>
+          </dd>
+        </div>
+        <div>
+          <dt>{t("instances.sumTarget")}</dt>
+          <dd className="num">{target?.id ?? "…"}</dd>
+        </div>
+        <div>
+          <dt>{t("instances.sumJava")}</dt>
+          <dd className="mono inst-summary-java">{settings?.javaPath?.split("\\").pop() ?? "—"}</dd>
+        </div>
+      </dl>
 
       <CreateDialog open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>

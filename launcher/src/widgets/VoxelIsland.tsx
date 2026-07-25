@@ -45,7 +45,11 @@ const poly = (pts: number[][], fill: string) => (
 
 export default function VoxelIsland({ className, style }: { className?: string; style?: CSSProperties }) {
   return (
-    <svg viewBox="0 0 340 320" className={className} style={style} fill="none">
+    /* cropped to the drawn blocks — the drifting stone at i-1/j3 and the brand
+       block at i3/j-1 set the horizontal extent, the top leaf and the tapered
+       point the vertical. The old 340×320 box left ~150px of dead space below
+       the art that every layout using it then had to absorb. */
+    <svg viewBox="56 20 208 152" className={className} style={style} fill="none">
       {blocks.map((b, n) => {
         const sx = OX + (b.i - b.j) * TW;
         const sy = OY + (b.i + b.j) * TH - b.k * CH;

@@ -166,6 +166,10 @@
   /* ---------- Density: compact (desktop software) ---------- */
   --control-h: 32px;
   --control-h-lg: 40px;
+  --sidebar-w: 216px;
+  /* wider than an article column: this is a desktop client, and at 1600 the
+     module and cosmetic grids need the fourth column to stop looking sparse */
+  --content-max: 1440px;
 }
 
 /* ---------- Dark theme: "Ink" ----------

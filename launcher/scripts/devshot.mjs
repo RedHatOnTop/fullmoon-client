@@ -40,6 +40,11 @@ try {
   await clickByText(page, ".mod-tab", "전체");
   await sleep(400);
 
+  /* the bundle panel deep-links into the settings HUD tab */
+  await clickByText(page, ".mod-side .btn", "HUD");
+  await sleep(900);
+  await shot("01c-hud-deeplink");
+
   await clickByText(page, ".sidebar-item", "인스턴스");
   await sleep(800);
   await shot("02-instances");

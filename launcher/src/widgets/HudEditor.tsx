@@ -162,7 +162,7 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
           .map((m) => (
             <div
               key={m.id}
-              className="hud-anchor"
+              className="hud-node"
               style={{ left: `${m.x}%`, top: `${m.y}%` }}
               onPointerDown={(e) => onPointerDown(e, m.id)}
             >

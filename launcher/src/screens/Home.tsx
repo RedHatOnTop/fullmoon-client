@@ -138,8 +138,8 @@ export function HomeScreen() {
               <Skin3D
                 skin={activeAccount?.skinUrl ?? "/skins/blackcow.png"}
                 cape={cape?.capeUrl ?? null}
-                width={224}
-                height={252}
+                width={276}
+                height={300}
                 zoom={0.92}
               />
             </div>

@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, Button, Segmented, Slider, Toggle } from "../components/ui";
 import { core } from "../core/client";
 import type { JavaRuntime } from "../core/bindings";
 import { HudEditor } from "../widgets/HudEditor";
-import { useStore } from "../state/store";
+import { useStore, type SettingsTab } from "../state/store";
 import { useT } from "../i18n";
 import brand from "../brand";
 
@@ -67,9 +67,14 @@ function JavaSection() {
 }
 
 export function SettingsScreen() {
-  const { settings, patchSettings, selectedInstance, toast } = useStore();
+  const { settings, patchSettings, selectedInstance, toast, settingsTab } = useStore();
   const { t, setLang } = useT();
-  const [tab, setTab] = useState<"java" | "perf" | "look" | "hud" | "privacy" | "about">("java");
+  const [tab, setTab] = useState<SettingsTab>(settingsTab ?? "java");
+
+  /* a deep link can arrive while this screen is already mounted */
+  useEffect(() => {
+    if (settingsTab) setTab(settingsTab);
+  }, [settingsTab]);
 
   if (!settings) return null;
 

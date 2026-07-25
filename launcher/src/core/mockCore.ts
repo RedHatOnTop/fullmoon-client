@@ -238,9 +238,9 @@ const DEFAULT_SETTINGS: Settings = {
 
 const DEFAULT_HUD: HudConfig = {
   modules: [
-    { id: "fps", enabled: true, x: 4, y: 6, scale: 1 },
-    { id: "cps", enabled: true, x: 4, y: 14, scale: 1 },
-    { id: "coords", enabled: true, x: 5.5, y: 22, scale: 1 },
+    { id: "fps", enabled: true, x: 4, y: 5, scale: 1 },
+    { id: "cps", enabled: true, x: 4, y: 16, scale: 1 },
+    { id: "coords", enabled: true, x: 4, y: 27, scale: 1 },
     { id: "ping", enabled: true, x: 93, y: 6, scale: 1 },
     { id: "keystrokes", enabled: true, x: 86, y: 74, scale: 1 },
     { id: "gear", enabled: true, x: 93, y: 40, scale: 1 },
