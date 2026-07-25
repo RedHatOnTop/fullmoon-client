@@ -31,6 +31,12 @@ pub fn accounts_file() -> PathBuf {
     root().join("accounts.json")
 }
 
+/// Session tokens, kept apart from the profiles so nothing the UI reads can
+/// ever carry one.
+pub fn sessions_file() -> PathBuf {
+    root().join("sessions.json")
+}
+
 pub fn servers_file() -> PathBuf {
     root().join("servers.json")
 }

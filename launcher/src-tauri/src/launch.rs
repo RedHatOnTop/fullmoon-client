@@ -18,6 +18,7 @@ use tokio::{
 };
 
 use crate::{
+    auth::Session,
     error::{Error, Result},
     install,
     model::{Account, GameState, GameStateValue, Instance, LogEvent, Settings, StateEvent},
@@ -110,6 +111,7 @@ pub fn plan(
     inst: &Instance,
     settings: &Settings,
     account: &Account,
+    session: Option<&Session>,
     quick_play: Option<&str>,
 ) -> Result<Plan> {
     let java = settings
@@ -130,8 +132,14 @@ pub fn plan(
     let mut vars: HashMap<&str, String> = HashMap::new();
     vars.insert("auth_player_name", account.username.clone());
     vars.insert("auth_uuid", account.uuid.replace('-', ""));
-    vars.insert("auth_access_token", account.access_token.clone().unwrap_or_else(|| "0".into()));
-    vars.insert("auth_xuid", account.xuid.clone().unwrap_or_default());
+    vars.insert(
+        "auth_access_token",
+        session.map(|s| s.access_token.clone()).unwrap_or_else(|| "0".into()),
+    );
+    vars.insert(
+        "auth_xuid",
+        session.and_then(|s| s.xuid.clone()).unwrap_or_default(),
+    );
     vars.insert("clientid", String::new());
     vars.insert(
         "user_type",

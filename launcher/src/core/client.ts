@@ -27,6 +27,16 @@ export async function addOfflineAccount(username: string): Promise<Account> {
   return core.auth_add_offline(username);
 }
 
+/** Sign-in happens in the user's own browser; in the dev browser a tab will do. */
+export async function openExternal(url: string): Promise<void> {
+  if (!isRealCore) {
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
+  await openUrl(url);
+}
+
 /** IPC rejects with a plain string, never an Error — unwrap either shape */
 export function errText(e: unknown): string {
   if (typeof e === "string") return e;

@@ -2,6 +2,8 @@
    field — that file is the contract, and the UI is written against it. */
 use serde::{Deserialize, Serialize};
 
+/// The profile, and only the profile: session tokens live in `auth::Session`
+/// so nothing that reaches the webview can carry one.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
@@ -11,12 +13,6 @@ pub struct Account {
     pub skin_url: Option<String>,
     pub source: String,
     pub capes: Vec<String>,
-    /// Only a Microsoft account carries a session; an offline profile has none
-    /// and the game is told so rather than handed a fake-looking token.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub access_token: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub xuid: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

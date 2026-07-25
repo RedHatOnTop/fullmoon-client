@@ -23,5 +23,10 @@ fn main() {
         println!("cargo:rustc-env=PINION_{}={value}", key.to_uppercase());
     }
 
+    // the Azure application id is a fork's own to register, so an absent one is
+    // a configuration state the app reports, not a build failure
+    let ms_client_id = brand.get("msClientId").and_then(|v| v.as_str()).unwrap_or("");
+    println!("cargo:rustc-env=PINION_MS_CLIENT_ID={ms_client_id}");
+
     tauri_build::build()
 }

@@ -115,7 +115,7 @@ const ko = {
     viaDevice: "디바이스 코드",
     viaDeviceDesc: "다른 기기에서 코드 입력 — 가장 간편",
     viaBrowser: "브라우저 로그인",
-    viaBrowserDesc: "내장 웹뷰에서 직접 로그인",
+    viaBrowserDesc: "기본 브라우저에서 로그인하면 바로 돌아옵니다",
     importOfficial: "공식 런처에서 가져오기",
     importDesc: "launcher_accounts.json에서 로그인된 계정 흡수",
     offline: "오프라인 프로필",

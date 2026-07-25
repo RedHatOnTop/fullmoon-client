@@ -6,5 +6,6 @@
   "scheme": "pinion",
   "tagline": "Flight-feather. Gear-tight.",
   "accent": "#B0481A",
-  "accentDim": "#8E3813"
+  "accentDim": "#8E3813",
+  "msClientId": ""
 }

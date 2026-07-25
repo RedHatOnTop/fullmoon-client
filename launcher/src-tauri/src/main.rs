@@ -1,6 +1,7 @@
 // the launcher is the window; a console behind it is debug-only noise
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod auth;
 mod catalog;
 mod commands;
 mod download;

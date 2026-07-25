@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, Button, ConfirmModal, IconButton, Modal, SkinFace } from "../components/ui";
-import { addOfflineAccount, core, errText } from "../core/client";
-import type { Account, DeviceCodePrompt } from "../core/bindings";
+import { addOfflineAccount, core, errText, openExternal } from "../core/client";
+import type { Account, AuthStatus, DeviceCodePrompt } from "../core/bindings";
 import { useStore } from "../state/store";
 import { useT } from "../i18n";
 
@@ -22,15 +22,36 @@ function DeviceCodeModal({ open, onClose }: { open: boolean; onClose: () => void
     let timer: ReturnType<typeof setInterval>;
     let dotTimer: ReturnType<typeof setInterval>;
 
+    const fail = (e: unknown) => {
+      clearInterval(timer);
+      clearInterval(dotTimer);
+      toast("error", errText(e));
+      onClose();
+    };
+
     (async () => {
-      const p = await core.auth_begin_device_code();
+      let p: DeviceCodePrompt;
+      try {
+        p = await core.auth_begin_device_code();
+      } catch (e) {
+        if (alive.current) fail(e);
+        return;
+      }
       if (!alive.current) return;
       setPrompt(p);
       dotTimer = setInterval(() => setDots((d) => (d % 3) + 1), 500);
       timer = setInterval(async () => {
-        const status = await core.auth_poll(p.session);
+        let status: AuthStatus;
+        try {
+          status = await core.auth_poll(p.session);
+        } catch (e) {
+          if (alive.current) fail(e);
+          return;
+        }
         if (!alive.current) return;
-        if (status.state === "done") {
+        if (status.state === "error") {
+          fail(status.message);
+        } else if (status.state === "done") {
           clearInterval(timer);
           clearInterval(dotTimer);
           await syncAccounts();
@@ -54,7 +75,16 @@ function DeviceCodeModal({ open, onClose }: { open: boolean; onClose: () => void
         <div className="device-flow">
           <div className="device-code mono">{prompt.userCode}</div>
           <p className="device-step">
-            <a href="#" onClick={(e) => e.preventDefault()}>{prompt.verificationUri}</a> {t("accounts.deviceStep")}
+            <a
+              href={prompt.verificationUri}
+              onClick={(e) => {
+                e.preventDefault();
+                void openExternal(prompt.verificationUri);
+              }}
+            >
+              {prompt.verificationUri}
+            </a>{" "}
+            {t("accounts.deviceStep")}
           </p>
           <div className="device-waiting">
             <span className="spinner" />

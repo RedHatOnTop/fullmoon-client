@@ -27,7 +27,7 @@ const nav = async (label) => {
 
 // ── offline profile ────────────────────────────────────────────
 await nav("계정");
-const hasAccount = await page.evaluate(() => document.querySelectorAll(".acct-card").length > 0);
+const hasAccount = await page.evaluate(() => document.querySelectorAll(".acc-card").length > 0);
 if (!hasAccount) {
   await page.evaluate(() => {
     // several chrome elements say 계정 추가; the screen's own button is the one

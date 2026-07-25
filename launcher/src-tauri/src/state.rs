@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::{oneshot, Mutex};
 
 use crate::{
+    auth::DeviceFlow,
     model::{Account, GameState, GameStateValue, Instance, Settings},
     paths, store,
 };
@@ -12,6 +13,9 @@ pub struct AppState {
     pub settings: Mutex<Settings>,
     pub instances: Mutex<Vec<Instance>>,
     pub active_account: Mutex<Option<String>>,
+    /// Device-code sign-ins in flight. In memory only — a code that outlives
+    /// the launcher is a code the user has to request again anyway.
+    pub device_flows: Mutex<HashMap<String, DeviceFlow>>,
     /// Shared with the process watcher, which updates it from its own task.
     pub game: Arc<Mutex<GameState>>,
     /// Dropping this sender is harmless; sending on it kills the game.
@@ -41,6 +45,7 @@ impl AppState {
             settings: Mutex::new(settings),
             instances: Mutex::new(instances),
             active_account: Mutex::new(accounts.first().map(|a| a.uuid.clone())),
+            device_flows: Mutex::new(HashMap::new()),
             game: Arc::new(Mutex::new(GameState {
                 state: GameStateValue::Idle,
                 session_id: None,

@@ -16,12 +16,6 @@ pub enum Error {
 
     #[error("{0}")]
     Invalid(String),
-
-    /// A surface that exists in the contract but has no core behind it yet.
-    /// Reported as-is rather than answered with a plausible-looking lie —
-    /// a launcher that fakes success is worse than one that admits a gap.
-    #[error("not implemented yet: {0}")]
-    Unimplemented(&'static str),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

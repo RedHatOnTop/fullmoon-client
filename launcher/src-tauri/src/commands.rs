@@ -1,6 +1,6 @@
-/* The IPC surface. One command per entry in `bindings.ts`; the ones with no
-   core behind them yet return Error::Unimplemented so the UI shows a real
-   failure instead of a convincing fake. */
+/* The IPC surface. One command per entry in `bindings.ts`, and every one of
+   them backed by real work — a command that cannot do its job says why, in a
+   sentence, rather than answering with a convincing fake. */
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -395,6 +395,9 @@ pub async fn auth_remove(state: State<'_, AppState>, uuid: String) -> Result<()>
     let mut accounts: Vec<Account> = store::read_or(&paths::accounts_file(), Vec::new).await;
     accounts.retain(|a| a.uuid != uuid);
     store::write(&paths::accounts_file(), &accounts).await?;
+    // removing an account has to remove its session too, or the next add of the
+    // same profile silently inherits a dead token
+    crate::auth::forget_session(&uuid).await?;
     let mut active = state.active_account.lock().await;
     if active.as_deref() == Some(uuid.as_str()) {
         *active = accounts.first().map(|a| a.uuid.clone());
@@ -426,8 +429,6 @@ pub async fn auth_add_offline(state: State<'_, AppState>, username: String) -> R
         skin_url: None,
         source: "offline".into(),
         capes: Vec::new(),
-        access_token: None,
-        xuid: None,
     };
 
     let mut accounts: Vec<Account> = store::read_or(&paths::accounts_file(), Vec::new).await;
@@ -445,28 +446,79 @@ pub async fn auth_add_offline(state: State<'_, AppState>, username: String) -> R
 }
 
 #[tauri::command]
-pub async fn auth_begin_device_code() -> Result<serde_json::Value> {
-    Err(Error::Unimplemented("auth_begin_device_code (Microsoft OAuth lands with launch)"))
+pub async fn auth_begin_device_code(
+    state: State<'_, AppState>,
+) -> Result<crate::auth::DeviceCodePrompt> {
+    let (prompt, flow) = crate::auth::begin_device_code(&state.http).await?;
+    state
+        .device_flows
+        .lock()
+        .await
+        .insert(prompt.session.clone(), flow);
+    Ok(prompt)
+}
+
+/// One poll of the device flow. `pending` is the UI's cue to ask again; every
+/// other answer ends the flow, so the session is dropped with it.
+#[tauri::command]
+pub async fn auth_poll(state: State<'_, AppState>, session: String) -> Result<serde_json::Value> {
+    let mut flow = state
+        .device_flows
+        .lock()
+        .await
+        .get(&session)
+        .cloned()
+        .ok_or_else(|| Error::NotFound(format!("sign-in session {session}")))?;
+
+    let outcome = crate::auth::poll_device(&state.http, &mut flow).await;
+    let mut flows = state.device_flows.lock().await;
+    match outcome {
+        // keep the pacing Microsoft just told us about
+        Ok(None) => {
+            flows.insert(session.clone(), flow);
+        }
+        _ => {
+            flows.remove(&session);
+        }
+    }
+    drop(flows);
+
+    match outcome {
+        Ok(None) => Ok(serde_json::json!({ "state": "pending" })),
+        Ok(Some(account)) => {
+            select_if_first(&state, &account.uuid).await;
+            Ok(serde_json::json!({ "state": "done", "account": account }))
+        }
+        Err(e) => Ok(serde_json::json!({ "state": "error", "message": e.to_string() })),
+    }
 }
 
 #[tauri::command]
-pub async fn auth_poll(_session: String) -> Result<serde_json::Value> {
-    Err(Error::Unimplemented("auth_poll"))
+pub async fn auth_login_authcode(state: State<'_, AppState>) -> Result<Account> {
+    let account = crate::auth::login_authcode(&state.http).await?;
+    select_if_first(&state, &account.uuid).await;
+    Ok(account)
 }
 
 #[tauri::command]
-pub async fn auth_login_authcode() -> Result<Account> {
-    Err(Error::Unimplemented("auth_login_authcode"))
+pub async fn auth_import_official(state: State<'_, AppState>) -> Result<Vec<Account>> {
+    let added = crate::auth::import_official().await?;
+    if let Some(first) = added.first() {
+        select_if_first(&state, &first.uuid).await;
+    }
+    Ok(added)
 }
 
 #[tauri::command]
-pub async fn auth_import_official() -> Result<Vec<Account>> {
-    Err(Error::Unimplemented("auth_import_official"))
+pub async fn auth_refresh(state: State<'_, AppState>, uuid: String) -> Result<Account> {
+    crate::auth::refresh(&state.http, &uuid).await
 }
 
-#[tauri::command]
-pub async fn auth_refresh(_uuid: String) -> Result<Account> {
-    Err(Error::Unimplemented("auth_refresh"))
+async fn select_if_first(state: &State<'_, AppState>, uuid: &str) {
+    let mut active = state.active_account.lock().await;
+    if active.is_none() {
+        *active = Some(uuid.to_string());
+    }
 }
 
 // ── launch ────────────────────────────────────────────────────
@@ -516,8 +568,19 @@ async fn start_game(
         serde_json::from_slice(&bytes)?
     };
 
+    // a stale token is renewed here, where the failure can still be explained,
+    // rather than inside a game that only says "failed to log in"
+    let session = crate::auth::session_for_launch(&state.http, &account).await?;
+
     let server = server.or_else(|| inst.quick_play_server.clone());
-    let plan = crate::launch::plan(&version, &inst, &settings, &account, server.as_deref())?;
+    let plan = crate::launch::plan(
+        &version,
+        &inst,
+        &settings,
+        &account,
+        session.as_ref(),
+        server.as_deref(),
+    )?;
 
     let session_id = format!("run-{}", uuid::Uuid::new_v4().simple());
 

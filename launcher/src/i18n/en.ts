@@ -117,7 +117,7 @@ const en: Dict = {
     viaDevice: "Device code",
     viaDeviceDesc: "Enter a code on another device — easiest",
     viaBrowser: "Browser login",
-    viaBrowserDesc: "Sign in directly in the embedded webview",
+    viaBrowserDesc: "Sign in in your own browser and come straight back",
     importOfficial: "Import from official launcher",
     importDesc: "Absorb signed-in accounts from launcher_accounts.json",
     offline: "Offline profile",

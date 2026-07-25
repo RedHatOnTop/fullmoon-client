@@ -337,19 +337,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const refreshAccount = useCallback(
     async (uuid: string) => {
-      await core.auth_refresh(uuid);
-      toast("success", t("accounts.refreshed"));
+      try {
+        await core.auth_refresh(uuid);
+        setAccounts(await core.auth_list());
+        toast("success", t("accounts.refreshed"));
+      } catch (e) {
+        toast("error", errText(e));
+      }
     },
     [toast, t],
   );
 
   const importOfficial = useCallback(async () => {
-    const added = await core.auth_import_official();
-    if (added.length === 0) toast("info", t("accounts.importNone"));
-    else {
-      toast("success", t("accounts.importSome", { n: added.length }));
-      setAccounts(await core.auth_list());
-      setActiveUuid(getActiveAccountUuid());
+    try {
+      const added = await core.auth_import_official();
+      if (added.length === 0) toast("info", t("accounts.importNone"));
+      else {
+        toast("success", t("accounts.importSome", { n: added.length }));
+        setAccounts(await core.auth_list());
+        setActiveUuid(getActiveAccountUuid());
+      }
+    } catch (e) {
+      toast("error", errText(e));
     }
   }, [toast, t]);
 
