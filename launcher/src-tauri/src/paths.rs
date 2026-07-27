@@ -88,6 +88,23 @@ pub fn instance_state_file(id: &str) -> PathBuf {
     instance_dir(id).join("instance.json")
 }
 
+/// The launcher's own shipped files — the Pinion mod jar lives here. An
+/// installed build has them beside the binary; `tauri dev` runs from the crate,
+/// where they are still only in the source tree.
+pub fn resources(app: &tauri::AppHandle) -> PathBuf {
+    use tauri::Manager;
+    if let Ok(dir) = app.path().resource_dir() {
+        let nested = dir.join("resources");
+        if nested.is_dir() {
+            return nested;
+        }
+        if dir.join("mods").is_dir() {
+            return dir;
+        }
+    }
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources")
+}
+
 /// Ids come from the UI, so they never get to walk out of the tree.
 fn sanitize(id: &str) -> String {
     id.chars()

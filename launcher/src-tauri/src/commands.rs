@@ -3,7 +3,7 @@
    sentence, rather than answering with a convincing fake. */
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tauri::{AppHandle, State};
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
     install, java,
     meta,
     model::*,
-    paths, store,
+    mods, paths, store,
     state::AppState,
 };
 
@@ -227,19 +227,6 @@ async fn set_installing(
 
 // ── mods ──────────────────────────────────────────────────────
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InstanceModState {
-    #[serde(default)]
-    pub disabled: Vec<String>,
-    #[serde(default)]
-    pub favorites: Vec<String>,
-}
-
-async fn mod_state(id: &str) -> InstanceModState {
-    store::read_or(&paths::instance_state_file(id), InstanceModState::default).await
-}
-
 #[tauri::command]
 pub async fn mods_available() -> Result<ModCatalog> {
     Ok(ModCatalog {
@@ -253,7 +240,7 @@ pub async fn mods_list(state: State<'_, AppState>, instance_id: String) -> Resul
     if !known {
         return Err(Error::NotFound(format!("instance {instance_id}")));
     }
-    let st = mod_state(&instance_id).await;
+    let st = mods::state(&instance_id).await;
     Ok(catalog::get()
         .mods
         .iter()
@@ -265,24 +252,52 @@ pub async fn mods_list(state: State<'_, AppState>, instance_id: String) -> Resul
         .collect())
 }
 
+/// Flipping a mod moves the jar, not just a flag — the next launch has to see
+/// the change without a reinstall.
 #[tauri::command]
-pub async fn mod_toggle(instance_id: String, mod_id: String, enabled: bool) -> Result<()> {
-    let mut st = mod_state(&instance_id).await;
+pub async fn mod_toggle(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    mod_id: String,
+    enabled: bool,
+) -> Result<()> {
+    let (game, loader) = {
+        let instances = state.instances.lock().await;
+        let inst = instances
+            .iter()
+            .find(|i| i.id == instance_id)
+            .ok_or_else(|| Error::NotFound(format!("instance {instance_id}")))?;
+        (inst.version_id.clone(), inst.loader.clone())
+    };
+    let concurrency = state.settings.lock().await.concurrency as usize;
+
+    let mut st = mods::state(&instance_id).await;
     st.disabled.retain(|x| *x != mod_id);
     if !enabled {
         st.disabled.push(mod_id);
     }
-    store::write(&paths::instance_state_file(&instance_id), &st).await
+    mods::save_state(&instance_id, &st).await?;
+
+    mods::apply(
+        &state.http,
+        &paths::resources(&app),
+        &instance_id,
+        &game,
+        &loader,
+        concurrency,
+    )
+    .await
 }
 
 #[tauri::command]
 pub async fn mod_favorite(instance_id: String, mod_id: String, favorite: bool) -> Result<()> {
-    let mut st = mod_state(&instance_id).await;
+    let mut st = mods::state(&instance_id).await;
     st.favorites.retain(|x| *x != mod_id);
     if favorite {
         st.favorites.push(mod_id);
     }
-    store::write(&paths::instance_state_file(&instance_id), &st).await
+    mods::save_state(&instance_id, &st).await
 }
 
 // ── cosmetics / hud ───────────────────────────────────────────

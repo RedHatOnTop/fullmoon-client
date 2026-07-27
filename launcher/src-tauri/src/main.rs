@@ -12,6 +12,7 @@ mod java;
 mod launch;
 mod meta;
 mod model;
+mod mods;
 mod paths;
 mod state;
 mod store;

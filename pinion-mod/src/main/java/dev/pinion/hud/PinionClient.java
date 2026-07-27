@@ -1,0 +1,25 @@
+package dev.pinion.hud;
+
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/** The in-game half of Pinion. The launcher writes the layout, this reads it. */
+public final class PinionClient implements ClientModInitializer {
+    public static final String MOD_ID = "pinion";
+    public static final Logger LOG = LoggerFactory.getLogger("Pinion");
+
+    public static final ClickCounter LEFT_CLICKS = new ClickCounter();
+    public static final ClickCounter RIGHT_CLICKS = new ClickCounter();
+
+    @Override
+    public void onInitializeClient() {
+        // last in the stack: the readouts sit above the vanilla bars, below chat input
+        HudElementRegistry.addLast(
+                Identifier.fromNamespaceAndPath(MOD_ID, "hud"),
+                PinionHud::render);
+        LOG.info("Pinion HUD ready");
+    }
+}

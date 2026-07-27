@@ -1,0 +1,39 @@
+/* The short `fabric-loom` id is the legacy remapping plugin and it demands a
+   mappings artifact. 26.1.2 ships unobfuscated — no client_mappings, no yarn,
+   intermediary is the 0.0.0 stub — so the no-remap variant is the right one. */
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.17'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    // no-remap Loom compiles straight against the shipped jars — plain configurations
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+// 26.1.2 asks for java-runtime-epsilon (major 25); the mod matches the game
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand version: project.version
+    }
+}
