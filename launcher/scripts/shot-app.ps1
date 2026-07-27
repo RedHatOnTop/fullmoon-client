@@ -8,7 +8,8 @@
 param(
   [string]$Out = "pinion-shot.png",
   [string]$Process = "pinion",
-  [int]$SettleMs = 900
+  [int]$SettleMs = 900,
+  [string]$TitleLike = ""
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -28,7 +29,8 @@ public class Win {
 "@
 
 $proc = Get-Process -Name $Process -ErrorAction SilentlyContinue |
-        Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+        Where-Object { $_.MainWindowHandle -ne 0 } |
+        Where-Object { $TitleLike -eq '' -or $_.MainWindowTitle -like $TitleLike } | Select-Object -First 1
 if (-not $proc) { Write-Error "no visible window for process '$Process'"; exit 2 }
 
 $h = $proc.MainWindowHandle
