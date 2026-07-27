@@ -10,6 +10,11 @@ function rarityClass(r: string): string {
   return `rarity-${r}`;
 }
 
+/* What the mod can actually draw. A slot that reaches the game is equippable;
+   the rest stay browsable and say so, because a loadout the game ignores is a
+   promise the client does not keep. */
+const RENDERS: Record<CosmeticSlot, boolean> = { cape: true, wings: false, trail: false };
+
 export function CosmeticsScreen() {
   const { activeAccount, cosmetics, loadout, equip, toast } = useStore();
   const { t } = useT();
@@ -23,6 +28,10 @@ export function CosmeticsScreen() {
   );
 
   const equipItem = (item: Cosmetic) => {
+    if (!RENDERS[item.slot]) {
+      toast("info", t("cosmetics.notYetToast", { slot: t(`cosmetics.${item.slot}`) }));
+      return;
+    }
     const isEquipped = loadout?.[item.slot] === item.id;
     void equip(item.slot, isEquipped ? null : item.id);
     if (isEquipped) toast("info", t("cosmetics.unequippedToast", { name: item.name }));
@@ -57,7 +66,9 @@ export function CosmeticsScreen() {
                 </span>
                 <span className="cos-slot-meta">
                   <em>{t(`cosmetics.${slot}`)}</em>
-                  <strong>{item ? item.name : t("cosmetics.empty")}</strong>
+                  <strong className={RENDERS[slot] ? "" : "cos-slot-soon"}>
+                    {RENDERS[slot] ? (item ? item.name : t("cosmetics.empty")) : t("cosmetics.notYet")}
+                  </strong>
                 </span>
                 {item && (
                   <span
@@ -111,13 +122,23 @@ export function CosmeticsScreen() {
             value={slotFilter}
             onChange={setSlotFilter}
           />
+          {!RENDERS[slotFilter] && (
+            <div className="cos-soon">
+              <Icon name="info" size={15} />
+              <div>
+                <strong>{t("cosmetics.notYetTitle", { slot: t(`cosmetics.${slotFilter}`) })}</strong>
+                <span>{t("cosmetics.notYetHint")}</span>
+              </div>
+            </div>
+          )}
           <div className="cos-grid stagger">
             {filtered.map((item) => {
               const equipped = loadout?.[item.slot] === item.id;
+              const renders = RENDERS[item.slot];
               return (
                 <button
                   key={item.id}
-                  className={`cos-item card ${rarityClass(item.rarity)} ${equipped ? "equipped" : ""}`}
+                  className={`cos-item card ${rarityClass(item.rarity)} ${equipped ? "equipped" : ""} ${renders ? "" : "unbuilt"}`}
                   onClick={() => equipItem(item)}
                 >
                   <span className="cos-swatch" style={{ "--h": item.hue }}>
@@ -140,7 +161,8 @@ export function CosmeticsScreen() {
                   </span>
                   <span className="cos-item-foot">
                     <span className={`cos-rarity cos-r-${item.rarity}`}>{t(`cosmetics.rarity.${item.rarity}`)}</span>
-                    {equipped && <span className="cos-equipped-label">{t("cosmetics.equipped")}</span>}
+                    {!renders && <span className="cos-soon-label">{t("cosmetics.notYet")}</span>}
+                    {equipped && renders && <span className="cos-equipped-label">{t("cosmetics.equipped")}</span>}
                   </span>
                 </button>
               );

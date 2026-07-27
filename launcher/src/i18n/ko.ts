@@ -218,6 +218,10 @@ const ko = {
     rarity: { common: "커먼", rare: "레어", epic: "에픽", legendary: "레전더리" },
     equippedToast: "{name} 장착",
     unequippedToast: "{name} 해제",
+    notYet: "인게임 미구현",
+    notYetTitle: "{slot} · 아직 게임에 나오지 않습니다",
+    notYetHint: "케이프만 인게임 렌더가 붙어 있습니다. 나머지는 구경만 가능합니다.",
+    notYetToast: "{slot} · 아직 인게임 렌더가 없습니다",
   },
   settings: {
     general: "일반",

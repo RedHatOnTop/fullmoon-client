@@ -930,6 +930,35 @@
   color: var(--accent);
 }
 
+/* a slot the game cannot draw yet reads as a shelf item: still catalogued,
+   visibly not wearable */
+.cos-item.unbuilt { opacity: 0.62; }
+.cos-item.unbuilt:hover { opacity: 0.78; }
+.cos-item.unbuilt .cos-swatch { filter: saturate(0.35); }
+.cos-soon-label {
+  font-size: var(--text-overline);
+  font-weight: 600;
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.cos-slot-soon { color: var(--text-3); font-style: italic; }
+.cos-soon {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 14px 0 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--text-3);
+  border-radius: var(--radius-1);
+  background: color-mix(in srgb, var(--text-3) 6%, transparent);
+}
+.cos-soon > svg { margin-top: 1px; color: var(--text-3); flex: none; }
+.cos-soon div { display: flex; flex-direction: column; gap: 3px; }
+.cos-soon strong { font-size: var(--text-small); color: var(--text-2); }
+.cos-soon span { font-size: var(--text-caption); color: var(--text-3); }
+
 /* ═══ Accounts ═══ */
 
 .acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
