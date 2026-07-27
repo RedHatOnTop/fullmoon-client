@@ -30,6 +30,7 @@ import type {
   ModCatalog,
   NewsItem,
   ServerEntry,
+  ServerStatus,
   Settings,
   VersionSummary,
 } from "../core/bindings";
@@ -96,6 +97,11 @@ interface Store {
 
   news: NewsItem[];
   servers: ServerEntry[];
+  /** live status by address; absent while the first probe is still out */
+  serverStatus: Record<string, ServerStatus>;
+  pingingServers: boolean;
+  refreshServers: () => Promise<void>;
+  addServer: (name: string, address: string) => Promise<void>;
   removeServer: (id: string) => Promise<void>;
 
   game: GameState;
@@ -175,6 +181,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [servers, setServers] = useState<ServerEntry[]>([]);
+  const [serverStatus, setServerStatus] = useState<Record<string, ServerStatus>>({});
+  const [pingingServers, setPingingServers] = useState(false);
   const [game, setGame] = useState<GameState>({
     state: "idle", sessionId: null, instanceId: null, server: null, startedAt: null, exitCode: null,
   });
@@ -238,6 +246,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         (rs) => alive && setJavaRuntimes(rs),
         () => {},
       );
+      /* same for the servers: a dead host costs a five second timeout */
+      if (sv.length > 0) {
+        core.servers_ping(sv.map((s) => s.address)).then(
+          (st) => alive && setServerStatus(st),
+          () => {},
+        );
+      }
     })();
 
     const offInstall = core.on("install://stage", ({ instanceId, stage, pct }) => {
@@ -430,6 +445,48 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSettings(next);
   }, []);
 
+  /* The card shows what the server said, so the list is only as true as its
+     last probe. Kept out of the boot bundle: a dead host must not hold up the
+     window coming up. */
+  const serversRef = useRef<ServerEntry[]>([]);
+  serversRef.current = servers;
+
+  const refreshServers = useCallback(async () => {
+    const list = serversRef.current;
+    if (list.length === 0) {
+      setServerStatus({});
+      return;
+    }
+    setPingingServers(true);
+    try {
+      setServerStatus(await core.servers_ping(list.map((s) => s.address)));
+    } catch {
+      /* leave the last known status up rather than blanking the cards */
+    } finally {
+      setPingingServers(false);
+    }
+  }, []);
+
+  const addServer = useCallback(
+    async (name: string, address: string) => {
+      const entry: ServerEntry = {
+        id: `srv-${Date.now().toString(36)}`,
+        name: name.trim() || address.trim(),
+        address: address.trim(),
+        motd: "",
+        players: 0,
+        maxPlayers: 0,
+        pingMs: 0,
+        hue: (Math.abs(hashCode(address)) % 36) * 10,
+      };
+      const next = [...serversRef.current, entry];
+      setServers(next);
+      await core.servers_save(next);
+      void refreshServers();
+    },
+    [refreshServers],
+  );
+
   const removeServer = useCallback(async (id: string) => {
     setServers((s) => {
       const next = s.filter((x) => x.id !== id);
@@ -497,7 +554,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     modCatalog, cosmetics,
     settings, patchSettings,
     javaRuntimes, scanningJava, rescanJava,
-    news, servers, removeServer,
+    news, servers, serverStatus, pingingServers, refreshServers, addServer, removeServer,
     game, logs, launch, killGame, clearLogs,
     loadout, equip,
     downloads, toasts, toast, dismissToast,
@@ -513,6 +570,14 @@ export function useStore(): Store {
 }
 
 /* color helpers for runtime accent injection */
+/* a server keeps the same swatch across restarts because the colour comes from
+   its address, not from the order it was added */
+function hashCode(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return h;
+}
+
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
   const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;

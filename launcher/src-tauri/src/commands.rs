@@ -12,7 +12,7 @@ use crate::{
     install, java,
     meta,
     model::*,
-    mods, paths, store,
+    mods, paths, ping, store,
     state::AppState,
 };
 
@@ -236,18 +236,42 @@ pub async fn mods_available() -> Result<ModCatalog> {
 
 #[tauri::command]
 pub async fn mods_list(state: State<'_, AppState>, instance_id: String) -> Result<Vec<InstalledMod>> {
-    let known = state.instances.lock().await.iter().any(|i| i.id == instance_id);
-    if !known {
-        return Err(Error::NotFound(format!("instance {instance_id}")));
-    }
+    let loader = {
+        let instances = state.instances.lock().await;
+        instances
+            .iter()
+            .find(|i| i.id == instance_id)
+            .ok_or_else(|| Error::NotFound(format!("instance {instance_id}")))?
+            .loader
+            .clone()
+    };
+    /* A vanilla instance has no loader to run a mod, so nothing here is on and
+       nothing here can be turned on — the screen used to show all four as
+       active over an instance that would launch without any of them. */
+    let modded = loader == "fabric";
     let st = mods::state(&instance_id).await;
+    let present = mods::installed(&instance_id).await;
+
     Ok(catalog::get()
         .mods
         .iter()
-        .map(|m| InstalledMod {
-            enabled: !st.disabled.contains(&m.id),
-            favorite: st.favorites.contains(&m.id),
-            base: m.clone(),
+        .map(|m| {
+            let file = present.get(&m.id).cloned();
+            let version = file
+                .as_deref()
+                .and_then(mods::version_from_file)
+                .unwrap_or_else(|| m.version.clone());
+            InstalledMod {
+                enabled: modded && !st.disabled.contains(&m.id),
+                favorite: st.favorites.contains(&m.id),
+                installed: file.is_some(),
+                file,
+                base: Mod {
+                    version,
+                    compatible: m.compatible && modded,
+                    ..m.clone()
+                },
+            }
         })
         .collect())
 }
@@ -379,6 +403,18 @@ pub async fn servers_list() -> Result<Vec<ServerEntry>> {
 #[tauri::command]
 pub async fn servers_save(list: Vec<ServerEntry>) -> Result<()> {
     store::write(&paths::servers_file(), &list).await
+}
+
+/// Ask the servers themselves. The card's motd, player count and latency are
+/// only worth showing if they came from the server, and a server that is down
+/// has to be able to say so. Queried together — one slow host must not hold up
+/// the rest of the list.
+#[tauri::command]
+pub async fn servers_ping(addresses: Vec<String>) -> Result<HashMap<String, ping::ServerStatus>> {
+    let probes = addresses
+        .into_iter()
+        .map(|a| async move { (a.clone(), ping::status(&a).await) });
+    Ok(futures::future::join_all(probes).await.into_iter().collect())
 }
 
 // ── auth ──────────────────────────────────────────────────────

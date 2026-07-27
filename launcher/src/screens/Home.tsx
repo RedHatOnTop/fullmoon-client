@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, IconButton } from "../components/ui";
 import { useStore } from "../state/store";
@@ -18,10 +18,12 @@ const TAG_TONE: Record<string, "accent" | "ok" | "warn" | "err" | "info" | "dim"
 
 export function HomeScreen() {
   const {
-    news, servers, versions, settings, modCatalog, cosmetics, loadout,
+    news, servers, serverStatus, pingingServers, refreshServers, addServer,
+    versions, settings, modCatalog, cosmetics, loadout,
     activeAccount, instances, selectedInstance, launch, removeServer, toast, setScreen,
   } = useStore();
   const { t } = useT();
+  const [draft, setDraft] = useState({ name: "", address: "" });
 
   const target = useMemo(() => versions.find((v) => v.isTarget), [versions]);
   const installedAny = instances.some((i) => i.installed);
@@ -100,7 +102,9 @@ export function HomeScreen() {
             >
               <span className="quickbar-swatch" style={{ "--h": s.hue }} />
               {s.name}
-              <span className="quickbar-ping">{s.pingMs}ms</span>
+              <span className="quickbar-ping">
+                {serverStatus[s.address]?.online ? `${serverStatus[s.address].pingMs}ms` : "—"}
+              </span>
             </button>
           ))}
         </div>
@@ -180,48 +184,118 @@ export function HomeScreen() {
         <div className="section-head">
           <h3>{t("home.serversTitle")}</h3>
           <span className="section-sub num">{servers.length}</span>
+          <button className="section-act" onClick={() => void refreshServers()} disabled={pingingServers}>
+            <Icon name="refresh" size={13} className={pingingServers ? "spin" : undefined} />
+            {t("home.refreshServers")}
+          </button>
         </div>
-        <div className="server-grid">
-          {servers.map((s) => (
-            <article key={s.id} className="server-card card-hover">
-              <div className="server-head">
-                <span className="server-orb" style={{ "--h": s.hue }}>
-                  <Icon name="server" size={15} />
-                </span>
-                <div className="server-title">
-                  <strong>{s.name}</strong>
-                  <span className="mono">{s.address}</span>
-                </div>
-                <IconButton
-                  icon="x"
-                  label={t("home.removeServer")}
-                  onClick={() => void removeServer(s.id)}
-                />
-              </div>
-              <p className="server-motd">{s.motd}</p>
-              <div className="server-stats">
-                <div className="server-players">
-                  <div className="pbar pbar-sm server-pbar">
-                    <span className="pbar-fill" style={{ width: `${(s.players / s.maxPlayers) * 100}%` }} />
+
+        <form
+          className="server-add"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!draft.address.trim()) return;
+            void addServer(draft.name, draft.address);
+            setDraft({ name: "", address: "" });
+          }}
+        >
+          <input
+            className="input"
+            value={draft.name}
+            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            placeholder={t("home.serverNamePlaceholder")}
+            spellCheck={false}
+          />
+          <input
+            className="input mono"
+            value={draft.address}
+            onChange={(e) => setDraft({ ...draft, address: e.target.value })}
+            placeholder={t("home.serverAddrPlaceholder")}
+            spellCheck={false}
+          />
+          <button className="server-add-go" type="submit" disabled={!draft.address.trim()}>
+            <Icon name="plus" size={14} />
+            {t("home.addServer")}
+          </button>
+        </form>
+
+        {servers.length === 0 ? (
+          <p className="server-none">{t("home.noServers")}</p>
+        ) : (
+          <div className="server-grid">
+            {servers.map((s) => {
+              /* everything on this card comes from the server's own answer;
+                 before the first probe lands there is nothing to claim */
+              const st = serverStatus[s.address];
+              const cap = st?.maxPlayers ?? 0;
+              return (
+                <article
+                  key={s.id}
+                  className={`server-card card-hover ${st && !st.online ? "server-down" : ""}`}
+                >
+                  <div className="server-head">
+                    <span className="server-orb" style={{ "--h": s.hue }}>
+                      <Icon name="server" size={15} />
+                    </span>
+                    <div className="server-title">
+                      <strong>{s.name}</strong>
+                      <span className="mono">{s.address}</span>
+                    </div>
+                    <IconButton
+                      icon="x"
+                      label={t("home.removeServer")}
+                      onClick={() => void removeServer(s.id)}
+                    />
                   </div>
-                  <span className="num">{s.players.toLocaleString()}/{s.maxPlayers.toLocaleString()}</span>
-                </div>
-                <span className={`server-ping num ${s.pingMs < 40 ? "ping-good" : s.pingMs < 80 ? "ping-mid" : "ping-bad"}`}>
-                  <Icon name="signal" size={12} />
-                  {s.pingMs}ms
-                </span>
-              </div>
-              <button
-                className="server-join"
-                disabled={!installedAny}
-                onClick={() => quickPlay(s.address)}
-              >
-                <Icon name="zap" size={14} />
-                <span>{t("home.join")}</span>
-              </button>
-            </article>
-          ))}
-        </div>
+
+                  <p className="server-motd">
+                    {st ? (st.online ? st.motd || st.version : st.error) : t("home.probing")}
+                  </p>
+
+                  <div className="server-stats">
+                    {st?.online ? (
+                      <>
+                        <div className="server-players">
+                          <div className="pbar pbar-sm server-pbar">
+                            <span
+                              className="pbar-fill"
+                              style={{ width: cap > 0 ? `${(st.players / cap) * 100}%` : "0%" }}
+                            />
+                          </div>
+                          <span className="num">
+                            {st.players.toLocaleString()}/{cap.toLocaleString()}
+                          </span>
+                        </div>
+                        <span
+                          className={`server-ping num ${
+                            st.pingMs < 40 ? "ping-good" : st.pingMs < 80 ? "ping-mid" : "ping-bad"
+                          }`}
+                        >
+                          <Icon name="signal" size={12} />
+                          {st.pingMs}ms
+                        </span>
+                      </>
+                    ) : (
+                      <span className="server-offline">
+                        <Icon name="signal" size={12} />
+                        {st ? t("home.offline") : "…"}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    className="server-join"
+                    disabled={!installedAny || (st && !st.online)}
+                    onClick={() => quickPlay(s.address)}
+                  >
+                    <Icon name="zap" size={14} />
+                    <span>{t("home.join")}</span>
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

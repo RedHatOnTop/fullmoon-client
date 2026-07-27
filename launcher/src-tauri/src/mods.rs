@@ -44,6 +44,32 @@ pub async fn save_state(instance_id: &str, st: &InstanceModState) -> Result<()> 
     store::write(&paths::instance_state_file(instance_id), st).await
 }
 
+/// Which managed jars are on disk this second, by catalogue id. The state file
+/// records intent; only the directory can say what a launch would actually
+/// load, and a user is free to delete a jar behind our back.
+pub async fn installed(instance_id: &str) -> BTreeMap<String, String> {
+    let dir = paths::instance_mods_dir(instance_id);
+    let mut present = BTreeMap::new();
+    for (id, file) in state(instance_id).await.managed {
+        if tokio::fs::metadata(dir.join(&file)).await.is_ok() {
+            present.insert(id, file);
+        }
+    }
+    present
+}
+
+/// `sodium-fabric-0.9.1+mc26.1.2.jar` → `0.9.1+mc26.1.2`. The catalogue's
+/// version is product copy written months ago; this is the build that shipped.
+/// The version starts at the first dash followed by a digit, which is the one
+/// convention every artifact here follows.
+pub fn version_from_file(file: &str) -> Option<String> {
+    let stem = file.strip_suffix(".jar")?;
+    stem.as_bytes()
+        .windows(2)
+        .position(|w| w[0] == b'-' && w[1].is_ascii_digit())
+        .map(|i| stem[i + 1..].to_string())
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ModSource {

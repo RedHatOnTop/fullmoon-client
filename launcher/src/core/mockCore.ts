@@ -29,6 +29,7 @@ import type {
   NewsItem,
   PinionCore,
   ServerEntry,
+  ServerStatus,
   Settings,
   VersionSummary,
 } from "./bindings";
@@ -649,10 +650,14 @@ export class MockCore implements PinionCore {
     await sleep(70);
     const enabledMap = this.modEnabled[instanceId] ?? {};
     const favMap = this.modFavorite[instanceId] ?? {};
+    const modded = this.instances.find((i) => i.id === instanceId)?.loader === "fabric";
     return MOD_CATALOG.mods.map((m) => ({
       ...m,
-      enabled: enabledMap[m.id] ?? true,
+      compatible: m.compatible && modded,
+      enabled: modded && (enabledMap[m.id] ?? true),
       favorite: favMap[m.id] ?? false,
+      installed: modded && (enabledMap[m.id] ?? true),
+      file: modded ? `${m.id}-${m.version}.jar` : undefined,
     }));
   }
 
@@ -799,12 +804,28 @@ export class MockCore implements PinionCore {
 
   async servers_list(): Promise<ServerEntry[]> {
     await sleep(120);
-    // live-ish ping jitter
-    return this.servers.map((s) => ({
-      ...s,
-      pingMs: Math.max(6, Math.round(s.pingMs + (Math.random() * 14 - 7))),
-      players: Math.max(0, Math.round(s.players * (0.94 + Math.random() * 0.12))),
-    }));
+    return this.servers.map((s) => ({ ...s }));
+  }
+
+  /* The browser build cannot open a TCP socket, so this is the one place the
+     mock has to invent — it says so by reporting every server as unreachable
+     rather than by making up a plausible player count. */
+  async servers_ping(addresses: string[]): Promise<Record<string, ServerStatus>> {
+    await sleep(200);
+    return Object.fromEntries(
+      addresses.map((a) => [
+        a,
+        {
+          online: false,
+          motd: "",
+          players: 0,
+          maxPlayers: 0,
+          pingMs: 0,
+          version: "",
+          error: "no socket in the browser build",
+        },
+      ]),
+    );
   }
 
   async servers_save(list: ServerEntry[]): Promise<void> {

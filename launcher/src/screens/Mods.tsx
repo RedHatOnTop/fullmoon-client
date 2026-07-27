@@ -51,6 +51,7 @@ export function ModsScreen() {
     await core.mod_favorite(selectedInstanceId, modId, favorite);
   };
 
+  const vanilla = selectedInstance?.loader === "vanilla";
   const onCount = mods.filter((m) => m.enabled).length;
   const favCount = mods.filter((m) => m.favorite).length;
   const badCount = mods.filter((m) => !m.compatible).length;
@@ -95,6 +96,16 @@ export function ModsScreen() {
         <Empty icon="puzzle" title={t("mods.title")} hint={t("mods.bundleNote")} />
       ) : (
         <>
+          {vanilla && (
+            <div className="mod-vanilla">
+              <Icon name="info" size={15} />
+              <div>
+                <strong>{t("mods.vanillaTitle")}</strong>
+                <span>{t("mods.vanillaHint")}</span>
+              </div>
+            </div>
+          )}
+
           <div className="mod-bar">
             <div className="mod-tabs">
               {tabs.map((x) => (
@@ -142,7 +153,11 @@ export function ModsScreen() {
                     </span>
                     <div className="mod-card-title">
                       <strong>{m.name}</strong>
-                      <span className="mod-ver num">v{m.version}</span>
+                      {/* the version of the jar that is actually there, not the
+                          one the catalogue was written against */}
+                      <span className="mod-ver num" title={m.file ?? undefined}>
+                        v{m.version}
+                      </span>
                     </div>
                     <button
                       className={`mod-fav ${m.favorite ? "on" : ""}`}
@@ -165,6 +180,7 @@ export function ModsScreen() {
                         </Badge>
                       )}
                       {!m.compatible && <Badge tone="err">{t("mods.incompatible")}</Badge>}
+                      {m.compatible && !m.installed && <Badge tone="dim">{t("mods.notInstalled")}</Badge>}
                     </div>
                     <Toggle checked={m.enabled} onChange={(v) => void toggle(m.id, v, m.name)} disabled={!m.compatible} />
                   </div>

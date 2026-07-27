@@ -99,6 +99,9 @@ export interface ModCatalog {
 export interface InstalledMod extends Mod {
   enabled: boolean;
   favorite: boolean;
+  /** the jar is in the instance's mods dir right now */
+  installed: boolean;
+  file?: string;
 }
 
 // ── launch ────────────────────────────────────────────────────
@@ -196,6 +199,18 @@ export interface ServerEntry {
   hue: number;
 }
 
+/** What the server itself answered. `online: false` carries the reason. */
+export interface ServerStatus {
+  online: boolean;
+  motd: string;
+  players: number;
+  maxPlayers: number;
+  pingMs: number;
+  version: string;
+  favicon?: string;
+  error?: string;
+}
+
 // ── events ────────────────────────────────────────────────────
 
 export interface CoreEvents {
@@ -243,6 +258,9 @@ export interface PinionCore {
 
   // mods
   mods_available(): Promise<ModCatalog>;
+  /** live status straight from the servers, keyed by the address asked for */
+  servers_ping(addresses: string[]): Promise<Record<string, ServerStatus>>;
+
   mods_list(instanceId: string): Promise<InstalledMod[]>;
   mod_toggle(instanceId: string, modId: string, enabled: boolean): Promise<void>;
   mod_favorite(instanceId: string, modId: string, favorite: boolean): Promise<void>;

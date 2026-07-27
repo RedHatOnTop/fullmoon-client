@@ -142,6 +142,9 @@ pub struct InstalledMod {
     pub base: Mod,
     pub enabled: bool,
     pub favorite: bool,
+    /// the jar is in the instance's mods dir right now
+    pub installed: bool,
+    pub file: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -285,7 +285,59 @@
 .server-title { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .server-title strong { font-size: var(--text-body); font-weight: 600; }
 .server-title .mono { font-size: var(--text-caption); color: var(--text-3); }
-.server-motd { font-size: var(--text-small); color: var(--text-2); }
+/* adding a server is the only way one gets here, so the form is part of the
+   section rather than hidden behind a dialog */
+.server-add { display: flex; gap: 8px; margin-bottom: 14px; }
+.server-add .input { height: var(--control-h); }
+.server-add .input:first-child { flex: 0 0 180px; }
+.server-add .input:nth-child(2) { flex: 1; }
+.server-add-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--control-h);
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-1);
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  transition: border-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+.server-add-go:hover:not(:disabled) { border-color: var(--accent); color: var(--text-1); }
+.server-add-go:disabled { opacity: 0.45; }
+
+.section-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-caption);
+  color: var(--text-3);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.section-act:hover:not(:disabled) { color: var(--text-1); }
+.section-act:disabled { opacity: 0.5; }
+.spin { animation: spin 900ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.server-none {
+  padding: 18px 0 4px;
+  font-size: var(--text-small);
+  color: var(--text-3);
+}
+/* a server that did not answer keeps its card but stops pretending */
+.server-down { opacity: 0.62; }
+.server-offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-3);
+}
+
+.server-motd { font-size: var(--text-small); color: var(--text-2); min-height: 1.4em; }
 .server-stats { display: flex; align-items: center; gap: 12px; }
 .server-players { display: flex; align-items: center; gap: 8px; flex: 1; font-family: var(--font-mono); font-size: var(--text-caption); color: var(--text-2); }
 .server-pbar { flex: 1; }
@@ -505,6 +557,25 @@
 .mod-count { margin-left: auto; align-self: center; font-family: var(--font-mono); font-size: var(--text-caption); color: var(--text-3); }
 
 /* toolbar — category tabs + search, the way a client browses modules */
+/* a vanilla instance cannot run any of this — say so once, at the top, rather
+   than leaving four cards that look switchable but are not */
+.mod-vanilla {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 16px;
+  padding: 13px 15px;
+  border: 1px solid var(--line-strong);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius-1);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  color: var(--text-2);
+}
+.mod-vanilla > svg { margin-top: 1px; color: var(--accent); flex: none; }
+.mod-vanilla div { display: flex; flex-direction: column; gap: 3px; }
+.mod-vanilla strong { font-size: var(--text-small); color: var(--text-1); }
+.mod-vanilla span { font-size: var(--text-caption); color: var(--text-3); }
+
 .mod-bar {
   display: flex;
   align-items: center;

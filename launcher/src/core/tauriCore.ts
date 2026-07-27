@@ -24,6 +24,7 @@ import type {
   NewsItem,
   PinionCore,
   ServerEntry,
+  ServerStatus,
   Settings,
   VersionSummary,
   CoreEventName,
@@ -121,6 +122,8 @@ export class TauriCore implements PinionCore {
   news_feed = () => this.call<NewsItem[]>("news_feed");
   servers_list = () => this.call<ServerEntry[]>("servers_list");
   servers_save = (list: ServerEntry[]) => this.call<void>("servers_save", { list });
+  servers_ping = (addresses: string[]) =>
+    this.call<Record<string, ServerStatus>>("servers_ping", { addresses });
 
   /* Events go through the event plugin, not the raw internals object — the
      internals only carry `invoke`. Registration is async while the store's

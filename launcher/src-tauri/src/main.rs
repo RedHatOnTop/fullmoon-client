@@ -14,6 +14,7 @@ mod meta;
 mod model;
 mod mods;
 mod paths;
+mod ping;
 mod state;
 mod store;
 mod version;
@@ -56,6 +57,7 @@ fn main() {
             commands::news_feed,
             commands::servers_list,
             commands::servers_save,
+            commands::servers_ping,
             commands::auth_list,
             commands::auth_active,
             commands::auth_add_offline,

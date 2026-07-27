@@ -217,48 +217,7 @@
       "featured": false
     }
   ],
-  "servers": [
-    {
-      "id": "s1",
-      "name": "Ember SMP",
-      "address": "play.embersmp.net",
-      "motd": "시즌 4 — 불꽃의 섬",
-      "players": 842,
-      "maxPlayers": 1000,
-      "pingMs": 23,
-      "hue": 22
-    },
-    {
-      "id": "s2",
-      "name": "Crystal PvP",
-      "address": "crystal.gg",
-      "motd": "랭크 시즌 12 · 듀얼 오픈",
-      "players": 3210,
-      "maxPlayers": 5000,
-      "pingMs": 41,
-      "hue": 190
-    },
-    {
-      "id": "s3",
-      "name": "Moonrise",
-      "address": "moonrise.network",
-      "motd": "스카이블록 · 신규 차원 업데이트",
-      "players": 12764,
-      "maxPlayers": 20000,
-      "pingMs": 57,
-      "hue": 268
-    },
-    {
-      "id": "s4",
-      "name": "Skyfall",
-      "address": "skyfall.gg",
-      "motd": "베드워즈 · 듀오 토너먼트",
-      "players": 534,
-      "maxPlayers": 800,
-      "pingMs": 12,
-      "hue": 330
-    }
-  ],
+  "servers": [],
   "defaultHud": {
     "modules": [
       {
