@@ -237,14 +237,17 @@ Feather/Lunar급으로 **의도적으로 디자인된, 눈에 띄게 구별되�
 
 ## 8. 마일스톤
 
-| M  | 내용                                                              | 검증 (launch & look)                    |
-|----|-------------------------------------------------------------------|-----------------------------------------|
-| M0 | repo + brand + rebrand + tauri-specta 배선 + `versions_manifest` live | `26.1.2` 매니페스트가 실제로 떠온다      |
-| M1 | Auth: device-code + 공식계정 import, refresh                       | 6년차 실계정 로그인 성공, 프로필 표시    |
-| M2 | 설치 파이프라인: `26.1.2` + Fabric, 해시검증, JRE 프로비전          | 인스턴스 파일 디스크에 무결성 통과       |
-| M3 | **Launch** — 우리 런처가 진짜 MC 창을 띄운다 (auth 주입)            | **MC 창 뜸. 스크린샷.** ← 핵심 증명      |
-| M4 | Mods + Pinion HUD 첫 컷(FPS/coords/keystrokes) 인게임               | 인게임 HUD 렌더 스샷                     |
-| M5 | Cosmetics + 폴리시 + rebrand 테스트                                | cape 본인 렌더 + 리네임 1회 동작         |
+| M  | 내용                                                              | 검증 (launch & look)                    | 상태 |
+|----|-------------------------------------------------------------------|-----------------------------------------|------|
+| M0 | repo + brand + rebrand + tauri-specta 배선 + `versions_manifest` live | `26.1.2` 매니페스트가 실제로 떠온다      | done |
+| M1 | Auth: device-code + 공식계정 import, refresh                       | 6년차 실계정 로그인 성공, 프로필 표시    | done |
+| M2 | 설치 파이프라인: `26.1.2` + Fabric, 해시검증, JRE 프로비전          | 인스턴스 파일 디스크에 무결성 통과       | done |
+| M3 | **Launch** — 우리 런처가 진짜 MC 창을 띄운다 (auth 주입)            | **MC 창 뜸. 스크린샷.** ← 핵심 증명      | done |
+| M4 | Mods + Pinion HUD 첫 컷(FPS/coords/keystrokes) 인게임               | 인게임 HUD 렌더 스샷                     | done |
+| M5 | Cosmetics + 폴리시 + rebrand 테스트                                | cape 본인 렌더 + 리네임 1회 동작         |      |
+
+M4 = 로컬 26.1.2 서버에 quick play로 접속한 실게임에서 FPS·CPS·XYZ·PING·키스트로크가
+전부 렌더된 스샷. 인게임 모드설정 GUI·zoom·fullbright(§7 v1 잔여)는 M5로 넘어간다.
 
 UI 바이크오프(UI-A/UI-B)는 **스코프 + Lunar/Feather 레퍼런스만** 주고 무제약 병렬 →
 품질로 겨뤄 승자/융합본을 M3 이후 core 계약에 어댑트·배선.
