@@ -7,7 +7,7 @@ use serde::Deserialize;
 use tauri::{AppHandle, State};
 
 use crate::{
-    catalog,
+    catalog, cosmetics,
     error::{Error, Result},
     install, java,
     meta,
@@ -326,7 +326,7 @@ pub async fn mod_favorite(instance_id: String, mod_id: String, favorite: bool) -
 
 // ── cosmetics / hud ───────────────────────────────────────────
 
-type LoadoutMap = HashMap<String, HashMap<String, Option<String>>>;
+use crate::cosmetics::{Loadout, LoadoutMap};
 
 #[tauri::command]
 pub async fn cosmetics_catalog() -> Result<Vec<Cosmetic>> {
@@ -334,14 +334,18 @@ pub async fn cosmetics_catalog() -> Result<Vec<Cosmetic>> {
 }
 
 #[tauri::command]
-pub async fn cosmetics_equipped(uuid: String) -> Result<HashMap<String, Option<String>>> {
-    let all: LoadoutMap = store::read_or(&paths::cosmetics_file(), LoadoutMap::new).await;
-    Ok(all.get(&uuid).cloned().unwrap_or_else(empty_loadout))
+pub async fn cosmetics_equipped(uuid: String) -> Result<Loadout> {
+    Ok(cosmetics::loadout(&uuid).await)
 }
 
 #[tauri::command]
-pub async fn cosmetics_equip(uuid: String, slot: String, item_id: Option<String>) -> Result<()> {
-    if !["cape", "wings", "trail"].contains(&slot.as_str()) {
+pub async fn cosmetics_equip(
+    state: State<'_, AppState>,
+    uuid: String,
+    slot: String,
+    item_id: Option<String>,
+) -> Result<()> {
+    if !cosmetics::SLOTS.contains(&slot.as_str()) {
         return Err(Error::Invalid(format!("unknown cosmetic slot {slot}")));
     }
     if let Some(id) = &item_id {
@@ -358,15 +362,17 @@ pub async fn cosmetics_equip(uuid: String, slot: String, item_id: Option<String>
         }
     }
     let mut all: LoadoutMap = store::read_or(&paths::cosmetics_file(), LoadoutMap::new).await;
-    all.entry(uuid).or_insert_with(empty_loadout).insert(slot, item_id);
-    store::write(&paths::cosmetics_file(), &all).await
-}
+    all.entry(uuid.clone())
+        .or_insert_with(cosmetics::empty)
+        .insert(slot, item_id);
+    store::write(&paths::cosmetics_file(), &all).await?;
 
-fn empty_loadout() -> HashMap<String, Option<String>> {
-    ["cape", "wings", "trail"]
-        .into_iter()
-        .map(|s| (s.to_owned(), None))
-        .collect()
+    // a running game re-reads the file, so an equip lands without a restart
+    let instances = state.instances.lock().await.clone();
+    for inst in instances.iter().filter(|i| i.installed) {
+        cosmetics::materialize(&inst.id, &uuid).await?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -609,6 +615,10 @@ async fn start_game(
             .or_else(|| accounts.first().cloned())
             .ok_or_else(|| Error::Invalid("no account is selected".into()))?
     };
+
+    // the mod reads this from the instance, so it has to say what the account
+    // that is actually launching has equipped
+    cosmetics::materialize(&instance_id, &account.uuid).await?;
 
     let settings = state.settings.lock().await.clone();
     let version: crate::version::VersionJson = {

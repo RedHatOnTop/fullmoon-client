@@ -36,12 +36,15 @@ param(
   [switch]$HideOnly,
   [switch]$List,
   [switch]$PrintWindow,
-  # Windows virtual key codes to send before capturing, e.g. 161 for right
-  # shift — NOT GLFW codes, which only coincide for the letter keys (GLFW right
-  # shift is 344, VK_RSHIFT is 161). PostMessage was tried first and GLFW
-  # ignores it: with the mod logging every fullbright toggle, a posted VK_B
-  # produced no line at all.
-  [int[]]$SendKey = @(),
+  # Windows virtual key codes to send before capturing, comma separated, e.g.
+  # "116,116,66" — NOT GLFW codes, which only coincide for the letter keys
+  # (GLFW right shift is 344, VK_RSHIFT is 161). A string rather than [int[]]
+  # because -File hands the whole argument over as one token: powershell then
+  # turns "116,116,66" into the single number 11611666.
+  #
+  # PostMessage was tried first and GLFW ignores it: with the mod logging every
+  # fullbright toggle, a posted VK_B produced no line at all.
+  [string]$SendKey = "",
   [int]$SettleMs = 700
 )
 
@@ -179,9 +182,10 @@ function Send-GameKeys([IntPtr]$hwnd, [int[]]$keys, [int]$holdMs = 70, [int]$gap
   Start-Sleep -Milliseconds 250
 }
 
-if ($SendKey.Count -gt 0) {
-  Send-GameKeys $h $SendKey
-  $SendKey | ForEach-Object { Write-Output ("KEY {0}" -f $_) }
+$keys = @($SendKey -split '[,\s]+' | Where-Object { $_ -ne "" } | ForEach-Object { [int]$_ })
+if ($keys.Count -gt 0) {
+  Send-GameKeys $h $keys
+  $keys | ForEach-Object { Write-Output ("KEY {0}" -f $_) }
 }
 
 if (-not $PrintWindow) {

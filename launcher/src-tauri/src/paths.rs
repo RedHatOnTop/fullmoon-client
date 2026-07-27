@@ -84,6 +84,13 @@ pub fn instance_hud_file(id: &str) -> PathBuf {
     instance_minecraft_dir(id).join("pinion").join("hud.json")
 }
 
+/// The equipped cosmetics of whichever account launched this instance.
+pub fn instance_cosmetics_file(id: &str) -> PathBuf {
+    instance_minecraft_dir(id)
+        .join("pinion")
+        .join("cosmetics.json")
+}
+
 pub fn instance_state_file(id: &str) -> PathBuf {
     instance_dir(id).join("instance.json")
 }

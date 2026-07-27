@@ -36,4 +36,11 @@ processResources {
     filesMatching('fabric.mod.json') {
         expand version: project.version
     }
+    /* The cape art belongs to the launcher's catalogue — it is what the
+       cosmetics screen shows. Copying it in at build time rather than keeping a
+       second set here means the preview and the cape in game cannot disagree. */
+    from(rootProject.file('../launcher/public/capes')) {
+        include '*-cape.png'
+        into 'assets/pinion/textures/cosmetics'
+    }
 }

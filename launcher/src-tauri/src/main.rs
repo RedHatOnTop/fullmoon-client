@@ -4,6 +4,7 @@
 mod auth;
 mod catalog;
 mod commands;
+mod cosmetics;
 mod download;
 mod error;
 mod fabric;
