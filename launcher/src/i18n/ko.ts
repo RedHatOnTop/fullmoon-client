@@ -258,7 +258,7 @@ const ko = {
       openSource: "검증 가능",
       openSourceDesc: "클라이언트 소스가 공개되어 있고 난독화하지 않습니다. 하는 말을 직접 확인할 수 있습니다.",
     },
-    pledgeFoot: "이 네 줄은 경쟁 클라이언트들이 하나씩 깬 약속입니다. 어기면 그때가 Pinion을 버릴 때입니다.",
+    pledgeFoot: "이 네 줄은 경쟁 클라이언트들이 하나씩 깬 약속입니다. 어기면 그때가 {brand} 사용을 멈출 때입니다.",
     hudDesc: "모듈을 드래그해 배치하고, 클릭해 크기를 조절하세요. 인스턴스의 pinion/hud.json으로 저장되어 우리 모드가 읽습니다.",
     resetLayout: "배치 초기화",
     moduleScale: "모듈 크기",

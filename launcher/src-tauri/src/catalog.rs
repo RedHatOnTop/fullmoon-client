@@ -9,6 +9,7 @@ use serde::Deserialize;
 use crate::{
     model::{Cosmetic, HudConfig, Mod, NewsItem, ServerEntry},
     mods::ModSource,
+    paths,
 };
 
 #[derive(Debug, Deserialize)]
@@ -27,7 +28,9 @@ pub struct Catalog {
 pub fn get() -> &'static Catalog {
     static CATALOG: OnceLock<Catalog> = OnceLock::new();
     CATALOG.get_or_init(|| {
-        serde_json::from_str(include_str!("../resources/catalog.json"))
-            .expect("bundled catalog.json is malformed")
+        // authored copy says `{brand}`, never the name, so a fork's catalogue
+        // reads as its own product without a find-and-replace
+        let raw = include_str!("../resources/catalog.json").replace("{brand}", paths::BRAND_NAME);
+        serde_json::from_str(&raw).expect("bundled catalog.json is malformed")
     })
 }

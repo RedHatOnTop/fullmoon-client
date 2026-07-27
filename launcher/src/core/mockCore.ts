@@ -34,6 +34,7 @@ import type {
   VersionSummary,
 } from "./bindings";
 import { loadState, saveState } from "./persistence";
+import BRAND from "../brand";
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const latency = () => sleep(90 + Math.random() * 160);
@@ -68,7 +69,7 @@ const SEED_ACCOUNTS: Account[] = [
 const SEED_INSTANCES: Instance[] = [
   {
     id: "inst-main",
-    name: "Pinion 26.1.2",
+    name: `${BRAND.name} 26.1.2`,
     versionId: "26.1.2",
     loader: "fabric",
     installed: true,
@@ -108,7 +109,7 @@ const MOD_CATALOG: ModCatalog = {
   mods: [
     {
       id: "pinion-hud",
-      name: "Pinion HUD",
+      name: `${BRAND.name} HUD`,
       version: "1.0.0",
       description:
         "우리 Fabric 모드. FPS·CPS·키스트로크·좌표·장비·포션·핑 HUD와 인게임 설정 GUI, 줌, 풀브라이트, 코스메틱 렌더.",
@@ -151,7 +152,7 @@ const MOD_CATALOG: ModCatalog = {
 };
 
 const COSMETICS: Cosmetic[] = [
-  { id: "aero-cape", slot: "cape", name: "아에로 케이프", rarity: "rare", hue: 214, desc: "비행 깃털 문양을 수놓은 Pinion 기본 케이프.", capeUrl: "/capes/aero-cape.png" },
+  { id: "aero-cape", slot: "cape", name: "아에로 케이프", rarity: "rare", hue: 214, desc: `비행 깃털 문양을 수놓은 ${BRAND.name} 기본 케이프.`, capeUrl: "/capes/aero-cape.png" },
   { id: "ember-cape", slot: "cape", name: "엠버 케이프", rarity: "epic", hue: 22, desc: "불씨가 낙엽처럼 흩날리는 자수.", capeUrl: "/capes/ember-cape.png" },
   { id: "void-cape", slot: "cape", name: "보이드 케이프", rarity: "legendary", hue: 272, desc: "끝없이 가라앉는 별먼지 그라데이션.", capeUrl: "/capes/void-cape.png" },
   { id: "mint-cape", slot: "cape", name: "민트 케이프", rarity: "common", hue: 152, desc: "산뜻한 단색. 조용한 취향.", capeUrl: "/capes/mint-cape.png" },
@@ -169,8 +170,8 @@ const NEWS: NewsItem[] = [
   {
     id: "n1",
     tag: "update",
-    title: "Pinion 1.0 — 날개를 달다",
-    summary: "첫 정식 릴리스. 26.1.2 타겟, Fabric 번들, Pinion HUD 탑재. 깃털처럼 가볍게, 기어처럼 정확하게.",
+    title: `${BRAND.name} 1.0 — 날개를 달다`,
+    summary: `첫 정식 릴리스. 26.1.2 타겟, Fabric 번들, ${BRAND.name} HUD 탑재. 깃털처럼 가볍게, 기어처럼 정확하게.`,
     date: "2026-07-20",
     hue: 214,
     featured: true,
@@ -205,7 +206,7 @@ const NEWS: NewsItem[] = [
   {
     id: "n5",
     tag: "update",
-    title: "Pinion HUD 프리뷰: 키스트로크 & 포션 타이머",
+    title: `${BRAND.name} HUD 프리뷰: 키스트로크 & 포션 타이머`,
     summary: "인게임 모듈 두 개가 런처 설정과 실시간 미러링된다. hud.json 계약 공개.",
     date: "2026-07-06",
     hue: 22,

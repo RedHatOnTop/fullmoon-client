@@ -13,6 +13,7 @@ import "./styles/screens.css";
 
 /* brand.json → CSS vars before first paint (PLAN §0/§6);
    the store effect re-derives per-theme values after mount */
+document.title = BRAND.name;
 const root = document.documentElement;
 root.style.setProperty("--accent", BRAND.accent);
 root.style.setProperty("--accent-fill", BRAND.accent);

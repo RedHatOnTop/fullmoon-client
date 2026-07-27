@@ -2,7 +2,7 @@
   "mods": [
     {
       "id": "pinion-hud",
-      "name": "Pinion HUD",
+      "name": "{brand} HUD",
       "version": "1.0.0",
       "description": "우리 Fabric 모드. FPS·CPS·키스트로크·좌표·장비·포션·핑 HUD와 인게임 설정 GUI, 줌, 풀브라이트, 코스메틱 렌더.",
       "kind": "hud",
@@ -67,7 +67,7 @@
       "name": "아에로 케이프",
       "rarity": "rare",
       "hue": 214,
-      "desc": "비행 깃털 문양을 수놓은 Pinion 기본 케이프.",
+      "desc": "비행 깃털 문양을 수놓은 {brand} 기본 케이프.",
       "capeUrl": "/capes/aero-cape.png"
     },
     {
@@ -174,8 +174,8 @@
     {
       "id": "n1",
       "tag": "update",
-      "title": "Pinion 1.0 — 날개를 달다",
-      "summary": "첫 정식 릴리스. 26.1.2 타겟, Fabric 번들, Pinion HUD 탑재. 깃털처럼 가볍게, 기어처럼 정확하게.",
+      "title": "{brand} 1.0 — 날개를 달다",
+      "summary": "첫 정식 릴리스. 26.1.2 타겟, Fabric 번들, {brand} HUD 탑재. 깃털처럼 가볍게, 기어처럼 정확하게.",
       "date": "2026-07-20",
       "hue": 214,
       "featured": true
@@ -210,7 +210,7 @@
     {
       "id": "n5",
       "tag": "update",
-      "title": "Pinion HUD 프리뷰: 키스트로크 & 포션 타이머",
+      "title": "{brand} HUD 프리뷰: 키스트로크 & 포션 타이머",
       "summary": "인게임 모듈 두 개가 런처 설정과 실시간 미러링된다. hud.json 계약 공개.",
       "date": "2026-07-06",
       "hue": 22,

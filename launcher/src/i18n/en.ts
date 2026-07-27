@@ -260,7 +260,7 @@ const en: Dict = {
       openSource: "Auditable",
       openSourceDesc: "The client source is public and unobfuscated. You can check every claim on this page.",
     },
-    pledgeFoot: "Every competing client has broken one of these four lines. If we break one, that is the day to drop Pinion.",
+    pledgeFoot: "Every competing client has broken one of these four lines. If we break one, that is the day to drop {brand}.",
     hudDesc: "Drag modules to place them, click to resize. Saved to the instance's pinion/hud.json for our mod to read.",
     resetLayout: "Reset layout",
     moduleScale: "Module scale",

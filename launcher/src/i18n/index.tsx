@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import ko, { type Dict } from "./ko";
 import en from "./en";
+import BRAND from "../brand";
 
 export type Language = "ko" | "en";
 const DICTS: Record<Language, Dict> = { ko, en };
@@ -32,7 +33,8 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
 
   const t = useCallback(
     (path: string, vars?: Record<string, string | number>) => {
-      let out = resolve(DICTS[lang], path);
+      // {brand} is free in every string — copy must never spell the name out
+      let out = resolve(DICTS[lang], path).replaceAll("{brand}", BRAND.name);
       if (vars) {
         for (const [k, v] of Object.entries(vars)) {
           out = out.replaceAll(`{${k}}`, String(v));

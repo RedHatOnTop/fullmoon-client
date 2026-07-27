@@ -1,6 +1,7 @@
 /* The Pinion mark — a flight feather drawn as a single diagonal
    blade with a quill and barbs, set on a flat accent plate.
    "Flight-feather. Gear-tight." */
+import BRAND from "../brand";
 
 export function FeatherGlyph({ size = 20 }: { size?: number }) {
   return (
@@ -47,7 +48,7 @@ export function Logo({ size = 30, withWord = true }: { size?: number; withWord?:
             letterSpacing: "0.14em",
           }}
         >
-          PINION
+          {BRAND.name.toUpperCase()}
         </span>
       )}
     </span>
