@@ -244,10 +244,24 @@ Feather/Lunar급으로 **의도적으로 디자인된, 눈에 띄게 구별되�
 | M2 | 설치 파이프라인: `26.1.2` + Fabric, 해시검증, JRE 프로비전          | 인스턴스 파일 디스크에 무결성 통과       | done |
 | M3 | **Launch** — 우리 런처가 진짜 MC 창을 띄운다 (auth 주입)            | **MC 창 뜸. 스크린샷.** ← 핵심 증명      | done |
 | M4 | Mods + Pinion HUD 첫 컷(FPS/coords/keystrokes) 인게임               | 인게임 HUD 렌더 스샷                     | done |
-| M5 | Cosmetics + 폴리시 + rebrand 테스트                                | cape 본인 렌더 + 리네임 1회 동작         |      |
+| M5 | Cosmetics + 폴리시 + rebrand 테스트                                | cape 본인 렌더 + 리네임 1회 동작         | done |
 
 M4 = 로컬 26.1.2 서버에 quick play로 접속한 실게임에서 FPS·CPS·XYZ·PING·키스트로크가
 전부 렌더된 스샷. 인게임 모드설정 GUI·zoom·fullbright(§7 v1 잔여)는 M5로 넘어간다.
+
+M5 증거 (전부 실행 후 확인, 로컬 26.1.2 서버):
+- 인게임 모드설정 GUI 렌더 + 행 토글이 `pinion/hud.json`을 쓰고 HUD에서 모듈이 사라짐.
+- zoom = C 홀드 fov 30(바닐라 하한. 20은 `Illegal option value`로 되돌아간다).
+- fullbright = `LightmapMixin`이 ambient를 흰색으로. 자정 프레임 48% → 97% 밝기.
+- cape = 런처 `cosmetics_equip` → 인스턴스 `pinion/cosmetics.json` → 본인 등에 렌더,
+  해제하면 사라짐. 재시작 없음. 케이프 PNG는 런처 `public/capes/`에서 빌드 때 복사되므로
+  미리보기와 인게임이 갈라질 수 없다.
+- rebrand = `brand.json`을 Talon으로 바꾸고 `npm run rebrand` + 빌드 → `talon.exe`,
+  창 제목·워드마크·뉴스 카피·데이터 루트(`%APPDATA%/Talon`)까지 Talon. 되돌리면 Pinion.
+  숨은 하드코딩 4곳(워드마크, index.html title, 번들 카탈로그, pledge 문구)을 이 테스트가
+  잡아냈다.
+- 촬영 리그는 게임 자체 F2를 쓴다. 창을 화면 밖으로 파킹하면 DWM이 리다이렉션 표면 갱신을
+  멈춰 `PrintWindow`가 옛 프레임을 돌려준다(측정: 켠 뒤 온스크린 97% vs 파킹 48%).
 
 UI 바이크오프(UI-A/UI-B)는 **스코프 + Lunar/Feather 레퍼런스만** 주고 무제약 병렬 →
 품질로 겨뤄 승자/융합본을 M3 이후 core 계약에 어댑트·배선.
