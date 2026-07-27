@@ -20,6 +20,7 @@ public final class PinionClient implements ClientModInitializer {
         HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath(MOD_ID, "hud"),
                 PinionHud::render);
+        PinionKeys.register();
         LOG.info("Pinion HUD ready");
     }
 }

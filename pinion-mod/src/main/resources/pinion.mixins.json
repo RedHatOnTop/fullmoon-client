@@ -3,6 +3,7 @@
   "package": "dev.pinion.hud.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "LightmapMixin",
     "MouseHandlerMixin"
   ],
   "injectors": {

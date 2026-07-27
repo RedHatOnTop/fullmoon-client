@@ -1,5 +1,6 @@
 package dev.pinion.hud;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -8,7 +9,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** The launcher's half of the contract: `<instance>/minecraft/pinion/hud.json`.
@@ -25,6 +28,10 @@ public final class HudSettings {
     private static final Path FILE = Path.of("pinion", "hud.json");
     private static final long RECHECK_MS = 1000;
 
+    /** Display order for the in-game editor. The file is a map as far as
+     *  lookups are concerned; the screen needs a stable list. */
+    private static final String[] ORDER = {"fps", "cps", "coords", "ping", "keystrokes", "gear", "potion"};
+
     private static Map<String, Module> modules = defaults();
     private static long lastStat;
     private static long lastMtime = -1;
@@ -34,6 +41,53 @@ public final class HudSettings {
 
     public static Module get(String id) {
         return modules.getOrDefault(id, Module.OFF);
+    }
+
+    /** Only the modules this build can actually draw. */
+    public static List<String> moduleIds() {
+        List<String> out = new ArrayList<>();
+        for (String id : ORDER) {
+            if (modules.containsKey(id)) {
+                out.add(id);
+            }
+        }
+        return out;
+    }
+
+    /** Flip a module from inside the game and write it back to the file the
+     *  launcher reads, so the two editors never disagree. Placement stays
+     *  whatever it was — this screen switches modules, it does not move them. */
+    public static void setEnabled(String id, boolean enabled) {
+        Module m = get(id);
+        modules.put(id, new Module(enabled, m.x(), m.y(), m.scale()));
+        save();
+    }
+
+    private static void save() {
+        JsonObject root = new JsonObject();
+        JsonArray arr = new JsonArray();
+        for (String id : ORDER) {
+            Module m = modules.get(id);
+            if (m == null) {
+                continue;
+            }
+            JsonObject o = new JsonObject();
+            o.addProperty("id", id);
+            o.addProperty("enabled", m.enabled());
+            o.addProperty("x", m.x());
+            o.addProperty("y", m.y());
+            o.addProperty("scale", m.scale());
+            arr.add(o);
+        }
+        root.add("modules", arr);
+        try {
+            Files.createDirectories(FILE.getParent());
+            Files.writeString(FILE, root.toString(), StandardCharsets.UTF_8);
+            // our own write must not read back as someone else's edit
+            lastMtime = Files.getLastModifiedTime(FILE).toMillis();
+        } catch (IOException e) {
+            PinionClient.LOG.warn("could not write {}: {}", FILE, e.toString());
+        }
     }
 
     /** Called once per frame; does real work at most once a second. */

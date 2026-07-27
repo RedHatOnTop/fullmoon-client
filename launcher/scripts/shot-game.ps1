@@ -7,20 +7,23 @@
 # (the launcher runs it out of the Pinion instances tree), and among its windows
 # only the GLFW top-level is a candidate.
 #
-# Capture is PrintWindow(PW_RENDERFULLCONTENT), not a screen BitBlt, so the
-# window never has to be raised or focused. `-Hide` gets it out of the way
-# without stopping it: moved off the desktop and restyled WS_EX_TOOLWINDOW, so
-# it is gone from the taskbar and from Alt-Tab too.
+# Capture asks the game for the picture (F2) instead of reading the window.
+# `-Hide` parks the window off the desktop and restyles it WS_EX_TOOLWINDOW, so
+# it is gone from the screen, the taskbar and Alt-Tab — and a parked window is
+# exactly the case the compositor will not photograph. Both ShowWindow(SW_HIDE)
+# and an off-desktop park stop the surface updating: PrintWindow keeps returning
+# the last frame that was presented while the window was on screen, which is a
+# lie that looks like a screenshot. Measured: with fullbright on, on-screen 97%
+# lit, parked 48% — the same frame from before the toggle.
 #
-# ShowWindow(SW_HIDE) was tried and does not work here. A hidden window loses
-# its DWM surface, Minecraft stops swapping frames into it, and PrintWindow
-# comes back with a flat white plate that survives any settle delay.
+# Minecraft renders whether or not anyone can see the result, so its own
+# screenshot key writes the true current frame no matter where the window is,
+# with no chrome and no DPI arithmetic. The cost is focus: GLFW only takes real
+# input, so the window is brought forward for the moment the key goes in and
+# whatever had focus gets it straight back.
 #
-# The process must be per-monitor DPI aware before it asks for a window rect.
-# Minecraft's window is, powershell.exe is not: on a 125% display an unaware
-# caller is handed 698x422 for an 870x527 window, and PrintWindow then draws
-# real pixels into that undersized bitmap — which crops the right and bottom
-# edges rather than scaling them.
+# `-PrintWindow` keeps the old path for the one thing F2 cannot show — the
+# window frame itself. Anything it returns while the window is hidden is stale.
 #
 #   powershell -ExecutionPolicy Bypass -File scripts/shot-game.ps1 -Out hud.png -Hide
 
@@ -32,6 +35,13 @@ param(
   [switch]$Park,
   [switch]$HideOnly,
   [switch]$List,
+  [switch]$PrintWindow,
+  # Windows virtual key codes to send before capturing, e.g. 161 for right
+  # shift — NOT GLFW codes, which only coincide for the letter keys (GLFW right
+  # shift is 344, VK_RSHIFT is 161). PostMessage was tried first and GLFW
+  # ignores it: with the mod logging every fullbright toggle, a posted VK_B
+  # produced no line at all.
+  [int[]]$SendKey = @(),
   [int]$SettleMs = 700
 )
 
@@ -65,12 +75,18 @@ public class GameWin {
   [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
   [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
+  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
+  [DllImport("user32.dll")] public static extern uint MapVirtualKey(uint code, uint mapType);
+  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
   [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);
   [DllImport("user32.dll", EntryPoint="GetWindowLongPtrW")] public static extern IntPtr GetWindowLongPtr(IntPtr h, int idx);
   [DllImport("user32.dll", EntryPoint="SetWindowLongPtrW")] public static extern IntPtr SetWindowLongPtr(IntPtr h, int idx, IntPtr v);
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
   [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
 
+  public const uint WM_KEYDOWN = 0x0100, WM_KEYUP = 0x0101;
   public const uint SWP_NOSIZE = 0x0001, SWP_NOZORDER = 0x0004, SWP_NOACTIVATE = 0x0010, SWP_FRAMECHANGED = 0x0020;
   public const uint PW_RENDERFULLCONTENT = 0x0002;
   public const int SW_HIDE = 0, SW_SHOWNA = 8;
@@ -144,6 +160,69 @@ if ($Hide -or $HideOnly) {
 }
 if ($Hide -or $HideOnly -or $Park) { Start-Sleep -Milliseconds $SettleMs }
 if ($HideOnly) { Write-Output ("HIDDEN pid={0} hwnd={1}" -f $ProcessId, $h); exit 0 }
+
+# The keys go in as real input, which means the window has to hold focus for the
+# moment it takes. It is parked off the desktop throughout, so nothing appears
+# on screen, and whatever had focus before gets it straight back.
+function Send-GameKeys([IntPtr]$hwnd, [int[]]$keys, [int]$holdMs = 70, [int]$gapMs = 450) {
+  $prev = [GameWin]::GetForegroundWindow()
+  [void][GameWin]::SetForegroundWindow($hwnd)
+  Start-Sleep -Milliseconds 350
+  foreach ($k in $keys) {
+    $scan = [byte][GameWin]::MapVirtualKey([uint32]$k, 0)
+    [GameWin]::keybd_event([byte]$k, $scan, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds $holdMs
+    [GameWin]::keybd_event([byte]$k, $scan, 2, [UIntPtr]::Zero)  # KEYEVENTF_KEYUP
+    Start-Sleep -Milliseconds $gapMs
+  }
+  if ($prev -ne [IntPtr]::Zero) { [void][GameWin]::SetForegroundWindow($prev) }
+  Start-Sleep -Milliseconds 250
+}
+
+if ($SendKey.Count -gt 0) {
+  Send-GameKeys $h $SendKey
+  $SendKey | ForEach-Object { Write-Output ("KEY {0}" -f $_) }
+}
+
+if (-not $PrintWindow) {
+  $cl = (Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId").CommandLine
+  $gameDir = if ($cl -match '--gameDir\s+"([^"]+)"') { $Matches[1] } elseif ($cl -match '--gameDir\s+(\S+)') { $Matches[1] } else { $null }
+  if (-not $gameDir) { Write-Error "no --gameDir on the client command line"; exit 8 }
+  $shots = Join-Path $gameDir "screenshots"
+
+  $before = @{}
+  if (Test-Path $shots) { Get-ChildItem $shots -Filter *.png | ForEach-Object { $before[$_.Name] = $true } }
+
+  Send-GameKeys $h @(113) 70 200   # VK_F2
+
+  # the png is written off the render thread, so wait for a file that has
+  # stopped growing rather than for one that merely exists
+  $fresh = $null
+  $deadline = (Get-Date).AddSeconds(8)
+  while (-not $fresh -and (Get-Date) -lt $deadline) {
+    if (Test-Path $shots) {
+      $cand = Get-ChildItem $shots -Filter *.png |
+        Where-Object { -not $before.ContainsKey($_.Name) } |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+      if ($cand) {
+        $size = $cand.Length
+        Start-Sleep -Milliseconds 200
+        $cand.Refresh()
+        if ($cand.Length -eq $size -and $size -gt 0) { $fresh = $cand }
+      }
+    }
+    if (-not $fresh) { Start-Sleep -Milliseconds 150 }
+  }
+  if (-not $fresh) { Write-Error "the game wrote no screenshot — is F2 still bound to Save Screenshot?"; exit 9 }
+
+  $path = [System.IO.Path]::GetFullPath($Out)
+  Move-Item -LiteralPath $fresh.FullName -Destination $path -Force
+  $img = [System.Drawing.Image]::FromFile($path)
+  $dims = "{0}x{1}" -f $img.Width, $img.Height
+  $img.Dispose()
+  Write-Output ("SHOT {0} {1} (game)" -f $path, $dims)
+  exit 0
+}
 
 $r = New-Object GameWin+RECT
 if (-not [GameWin]::GetWindowRect($h, [ref]$r)) { Write-Error "GetWindowRect failed"; exit 4 }
