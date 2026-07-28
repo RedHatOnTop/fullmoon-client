@@ -245,6 +245,7 @@ Feather/Lunar급으로 **의도적으로 디자인된, 눈에 띄게 구별되�
 | M3 | **Launch** — 우리 런처가 진짜 MC 창을 띄운다 (auth 주입)            | **MC 창 뜸. 스크린샷.** ← 핵심 증명      | done |
 | M4 | Mods + Pinion HUD 첫 컷(FPS/coords/keystrokes) 인게임               | 인게임 HUD 렌더 스샷                     | done |
 | M5 | Cosmetics + 폴리시 + rebrand 테스트                                | cape 본인 렌더 + 리네임 1회 동작         | done |
+| M6 | 배포 산출물 — 릴리스 빌드 + NSIS 인스톨러 + 클린 첫 실행           | 설치된 exe가 계정 없는 상태에서 뜬다     | wip  |
 
 M4 = 로컬 26.1.2 서버에 quick play로 접속한 실게임에서 FPS·CPS·XYZ·PING·키스트로크가
 전부 렌더된 스샷. 인게임 모드설정 GUI·zoom·fullbright(§7 v1 잔여)는 M5로 넘어간다.
@@ -262,6 +263,13 @@ M5 증거 (전부 실행 후 확인, 로컬 26.1.2 서버):
   잡아냈다.
 - 촬영 리그는 게임 자체 F2를 쓴다. 창을 화면 밖으로 파킹하면 DWM이 리다이렉션 표면 갱신을
   멈춰 `PrintWindow`가 옛 프레임을 돌려준다(측정: 켠 뒤 온스크린 97% vs 파킹 48%).
+
+M6 착수 상태:
+- 개발 내내 `cargo build` + 수동 vite였고 tauri CLI가 없어 인스톨러를 만들 수 없었다.
+  `@tauri-apps/cli`를 devDependency로 넣고 `npm run bundle`로 nsis 타깃을 돈다.
+- `brand.json.msClientId`가 비어 있어 클린 머신에서 device-code/브라우저 로그인은
+  Azure 앱 등록 전까지 `no Microsoft application id is configured`로 막힌다.
+  공식 런처 계정 import와 오프라인 프로필은 영향 없음.
 
 UI 바이크오프(UI-A/UI-B)는 **스코프 + Lunar/Feather 레퍼런스만** 주고 무제약 병렬 →
 품질로 겨뤄 승자/융합본을 M3 이후 core 계약에 어댑트·배선.
