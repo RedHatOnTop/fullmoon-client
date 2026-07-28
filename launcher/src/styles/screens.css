@@ -844,6 +844,15 @@
   font-size: var(--text-caption);
   color: var(--text-3);
 }
+.cos-stage-drag {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-3);
+  opacity: 0.75;
+}
 .cos-stage-anim { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); }
 
 .cos-catalog { min-width: 0; }

@@ -49,7 +49,7 @@ impl Progress {
     }
 }
 
-async fn sha1_of(path: &Path) -> Option<String> {
+pub async fn sha1_of(path: &Path) -> Option<String> {
     let bytes = tokio::fs::read(path).await.ok()?;
     let mut h = Sha1::new();
     h.update(&bytes);

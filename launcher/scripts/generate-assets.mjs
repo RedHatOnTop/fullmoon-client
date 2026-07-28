@@ -122,45 +122,131 @@ const hsl = (h, s, l) => {
   s.save(join(pub, "skins", "blackcow.png"));
 }
 
-/* ───────── capes: one per cape-slot cosmetic (ids match mockCore catalog) ───────── */
-const capes = [
-  ["aero-cape", 214], ["ember-cape", 22], ["void-cape", 272],
-  ["mint-cape", 152], ["regal-cape", 46],
+/* ───────── capes: one per cape-slot cosmetic (ids match the catalogue) ─────────
+   Each cape draws its own motif. The catalogue promises a feather, an ember
+   embroidery, a starfield and a gold crest; five recolours of one diamond would
+   make every line of that copy a lie. The visible panel is the 10x16 at (1,1);
+   the rest of the 23x17 block only has to be covered so no face renders
+   transparent. */
+const mix = (a, b, t) => [
+  Math.round(a[0] * (1 - t) + b[0] * t),
+  Math.round(a[1] * (1 - t) + b[1] * t),
+  Math.round(a[2] * (1 - t) + b[2] * t),
+  255,
 ];
-for (const [id, hue] of capes) {
-  const c = mk(64, 32);
-  const base = hsl(hue, 68, 52);
-  const dark = hsl(hue, 62, 34);
-  const light = hsl(hue, 78, 68);
-  const trim = id === "regal-cape" ? [242, 210, 120, 255] : light; // gold trim on the ceremonial cape
 
-  // cover every cape face region
-  c.rect(0, 0, 23, 17, base);
-  // front (1,1,10,16): vertical shade + emblem
-  for (let y = 1; y < 17; y++) {
-    const t = (y - 1) / 15;
-    const col = [
-      Math.round(base[0] * (1 - t) + dark[0] * t),
-      Math.round(base[1] * (1 - t) + dark[1] * t),
-      Math.round(base[2] * (1 - t) + dark[2] * t),
-      255,
+const capes = {
+  "aero-cape": (p, { base, dark, light, pale }) => {
+    for (let v = 0; v < 16; v++) p.row(v, mix(base, dark, v / 15));
+    p.border(mix(light, base, 0.35));
+    /* one flight feather. The vane is a silhouette, not a stack of diagonals —
+       at ten pixels wide, drawn barbs merge into a blob; notching the edge is
+       what makes it read as a feather. */
+    const vane = (v) => (v <= 3 ? 1 : v <= 6 ? 2 : v <= 10 ? 3 : v <= 12 ? 2 : 1);
+    for (let v = 2; v < 14; v++) {
+      const w = vane(v);
+      for (let k = 1; k <= w; k++) {
+        const shade = mix(light, base, 0.1 + k * 0.14);
+        p.px(4 - k, v, shade);
+        p.px(4 + k, v, shade);
+      }
+      if (v % 3 === 0 && w > 1) {
+        p.px(4 - w, v, mix(base, dark, 0.5));
+        p.px(4 + w, v, mix(base, dark, 0.5));
+      }
+    }
+    for (let v = 2; v < 14; v++) p.px(4, v, v > 11 ? mix(pale, light, 0.5) : pale);
+  },
+
+  "ember-cape": (p, { base, dark, light, pale }) => {
+    // charcoal at the shoulders, live coals at the hem
+    for (let v = 0; v < 16; v++) p.row(v, mix(mix(dark, [26, 18, 16, 255], 0.55), base, v / 15));
+    p.border(mix(dark, base, 0.5));
+    const sparks = [
+      [2, 3], [6, 2], [4, 5], [7, 6], [1, 7], [5, 8], [8, 9], [3, 9],
+      [6, 11], [2, 11], [7, 13], [4, 12], [1, 13], [5, 14],
     ];
-    c.rect(1, y, 10, 1, col);
-  }
-  // trim border on front
-  c.rect(1, 1, 10, 1, trim);
-  c.rect(1, 1, 1, 16, trim);
-  c.rect(10, 1, 1, 16, trim);
-  c.rect(1, 16, 10, 1, dark);
-  // emblem diamond (feather-ish)
-  const ex = 5, ey = 8;
-  c.set(ex + 1, ey - 2, light);
-  c.rect(ex, ey - 1, 3, 1, light);
-  c.rect(ex - 1, ey, 5, 1, light);
-  c.rect(ex, ey + 1, 3, 1, light);
-  c.set(ex + 1, ey + 2, light);
-  c.set(ex + 1, ey, trim);
+    for (const [u, v] of sparks) {
+      p.px(u, v, v > 8 ? pale : light);
+      if (v > 10) p.px(u, v - 1, mix(light, base, 0.6)); // the ones near the fire trail
+    }
+  },
+
+  "void-cape": (p, { base, dark, light, pale }) => {
+    // sinks past black rather than to it, so the hem keeps a trace of hue
+    const deep = mix(dark, [8, 6, 14, 255], 0.8);
+    for (let v = 0; v < 16; v++) p.row(v, mix(mix(base, light, 0.2), deep, (v / 15) ** 0.75));
+    p.border(mix(deep, base, 0.35));
+    const stars = [
+      [2, 1, 1], [6, 2, 0], [8, 1, 1], [4, 3, 0], [1, 4, 1], [7, 5, 0],
+      [3, 6, 0], [5, 7, 1], [8, 8, 0], [2, 9, 0], [6, 10, 0], [4, 12, 0],
+    ];
+    for (const [u, v, bright] of stars) p.px(u, v, bright ? pale : mix(pale, base, 0.55));
+  },
+
+  "mint-cape": (p, { base, dark, light }) => {
+    // the quiet one: flat colour, one seam, a hem. Restraint is the design.
+    p.fill(base);
+    p.border(mix(base, light, 0.4));
+    for (let v = 1; v < 15; v++) p.px(7, v, mix(base, light, 0.55));
+    p.row(14, mix(base, dark, 0.45));
+    p.row(15, mix(base, dark, 0.7));
+  },
+
+  "regal-cape": (p) => {
+    /* the catalogue sells the gold thread, so the cloth has to be dark enough
+       for gold to be thread and not just more cloth */
+    const cloth = hsl(46, 34, 17);
+    const clothLo = hsl(46, 30, 11);
+    const gold = [242, 210, 120, 255];
+    const goldDk = [178, 142, 62, 255];
+    for (let v = 0; v < 16; v++) p.row(v, mix(cloth, clothLo, v / 15));
+    for (let v = 1; v < 15; v++)
+      for (let u = 0; u < 10; u++)
+        if ((u + v) % 4 === 0) p.px(u, v, mix(cloth, goldDk, 0.3));
+    p.border(gold);
+    p.row(15, goldDk);
+    const crest = [
+      [4, 5], [5, 5],
+      [3, 6], [4, 6], [5, 6], [6, 6],
+      [2, 7], [7, 7],
+      [3, 8], [4, 8], [5, 8], [6, 8],
+      [4, 9], [5, 9],
+      [4, 10], [5, 10],
+    ];
+    for (const [u, v] of crest) p.px(u, v, gold);
+    p.px(4, 7, goldDk);
+    p.px(5, 7, goldDk);
+  },
+};
+
+const CAPE_HUE = {
+  "aero-cape": 214, "ember-cape": 22, "void-cape": 272, "mint-cape": 152, "regal-cape": 46,
+};
+
+for (const [id, draw] of Object.entries(capes)) {
+  const c = mk(64, 32);
+  const hue = CAPE_HUE[id];
+  const palette = {
+    base: hsl(hue, 68, 52),
+    dark: hsl(hue, 62, 30),
+    light: hsl(hue, 78, 68),
+    pale: hsl(hue, 90, 86),
+  };
+  c.rect(0, 0, 23, 17, palette.base);
+
+  const p = {
+    px: (u, v, col) => c.set(1 + u, 1 + v, col),
+    row: (v, col) => c.rect(1, 1 + v, 10, 1, col),
+    fill: (col) => c.rect(1, 1, 10, 16, col),
+    border: (col) => {
+      c.rect(1, 1, 10, 1, col);
+      c.rect(1, 1, 1, 16, col);
+      c.rect(10, 1, 1, 16, col);
+    },
+  };
+  draw(p, palette);
   c.save(join(pub, "capes", `${id}.png`));
 }
 
-console.log("assets: skins/blackcow.png + 5 capes");
+console.log(`assets: skins/blackcow.png + ${Object.keys(capes).length} capes`);

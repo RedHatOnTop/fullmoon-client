@@ -621,6 +621,19 @@ async fn start_game(
     cosmetics::materialize(&instance_id, &account.uuid).await?;
 
     let settings = state.settings.lock().await.clone();
+
+    /* Our own mod ships inside the launcher, so updating the launcher has to
+       update the copy in the instance. Placing it only at install time left an
+       instance pinned to whichever build it was created with. */
+    mods::apply(
+        &state.http,
+        &paths::resources(&app),
+        &instance_id,
+        &inst.version_id,
+        &inst.loader,
+        settings.concurrency as usize,
+    )
+    .await?;
     let version: crate::version::VersionJson = {
         let file = install::resolved_file(&instance_id);
         let bytes = tokio::fs::read(&file).await.map_err(|_| {

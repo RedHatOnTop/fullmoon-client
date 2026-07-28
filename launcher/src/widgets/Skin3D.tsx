@@ -8,6 +8,8 @@ type Props = {
   height?: number;
   walk?: boolean;
   rotate?: boolean;
+  /** initial y rotation, radians. PI shows the player's back — where capes are. */
+  angle?: number;
   zoom?: number;
 };
 
@@ -18,6 +20,7 @@ export default function Skin3D({
   height = 380,
   walk = false,
   rotate = true,
+  angle = 0,
   zoom = 0.82,
 }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -28,6 +31,7 @@ export default function Skin3D({
     const v = new SkinViewer({ canvas: canvas.current, width, height, skin });
     v.autoRotate = rotate;
     v.autoRotateSpeed = 0.55;
+    v.playerWrapper.rotation.y = angle;
     v.zoom = zoom;
     v.fov = 42;
     v.animation = walk ? new WalkingAnimation() : new IdleAnimation();

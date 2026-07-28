@@ -315,11 +315,14 @@ async fn sync(
         }
     }
 
+    /* Compared by content, not by length: our own mod keeps its file name and
+       usually its size across builds, so a length check left every instance
+       running whichever jar it happened to install first. */
     for (from, to) in copies {
-        if let Ok(meta) = tokio::fs::metadata(&to).await {
-            if meta.len() == tokio::fs::metadata(&from).await?.len() {
-                continue;
-            }
+        if tokio::fs::metadata(&to).await.is_ok()
+            && download::sha1_of(&to).await == download::sha1_of(&from).await
+        {
+            continue;
         }
         tokio::fs::copy(&from, &to).await?;
     }

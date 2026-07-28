@@ -223,6 +223,7 @@ const en: Dict = {
     notYet: "Not in game yet",
     notYetTitle: "{slot} does not reach the game yet",
     notYetHint: "Only capes have in-game rendering. The rest are catalogue only.",
+    dragHint: "drag to turn",
     notYetToast: "{slot} is not rendered in game yet",
   },
   settings: {

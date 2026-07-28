@@ -92,10 +92,14 @@ export function CosmeticsScreen() {
           {/* preview stage — the real skinview3d viewer, same one the HUD ships */}
           <div className="cos-stage card">
             <div className="cos-figure">
+              {/* three-quarters from behind: a cape stage that spins the cape
+                  out of view half the time is a stage that shows nothing */}
               <Skin3D
                 skin={activeAccount.skinUrl ?? "/skins/blackcow.png"}
                 cape={equippedCape?.capeUrl ?? null}
                 walk={walk}
+                rotate={false}
+                angle={Math.PI * 0.86}
                 width={246}
                 height={344}
                 zoom={0.95}
@@ -111,6 +115,7 @@ export function CosmeticsScreen() {
                 onChange={(v) => setWalk(v === "walk")}
               />
             </div>
+            <span className="cos-stage-drag mono">{t("cosmetics.dragHint")}</span>
             <span className="cos-stage-label mono">client-side render</span>
           </div>
         </section>
