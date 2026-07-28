@@ -38,7 +38,7 @@
 
 /* ═══ Home ═══ */
 
-.home { display: flex; flex-direction: column; gap: 28px; padding: 24px 0 8px; }
+.home { display: flex; flex-direction: column; gap: 28px; padding: 24px 0 96px; }
 
 /* hero banner — launch-forward, the way a client opens. One dusk wash
    behind the art: it exists to sit the island in a sky, and it is the

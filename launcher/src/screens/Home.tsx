@@ -19,7 +19,7 @@ const TAG_TONE: Record<string, "accent" | "ok" | "warn" | "err" | "info" | "dim"
 export function HomeScreen() {
   const {
     news, servers, serverStatus, pingingServers, refreshServers, addServer,
-    versions, settings, modCatalog, cosmetics, loadout,
+    versions, settings, modCatalog, cosmetics, loadout, javaRuntimes,
     activeAccount, instances, selectedInstance, launch, removeServer, toast, setScreen,
   } = useStore();
   const { t } = useT();
@@ -28,7 +28,12 @@ export function HomeScreen() {
   const target = useMemo(() => versions.find((v) => v.isTarget), [versions]);
   const installedAny = instances.some((i) => i.installed);
   const memGb = selectedInstance ? Math.round(selectedInstance.memoryMb / 1024) : null;
-  const javaLabel = settings?.javaPath?.split("\\").pop() ?? "—";
+  /* the version is the fact worth a row here — every runtime on the box is
+     called java.exe, so the file name told the user nothing */
+  const javaLabel =
+    javaRuntimes.find((j) => j.path === settings?.javaPath)?.version ??
+    settings?.javaPath?.split("\\").pop() ??
+    "—";
 
   const cape = useMemo(() => {
     const id = loadout?.cape;
