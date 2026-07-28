@@ -264,6 +264,17 @@ M5 증거 (전부 실행 후 확인, 로컬 26.1.2 서버):
 - 촬영 리그는 게임 자체 F2를 쓴다. 창을 화면 밖으로 파킹하면 DWM이 리다이렉션 표면 갱신을
   멈춰 `PrintWindow`가 옛 프레임을 돌려준다(측정: 켠 뒤 온스크린 97% vs 파킹 48%).
 
+M6 증거 (2026-07-28, 전부 실행 후 확인):
+- `npm run bundle` EXIT=0, 14m47s → `target/release/pinion.exe` 13.4 MB +
+  `bundle/nsis/Pinion_1.0.0_x64-setup.exe` 3.5 MB.
+- 무인 설치 `/S` exit 0 → `%LOCALAPPDATA%\Pinion\`에 exe + uninstall.exe +
+  `resources\mods\pinion-hud.jar`(번들 모드가 인스톨러에 실제로 들어간다).
+  제어판 항목 등록됨(DisplayName Pinion, DisplayVersion 1.0.0, UninstallString).
+- 클린 첫 실행 = `PINION_DATA_ROOT`를 빈 디렉터리로 지정하고 설치본 실행. 계정 0·인스턴스 0
+  상태로 렌더(우상단·독 CTA가 전부 "계정 추가"), 루트에 `settings.json`과 라이브
+  `version_manifest_v2.json`(272 KB)이 생성 = 네트워크까지 산 채로 동작.
+  `dirs`는 Known Folder API를 쓰므로 `%APPDATA%` 오버라이드로는 이 테스트가 불가능하다.
+
 M6 착수 상태:
 - 개발 내내 `cargo build` + 수동 vite였고 tauri CLI가 없어 인스톨러를 만들 수 없었다.
   `@tauri-apps/cli`를 devDependency로 넣고 `npm run bundle`로 nsis 타깃을 돈다.

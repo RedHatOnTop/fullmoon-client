@@ -42,6 +42,7 @@ field("productName", brand.name);
 field("identifier", brand.appId);
 field("mainBinaryName", brand.bin);
 field("title", brand.name);
+field("publisher", brand.name);
 writeFileSync(confPath, conf);
 
 // ── Cargo.toml ─────────────────────────────────────────────────

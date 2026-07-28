@@ -7,16 +7,24 @@ pub const BRAND_NAME: &str = env!("PINION_NAME");
 pub const BRAND_SLUG: &str = env!("PINION_SLUG");
 
 /// `%APPDATA%/Pinion` on Windows, `~/.local/share/pinion` elsewhere.
+///
+/// `<SLUG>_DATA_ROOT` moves the whole tree. `dirs` asks Windows for the known
+/// folder rather than reading `%APPDATA%`, so pointing the environment at a
+/// scratch profile is otherwise impossible — which is what testing an install
+/// the way a new machine meets it needs.
 pub fn root() -> PathBuf {
+    if let Ok(over) = std::env::var(format!("{}_DATA_ROOT", BRAND_SLUG.to_uppercase())) {
+        if !over.trim().is_empty() {
+            return PathBuf::from(over.trim());
+        }
+    }
     let base = if cfg!(windows) {
         dirs::data_dir()
     } else {
         dirs::data_local_dir()
     };
-    let dir = base
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(if cfg!(windows) { BRAND_NAME } else { BRAND_SLUG });
-    dir
+    base.unwrap_or_else(|| PathBuf::from("."))
+        .join(if cfg!(windows) { BRAND_NAME } else { BRAND_SLUG })
 }
 
 pub fn settings_file() -> PathBuf {
