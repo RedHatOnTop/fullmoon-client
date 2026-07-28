@@ -10,7 +10,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "verify": "node scripts/verify.mjs",
     "assets": "node scripts/generate-assets.mjs",
-    "rebrand": "node scripts/rebrand.mjs"
+    "rebrand": "node scripts/rebrand.mjs",
+    "bundle": "tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
@@ -22,6 +23,7 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/three": "^0.185.0",
