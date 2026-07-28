@@ -92,6 +92,8 @@ interface Store {
 
   /** detected once at boot, shared by the settings picker and the summary strip */
   javaRuntimes: JavaRuntime[];
+  /** physical RAM in MB, 0 when unknown — the memory slider's ceiling */
+  systemMemoryMb: number;
   scanningJava: boolean;
   rescanJava: () => Promise<void>;
 
@@ -189,6 +191,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loadout, setLoadout] = useState<Loadout | null>(null);
   const [javaRuntimes, setJavaRuntimes] = useState<JavaRuntime[]>([]);
+  const [systemMemoryMb, setSystemMemoryMb] = useState(0);
   const [scanningJava, setScanningJava] = useState(false);
   const [downloads, setDownloads] = useState<DownloadInfo[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -263,6 +266,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* probing every JDK on the box takes a second — never hold up the boot */
       core.java_detect().then(
         (rs) => alive && setJavaRuntimes(rs),
+        () => {},
+      );
+      core.system_memory_mb().then(
+        (mb) => alive && setSystemMemoryMb(mb),
         () => {},
       );
       /* same for the servers: a dead host costs a five second timeout */
@@ -572,7 +579,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     createInstance, deleteInstance, installInstance,
     modCatalog, cosmetics,
     settings, patchSettings,
-    javaRuntimes, scanningJava, rescanJava,
+    javaRuntimes, systemMemoryMb, scanningJava, rescanJava,
     news, servers, serverStatus, pingingServers, refreshServers, addServer, removeServer,
     game, logs, launch, killGame, clearLogs,
     loadout, equip,

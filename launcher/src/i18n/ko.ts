@@ -252,6 +252,8 @@ const ko = {
     javaArgs: "JVM 인수",
     memory: "최대 메모리",
     memoryDesc: "26.1.2 + Sodium 권장: 4–8 GB. 과도한 할당은 오히려 GC 스파이크를 유발합니다.",
+    memoryTotal: "이 PC 물리 메모리 {gb} GB",
+    memoryOver: "절반 이상을 JVM에 넘기면 OS와 런처가 스왑을 탑니다",
     concurrency: "다운로드 동시성",
     concurrencyDesc: "에셋 병렬 다운로드 수",
     theme: "테마",

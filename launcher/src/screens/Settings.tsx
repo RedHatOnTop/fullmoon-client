@@ -99,7 +99,8 @@ function JavaSection() {
 }
 
 export function SettingsScreen() {
-  const { settings, patchSettings, selectedInstance, toast, settingsTab, versions } = useStore();
+  const { settings, patchSettings, selectedInstance, toast, settingsTab, versions, systemMemoryMb } =
+    useStore();
   const target = versions.find((v) => v.isTarget);
   const { t, setLang } = useT();
   const [tab, setTab] = useState<SettingsTab>(settingsTab ?? "java");
@@ -154,6 +155,16 @@ export function SettingsScreen() {
                   format={(v) => `${v / 1024}G`}
                 />
                 <p className="set-hint">{t("settings.memoryDesc")}</p>
+                {/* a JVM handed most of the machine leaves nothing for the OS or
+                    the launcher itself, and the slider used to run to 16G on a
+                    16 GB box without saying so */}
+                {systemMemoryMb > 0 && (
+                  <p className={`mem-note ${settings.memoryMb > systemMemoryMb * 0.6 ? "warn" : ""}`}>
+                    <Icon name="info" size={13} />
+                    {t("settings.memoryTotal", { gb: (systemMemoryMb / 1024).toFixed(1) })}
+                    {settings.memoryMb > systemMemoryMb * 0.6 && ` · ${t("settings.memoryOver")}`}
+                  </p>
+                )}
               </div>
               <div className="field">
                 <label className="field-label">

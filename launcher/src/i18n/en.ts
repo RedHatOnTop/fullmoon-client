@@ -254,6 +254,8 @@ const en: Dict = {
     javaArgs: "JVM arguments",
     memory: "Max memory",
     memoryDesc: "Recommended for 26.1.2 + Sodium: 4–8 GB. Over-allocating causes GC spikes.",
+    memoryTotal: "This machine has {gb} GB",
+    memoryOver: "handing over half the box makes the OS and the launcher swap",
     concurrency: "Download concurrency",
     concurrencyDesc: "Parallel asset downloads",
     theme: "Theme",

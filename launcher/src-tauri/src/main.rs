@@ -40,6 +40,7 @@ fn main() {
             commands::settings_get,
             commands::settings_set,
             commands::java_detect,
+            commands::system_memory_mb,
             commands::versions_manifest,
             commands::instances_list,
             commands::instance_create,

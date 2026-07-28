@@ -119,6 +119,7 @@ export class TauriCore implements PinionCore {
   settings_get = () => this.call<Settings>("settings_get");
   settings_set = (patch: Partial<Settings>) => this.call<Settings>("settings_set", { patch });
   java_detect = () => this.call<JavaRuntime[]>("java_detect");
+  system_memory_mb = () => this.call<number>("system_memory_mb");
 
   // home
   news_feed = () => this.call<NewsItem[]>("news_feed");

@@ -800,6 +800,10 @@ export class MockCore implements PinionCore {
     return JAVA_RUNTIMES.map((j) => ({ ...j }));
   }
 
+  async system_memory_mb(): Promise<number> {
+    return 16384; // a plausible laptop, so the slider's ceiling copy has something to say
+  }
+
   /* ── home ── */
 
   async news_feed(): Promise<NewsItem[]> {

@@ -284,6 +284,8 @@ export interface PinionCore {
   settings_get(): Promise<Settings>;
   settings_set(patch: Partial<Settings>): Promise<Settings>;
   java_detect(): Promise<JavaRuntime[]>;
+  /** physical RAM in MB; 0 when the platform will not say */
+  system_memory_mb(): Promise<number>;
 
   // home
   news_feed(): Promise<NewsItem[]>;

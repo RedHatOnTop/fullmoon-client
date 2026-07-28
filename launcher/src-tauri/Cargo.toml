@@ -31,6 +31,10 @@ uuid = { version = "1", features = ["v3", "v4", "md5", "serde"] }
 time = { version = "0.3", features = ["formatting", "parsing", "serde"] }
 dirs = "5"
 
+[target.'cfg(windows)'.dependencies]
+# GlobalMemoryStatusEx — the memory slider has to know what the box actually has
+windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_System_SystemInformation"] }
+
 [features]
 # keeps `cargo build` honest about tauri's custom-protocol split
 custom-protocol = ["tauri/custom-protocol"]

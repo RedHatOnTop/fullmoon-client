@@ -74,6 +74,25 @@ pub async fn java_detect() -> Result<Vec<JavaRuntime>> {
     java::detect().await
 }
 
+/// Physical RAM in MB, 0 when the platform will not say. The memory slider
+/// otherwise happily offers a machine's entire RAM to one JVM.
+#[tauri::command]
+pub async fn system_memory_mb() -> Result<u64> {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+        let mut st = MEMORYSTATUSEX {
+            dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32,
+            ..unsafe { std::mem::zeroed() }
+        };
+        // SAFETY: dwLength is set to the struct's own size, as the API requires
+        if unsafe { GlobalMemoryStatusEx(&mut st) } != 0 {
+            return Ok(st.ullTotalPhys / (1024 * 1024));
+        }
+    }
+    Ok(0)
+}
+
 // ── versions / instances ──────────────────────────────────────
 
 #[tauri::command]

@@ -1260,6 +1260,16 @@
 .pledge-foot svg { margin-top: 1px; flex: none; }
 
 .java-list { display: flex; flex-direction: column; gap: 8px; }
+.mem-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: var(--text-caption);
+  color: var(--text-3);
+}
+.mem-note.warn { color: var(--danger); }
+
 .java-req {
   display: flex;
   align-items: center;
