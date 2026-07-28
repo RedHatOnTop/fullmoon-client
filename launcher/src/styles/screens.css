@@ -1322,14 +1322,19 @@
 .about-name { font-family: var(--font-display); font-size: var(--text-display-sm); font-weight: 600; letter-spacing: var(--ls-snug); }
 .about-tagline { font-family: var(--font-display); color: var(--text-2); }
 .about-rows { display: flex; flex-direction: column; gap: 0; width: 100%; max-width: 380px; }
-.about-rows li {
+/* rows are divs, not list items — the li selector this once carried matched
+   nothing, which is why label and value sat jammed together */
+.about-rows > div {
   display: flex;
   justify-content: space-between;
+  gap: 16px;
   padding: 8px 0;
   border-top: 1px solid var(--line);
   font-size: var(--text-small);
   color: var(--text-2);
 }
+.about-rows > div:last-child { border-bottom: 1px solid var(--line); }
+.about-rows b { color: var(--text); }
 
 /* ═══ Console ═══ */
 

@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import brand from "../brand.json";
+import pkg from "./package.json";
 
 // brand.json is the single source of the product name (PLAN §0).
 // It is injected at build time as __BRAND__ and also imported at runtime.
@@ -16,6 +17,7 @@ export default defineConfig({
   ],
   define: {
     __BRAND__: JSON.stringify(brand),
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   server: {
     port: 5173,

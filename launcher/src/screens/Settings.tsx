@@ -2,9 +2,15 @@ import { useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, Button, Segmented, Slider, Toggle } from "../components/ui";
 import { HudEditor } from "../widgets/HudEditor";
+import { isRealCore } from "../core/client";
 import { useStore, type SettingsTab } from "../state/store";
 import { useT } from "../i18n";
 import brand from "../brand";
+
+/* injected by vite from package.json — the About tab used to carry a literal
+   that nobody remembers to bump */
+declare const __APP_VERSION__: string;
+const APP_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
 
 const ACCENTS = ["#B0481A", "#0E6B57", "#3E5C72", "#4A6B3E", "#75570D", "#9E2F24"];
 
@@ -93,7 +99,8 @@ function JavaSection() {
 }
 
 export function SettingsScreen() {
-  const { settings, patchSettings, selectedInstance, toast, settingsTab } = useStore();
+  const { settings, patchSettings, selectedInstance, toast, settingsTab, versions } = useStore();
+  const target = versions.find((v) => v.isTarget);
   const { t, setLang } = useT();
   const [tab, setTab] = useState<SettingsTab>(settingsTab ?? "java");
 
@@ -277,14 +284,19 @@ export function SettingsScreen() {
                   <Icon name="gamepad" size={30} />
                 </span>
               </div>
-              <h3 className="about-name">PINION</h3>
+              <h3 className="about-name">{brand.name.toUpperCase()}</h3>
               <p className="about-tagline">{brand.tagline}</p>
               <div className="about-rows">
-                <div><span>{t("settings.version")}</span><b className="num">1.0.0</b></div>
-                <div><span>{t("settings.build")}</span><b className="mono">ui-standalone / vite</b></div>
-                <div><span>MC</span><b className="num">26.1.2</b></div>
+                <div><span>{t("settings.version")}</span><b className="num">{APP_VERSION}</b></div>
+                <div>
+                  <span>{t("settings.build")}</span>
+                  <b className="mono">{isRealCore ? "rust core / tauri" : "ui-standalone / vite"}</b>
+                </div>
+                <div><span>MC</span><b className="num">{target?.id ?? "…"}</b></div>
               </div>
-              <p className="set-hint">{t("settings.aboutMock")}</p>
+              {/* the shell decides which core answers, so this line has to ask
+                  rather than assert — it claimed mock while the rust core was live */}
+              {!isRealCore && <p className="set-hint">{t("settings.aboutMock")}</p>}
             </section>
           )}
         </div>
