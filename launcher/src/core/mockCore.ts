@@ -747,6 +747,10 @@ export class MockCore implements PinionCore {
     return { ...this.game };
   }
 
+  async game_log(): Promise<{ sessionId: string; level: LogLevel; line: string }[]> {
+    return [];
+  }
+
   /* ── cosmetics / hud ── */
 
   async cosmetics_catalog(): Promise<Cosmetic[]> {

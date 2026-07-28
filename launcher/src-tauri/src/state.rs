@@ -1,10 +1,13 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::Arc,
+};
 
 use tokio::sync::{oneshot, Mutex};
 
 use crate::{
     auth::DeviceFlow,
-    model::{Account, GameState, GameStateValue, Instance, Settings},
+    model::{Account, GameState, GameStateValue, Instance, LogEvent, Settings},
     paths, store,
 };
 
@@ -18,6 +21,10 @@ pub struct AppState {
     pub device_flows: Mutex<HashMap<String, DeviceFlow>>,
     /// Shared with the process watcher, which updates it from its own task.
     pub game: Arc<Mutex<GameState>>,
+    /// What the game has said so far. Events alone are not enough: a console
+    /// opened after launch would be blank until the game happened to speak,
+    /// and a running client can stay quiet for minutes.
+    pub log: Arc<Mutex<VecDeque<LogEvent>>>,
     /// Dropping this sender is harmless; sending on it kills the game.
     pub kill: Mutex<Option<oneshot::Sender<()>>>,
 }
@@ -54,6 +61,7 @@ impl AppState {
                 started_at: None,
                 exit_code: None,
             })),
+            log: Arc::new(Mutex::new(VecDeque::new())),
             kill: Mutex::new(None),
         }
     }

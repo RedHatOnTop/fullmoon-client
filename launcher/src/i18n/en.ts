@@ -289,6 +289,8 @@ const en: Dict = {
     killConfirm: "Terminates the game process.",
     autoscroll: "Auto-scroll",
     filter: "Filter logs…",
+    quiet: "no output yet",
+    noMatch: "nothing matches the filter",
     copyAll: "Copy all",
     relaunch: "Relaunch",
     session: "Session",

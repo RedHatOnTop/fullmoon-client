@@ -287,6 +287,8 @@ const ko = {
     killConfirm: "게임 프로세스를 종료합니다.",
     autoscroll: "자동 스크롤",
     filter: "로그 필터…",
+    quiet: "아직 출력이 없습니다",
+    noMatch: "필터에 걸리는 줄이 없습니다",
     copyAll: "전체 복사",
     relaunch: "다시 실행",
     session: "세션",

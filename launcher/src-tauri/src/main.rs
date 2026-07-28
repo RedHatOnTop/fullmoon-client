@@ -73,6 +73,7 @@ fn main() {
             commands::launch_quickplay,
             commands::game_kill,
             commands::game_status,
+            commands::game_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Pinion");

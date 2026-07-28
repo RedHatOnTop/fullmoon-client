@@ -270,6 +270,8 @@ export interface PinionCore {
   launch_quickplay(instanceId: string, server: string): Promise<string>;
   game_kill(sessionId: string): Promise<void>;
   game_status(): Promise<GameState>;
+  /** What the current run has already printed, for a console that opens late. */
+  game_log(): Promise<{ sessionId: string; level: LogLevel; line: string }[]>;
 
   // cosmetics / hud
   cosmetics_catalog(): Promise<Cosmetic[]>;

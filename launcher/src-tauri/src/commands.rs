@@ -670,9 +670,13 @@ async fn start_game(
         };
     }
 
+    // a new run starts with a clean console; the previous game's tail is not
+    // this game's history
+    state.log.lock().await.clear();
     let kill = crate::launch::spawn(
         &app,
         std::sync::Arc::clone(&state.game),
+        std::sync::Arc::clone(&state.log),
         plan,
         session_id.clone(),
     )?;
@@ -731,6 +735,14 @@ pub async fn game_kill(state: State<'_, AppState>, session_id: String) -> Result
 #[tauri::command]
 pub async fn game_status(state: State<'_, AppState>) -> Result<GameState> {
     Ok(state.game.lock().await.clone())
+}
+
+/// Everything the current run has said. The UI seeds its console with this, so
+/// opening the console — or reloading the window — shows the run so far rather
+/// than waiting for the next line.
+#[tauri::command]
+pub async fn game_log(state: State<'_, AppState>) -> Result<Vec<LogEvent>> {
+    Ok(state.log.lock().await.iter().cloned().collect())
 }
 
 fn now_millis() -> i64 {

@@ -9,7 +9,12 @@
 
    stdout and stderr are streamed to the UI as they arrive. The process is
    owned by the launcher: closing the window kills nothing, but 게임 종료 does. */
-use std::{collections::HashMap, path::PathBuf, process::Stdio, sync::Arc};
+use std::{
+    collections::{HashMap, VecDeque},
+    path::PathBuf,
+    process::Stdio,
+    sync::Arc,
+};
 
 use tauri::{AppHandle, Emitter};
 use tokio::{
@@ -213,6 +218,7 @@ fn level_of(line: &str) -> &'static str {
 pub fn spawn(
     app: &AppHandle,
     game: Arc<Mutex<GameState>>,
+    log: Arc<Mutex<VecDeque<LogEvent>>>,
     plan: Plan,
     session_id: String,
 ) -> Result<tokio::sync::oneshot::Sender<()>> {
@@ -231,10 +237,10 @@ pub fn spawn(
     let mut child = cmd.spawn()?;
 
     if let Some(out) = child.stdout.take() {
-        pump(app.clone(), Arc::clone(&game), session_id.clone(), out, false);
+        pump(app.clone(), Arc::clone(&game), Arc::clone(&log), session_id.clone(), out, false);
     }
     if let Some(err) = child.stderr.take() {
-        pump(app.clone(), Arc::clone(&game), session_id.clone(), err, true);
+        pump(app.clone(), Arc::clone(&game), Arc::clone(&log), session_id.clone(), err, true);
     }
 
     let (kill_tx, kill_rx) = tokio::sync::oneshot::channel::<()>();
@@ -262,9 +268,15 @@ async fn emit_state(
     }
 }
 
+/// How much of the game's output the console can scroll back through. Long
+/// enough to hold a crash's stack trace, short enough that a chatty mod cannot
+/// grow the launcher without bound.
+const LOG_KEEP: usize = 4000;
+
 fn pump<R>(
     app: AppHandle,
     game: Arc<Mutex<GameState>>,
+    log: Arc<Mutex<VecDeque<LogEvent>>>,
     session_id: String,
     stream: R,
     is_err: bool,
@@ -281,10 +293,16 @@ fn pump<R>(
                 emit_state(&app, &game, &session_id, GameStateValue::Running, None).await;
             }
             let level = if is_err { "ERROR" } else { level_of(&line) };
-            let _ = app.emit(
-                "game://log",
-                LogEvent { session_id: session_id.clone(), level: level.into(), line },
-            );
+            let event =
+                LogEvent { session_id: session_id.clone(), level: level.into(), line };
+            {
+                let mut kept = log.lock().await;
+                if kept.len() >= LOG_KEEP {
+                    kept.pop_front();
+                }
+                kept.push_back(event.clone());
+            }
+            let _ = app.emit("game://log", event);
         }
     });
 }

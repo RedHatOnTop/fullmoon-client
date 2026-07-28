@@ -236,6 +236,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setNews(nw);
       setServers(sv);
       setGame(gs);
+      /* a run already in flight has been talking without us — take its tail so
+         the console shows the session rather than starting from the next line */
+      if (gs.sessionId) {
+        core.game_log().then(
+          (lines) =>
+            alive &&
+            setLogs(
+              lines.map(({ level, line }) => ({
+                id: ++logSeq,
+                level,
+                line,
+                // stamping the whole backlog with the moment we asked for it
+                // would date every line to the same millisecond
+                ts: line.match(/^\[(\d{2}:\d{2}:\d{2})\]/)?.[1] ?? "",
+              })),
+            ),
+          () => {},
+        );
+      }
       setSelectedInstanceId((sel) =>
         sel && insts.some((i) => i.id === sel) ? sel : insts[0]?.id ?? null,
       );

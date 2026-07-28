@@ -123,7 +123,9 @@ export function ConsoleScreen() {
             <span className="log-text">{l.line}</span>
           </div>
         ))}
-        {visible.length === 0 && <div className="log-empty">{t("console.filter")}</div>}
+        {visible.length === 0 && (
+          <div className="log-empty">{t(filter ? "console.noMatch" : "console.quiet")}</div>
+        )}
       </div>
 
       <ConfirmModal

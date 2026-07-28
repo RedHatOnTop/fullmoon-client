@@ -30,6 +30,7 @@ import type {
   CoreEventName,
   CoreEvents,
   LaunchOpts,
+  LogLevel,
 } from "./bindings";
 
 type Invoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
@@ -104,6 +105,7 @@ export class TauriCore implements PinionCore {
     this.call<string>("launch_quickplay", { instanceId, server });
   game_kill = (sessionId: string) => this.call<void>("game_kill", { sessionId });
   game_status = () => this.call<GameState>("game_status");
+  game_log = () => this.call<{ sessionId: string; level: LogLevel; line: string }[]>("game_log");
 
   // cosmetics / hud
   cosmetics_catalog = () => this.call<Cosmetic[]>("cosmetics_catalog");
