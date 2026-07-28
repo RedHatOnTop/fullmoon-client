@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
-import { Badge, Button, ConfirmModal, IconButton, Modal, SkinFace } from "../components/ui";
+import { Badge, Button, ConfirmModal, Empty, IconButton, Modal, SkinFace } from "../components/ui";
+import Skin3D from "../widgets/Skin3D";
 import { addOfflineAccount, core, errText, openExternal } from "../core/client";
 import type { Account, AuthStatus, DeviceCodePrompt } from "../core/bindings";
 import { useStore } from "../state/store";
@@ -222,6 +223,112 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
   );
 }
 
+/* ── the account the game will actually launch as ── */
+
+function ActiveHero({ account, onAdd }: { account: Account; onAdd: () => void }) {
+  const { cosmetics, loadout, refreshAccount, setScreen, toast } = useStore();
+  const { t } = useT();
+  const [busy, setBusy] = useState(false);
+
+  const cape = useMemo(() => cosmetics.find((c) => c.id === loadout?.cape) ?? null, [cosmetics, loadout]);
+
+  const refresh = async () => {
+    setBusy(true);
+    try {
+      await refreshAccount(account.uuid);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="acc-hero card">
+      <div className="acc-hero-stage">
+        <Skin3D
+          skin={account.skinUrl ?? "/skins/blackcow.png"}
+          cape={cape?.capeUrl ?? null}
+          /* fixed three-quarters, facing the viewer: this panel answers "who am
+             I", and a spin that parks the figure edge-on half the time cannot */
+          rotate={false}
+          angle={-0.42}
+          width={214}
+          height={306}
+          zoom={0.88}
+        />
+      </div>
+
+      <div className="acc-hero-body">
+        <span className="acc-hero-kicker">{t("accounts.heroKicker")}</span>
+        <h2 className="acc-hero-name">{account.username}</h2>
+        <div className="acc-hero-badges">
+          <Badge tone={account.source === "microsoft" ? "accent" : account.source === "imported" ? "ok" : "dim"}>
+            {t(`accounts.source.${account.source}`)}
+          </Badge>
+          {/* Mojang's own capes, which are a different thing from the ones this
+              client draws — counting them next to an equipped Pinion cape only
+              reads as a contradiction when the number is zero */}
+          {account.capes.length > 0 && (
+            <Badge tone="dim">{t("accounts.capeCount", { n: String(account.capes.length) })}</Badge>
+          )}
+        </div>
+
+        <dl className="acc-hero-facts">
+          <div>
+            <dt>{t("accounts.uuid")}</dt>
+            {/* full, not truncated: a server op typing /whitelist needs every
+                character of it, and this is the only place the launcher shows it */}
+            <dd className="mono acc-hero-uuid">
+              {account.uuid}
+              <IconButton
+                icon="copy"
+                label={t("common.copy")}
+                onClick={() => {
+                  void navigator.clipboard?.writeText(account.uuid);
+                  toast("info", t("common.copied"));
+                }}
+              />
+            </dd>
+          </div>
+          <div>
+            <dt>{t("accounts.clientCape")}</dt>
+            <dd>
+              {cape ? (
+                <button className="acc-hero-link" onClick={() => setScreen("cosmetics")}>
+                  {cape.name}
+                  <Icon name="chevronRight" size={13} />
+                </button>
+              ) : (
+                <button className="acc-hero-link dim" onClick={() => setScreen("cosmetics")}>
+                  {t("accounts.noCape")}
+                  <Icon name="chevronRight" size={13} />
+                </button>
+              )}
+            </dd>
+          </div>
+        </dl>
+
+        {account.source === "offline" && (
+          <p className="acc-hero-warn">
+            <Icon name="info" size={13} />
+            {t("accounts.offlineDesc")}
+          </p>
+        )}
+
+        <div className="acc-hero-actions">
+          {account.source !== "offline" && (
+            <Button variant="soft" icon="refresh" loading={busy} onClick={() => void refresh()}>
+              {t("accounts.refresh")}
+            </Button>
+          )}
+          <Button variant="outline" icon="plus" onClick={onAdd}>
+            {t("accounts.add")}
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ── account card ── */
 
 function AccountCard({ account }: { account: Account }) {
@@ -268,29 +375,48 @@ function AccountCard({ account }: { account: Account }) {
 }
 
 export function AccountsScreen() {
-  const { accounts } = useStore();
+  const { accounts, activeAccount } = useStore();
   const { t } = useT();
   const [addOpen, setAddOpen] = useState(false);
 
-  return (
-    <div className="screen-pad">
-      <div className="page-actions">
-        <Button variant="primary" icon="plus" onClick={() => setAddOpen(true)}>
-          {t("accounts.add")}
-        </Button>
-      </div>
+  /* The active account owns the top of the page; the grid below is the bench.
+     Repeating the active one as a card too would make the page say the same
+     thing twice. */
+  const others = accounts.filter((a) => a.uuid !== activeAccount?.uuid);
 
-      <div className="acc-grid stagger">
-        {accounts.map((a) => (
-          <AccountCard key={a.uuid} account={a} />
-        ))}
-        <button className="inst-new card" onClick={() => setAddOpen(true)}>
-          <span className="inst-new-icon">
-            <Icon name="plus" size={22} />
-          </span>
-          <span>{t("accounts.add")}</span>
-        </button>
-      </div>
+  return (
+    <div className="screen-pad acc-screen">
+      {activeAccount ? (
+        <ActiveHero account={activeAccount} onAdd={() => setAddOpen(true)} />
+      ) : (
+        <Empty
+          icon="users"
+          title={t("accounts.noneTitle")}
+          hint={t("accounts.noneHint")}
+          action={
+            <Button variant="primary" icon="plus" onClick={() => setAddOpen(true)}>
+              {t("accounts.add")}
+            </Button>
+          }
+        />
+      )}
+
+      {(others.length > 0 || activeAccount) && (
+        <>
+          <h3 className="acc-section">{t("accounts.others")}</h3>
+          <div className="acc-grid stagger">
+            {others.map((a) => (
+              <AccountCard key={a.uuid} account={a} />
+            ))}
+            <button className="inst-new card" onClick={() => setAddOpen(true)}>
+              <span className="inst-new-icon">
+                <Icon name="plus" size={22} />
+              </span>
+              <span>{t("accounts.add")}</span>
+            </button>
+          </div>
+        </>
+      )}
 
       <AddAccountModal open={addOpen} onClose={() => setAddOpen(false)} />
     </div>

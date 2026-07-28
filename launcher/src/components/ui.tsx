@@ -303,7 +303,18 @@ export function SkinFace({ hue, size = 32 }: { hue: number; size?: number }) {
 
 /* ── Empty state ── */
 
-export function Empty({ icon, title, hint }: { icon: IconName; title: string; hint?: string }) {
+export function Empty({
+  icon,
+  title,
+  hint,
+  action,
+}: {
+  icon: IconName;
+  title: string;
+  hint?: string;
+  /** the one thing that ends the empty state, when there is exactly one */
+  action?: ReactNode;
+}) {
   return (
     <div className="empty">
       <div className="empty-icon">
@@ -311,6 +322,7 @@ export function Empty({ icon, title, hint }: { icon: IconName; title: string; hi
       </div>
       <p className="empty-title">{title}</p>
       {hint && <p className="empty-hint">{hint}</p>}
+      {action && <div className="empty-action">{action}</div>}
     </div>
   );
 }

@@ -259,6 +259,7 @@
   color: var(--text);
 }
 .empty-hint { font-size: var(--text-small); color: var(--text-2); max-width: 340px; }
+.empty-action { margin-top: 10px; }
 
 /* ── field (forms) ── */
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
