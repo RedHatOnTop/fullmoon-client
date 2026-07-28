@@ -8,11 +8,30 @@ import brand from "../brand";
 
 const ACCENTS = ["#B0481A", "#0E6B57", "#3E5C72", "#4A6B3E", "#75570D", "#9E2F24"];
 
+/* Mirrors java.rs `major_of` — Java 8 reports itself as 1.8.0_x. The floor is
+   MIN_MAJOR there; the two have to move together. */
+const JAVA_MIN_MAJOR = 21;
+function javaMajor(version: string): number {
+  const head = version.split(/[.\-+]/)[0] ?? "0";
+  if (head === "1") return Number(version.split(".")[1] ?? 0) || 0;
+  return Number(head) || 0;
+}
+
 function JavaSection() {
-  const { settings, patchSettings, javaRuntimes: runtimes, scanningJava: scanning, rescanJava } =
-    useStore();
+  const {
+    settings,
+    patchSettings,
+    javaRuntimes: runtimes,
+    scanningJava: scanning,
+    rescanJava,
+    versions,
+  } = useStore();
   const { t } = useT();
   const scan = rescanJava;
+
+  const target = versions.find((v) => v.isTarget)?.id ?? "";
+  const picked = runtimes.find((j) => j.path === settings?.javaPath) ?? null;
+  const meets = picked !== null && javaMajor(picked.version) >= JAVA_MIN_MAJOR;
 
   return (
     <section className="set-section" id="set-java">
@@ -43,7 +62,23 @@ function JavaSection() {
             {settings?.javaPath === j.path && <Icon name="check" size={16} className="java-check" />}
           </button>
         ))}
+        {runtimes.length === 0 && !scanning && (
+          <p className="set-hint">{t("settings.javaNone")}</p>
+        )}
       </div>
+
+      {/* the picker lists whatever is on the box; this line is the only thing
+          that says whether the pick can actually run the target version */}
+      <div className={`java-req ${meets ? "ok" : "bad"}`}>
+        <Icon name={meets ? "check" : "info"} size={14} />
+        <span>
+          {t("settings.javaReq", { mc: target || "26.x", major: String(JAVA_MIN_MAJOR) })}
+        </span>
+        <b className="num">
+          {picked ? t(meets ? "settings.javaMeets" : "settings.javaShort", { v: picked.version }) : t("settings.javaUnset")}
+        </b>
+      </div>
+
       <div className="field" style={{ marginTop: 14 }}>
         <label className="field-label">{t("settings.javaArgs")}</label>
         <input

@@ -1,6 +1,8 @@
 /* ── screens — Imprint ─────────────────────────────────────── */
 
-.screen-pad { padding: 24px 0 8px; }
+/* the play dock is fixed and floats over the scroll area, so every screen has
+   to reserve its height or the last row of content ends up underneath it */
+.screen-pad { padding: 24px 0 96px; }
 
 /* actions row under the topbar — the topbar owns the screen title */
 .page-actions {
@@ -1258,6 +1260,23 @@
 .pledge-foot svg { margin-top: 1px; flex: none; }
 
 .java-list { display: flex; flex-direction: column; gap: 8px; }
+.java-req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: var(--sunken);
+  font-size: var(--text-small);
+  color: var(--text-2);
+}
+.java-req b { margin-left: auto; font-size: var(--text-caption); color: var(--text); }
+.java-req.ok { color: var(--text-2); }
+.java-req.ok > svg { color: var(--success); }
+.java-req.bad { border-color: var(--danger-line, var(--line-strong)); }
+.java-req.bad > svg { color: var(--danger); }
 .java-card {
   display: flex;
   align-items: center;
