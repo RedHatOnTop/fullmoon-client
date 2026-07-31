@@ -2,6 +2,7 @@ package dev.pinion.hud;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,19 @@ public final class PinionClient implements ClientModInitializer {
         HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath(MOD_ID, "hud"),
                 PinionHud::render);
+        /* Our potion module says the same thing as vanilla's icon strip, in the
+           corner the player chose, with the time left on it. Two of them on
+           screen is not two readouts, it is one readout and a duplicate — so
+           the vanilla one steps aside while ours is on. Wrapping the element
+           rather than mixing into Gui keeps this alive across a rebase. */
+        HudElementRegistry.replaceElement(
+                VanillaHudElements.MOB_EFFECTS,
+                vanilla -> (gfx, delta) -> {
+                    if (!HudSettings.get("potion").enabled()) {
+                        vanilla.extractRenderState(gfx, delta);
+                    }
+                });
+
         PinionKeys.register();
         LOG.info("Pinion HUD ready");
     }

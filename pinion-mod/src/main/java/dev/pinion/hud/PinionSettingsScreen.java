@@ -71,6 +71,11 @@ public final class PinionSettingsScreen extends Screen {
     private int panelY;
     private int panelH;
 
+    /** 1 unless the panel is taller than the surface it has to fit. Vanilla
+     *  clamps GUI scale so the logical screen is never smaller than 320x240,
+     *  which leaves the 302x220 panel 20 pixels of air — this only bites if
+     *  something else ever hands the client a smaller surface. */
+    private float fit = 1f;
     private long openedAt;
     private long pageAt;
     private long lastFrame;
@@ -85,6 +90,7 @@ public final class PinionSettingsScreen extends Screen {
     @Override
     protected void init() {
         panelH = HEAD_H + BODY_PAD * 2 + BODY_ROWS * ROW_H + FOOT_H;
+        fit = Math.min(1f, Math.min((height - 12f) / panelH, (width - 12f) / PANEL_W));
         panelX = (width - PANEL_W) / 2;
         panelY = (height - panelH) / 2;
         openedAt = System.currentTimeMillis();
@@ -155,6 +161,17 @@ public final class PinionSettingsScreen extends Screen {
         return mx >= contentX() && mx <= panelX + PANEL_W && my >= y && my < y + ROW_H;
     }
 
+    /* The panel is drawn about the screen's centre through {@link #fit}, so
+       every pointer coordinate has to come back the other way before it can be
+       compared with the layout, which is all written unscaled. */
+    private double localX(double mx) {
+        return (mx - width / 2.0) / fit + width / 2.0;
+    }
+
+    private double localY(double my) {
+        return (my - height / 2.0) / fit + height / 2.0;
+    }
+
     // ── render ────────────────────────────────────────────────────
 
     @Override
@@ -174,6 +191,13 @@ public final class PinionSettingsScreen extends Screen {
         gfx.fillGradient(0, 0, width, height,
                 Ui.alpha(0xFF06070A, 0.52f * open), Ui.alpha(0xFF06070A, 0.78f * open));
 
+        int localMouseX = (int) Math.round(localX(mouseX));
+        int localMouseY = (int) Math.round(localY(mouseY));
+        gfx.pose().pushMatrix();
+        gfx.pose().translate(width / 2f, height / 2f);
+        gfx.pose().scale(fit, fit);
+        gfx.pose().translate(-width / 2f, -height / 2f);
+
         Ui.shadow(gfx, px, py, PANEL_W, panelH, RADIUS, open);
         Ui.rect(gfx, px, py, PANEL_W, panelH, Ui.alpha(Ui.INK, 0.98f * open), RADIUS);
         Ui.border(gfx, px, py, PANEL_W, panelH, Ui.alpha(Ui.LINE_STRONG, open), RADIUS);
@@ -181,16 +205,17 @@ public final class PinionSettingsScreen extends Screen {
         // from reading as a hole cut in the screen
         gfx.fill(px + RADIUS + 1, py + 1, px + PANEL_W - RADIUS - 1, py + 2, Ui.alpha(Ui.TEXT, 0.06f * open));
 
-        rail(gfx, font, px, py, mouseX, mouseY, dt, open);
+        rail(gfx, font, px, py, localMouseX, localMouseY, dt, open);
         header(gfx, font, px, py, open);
 
         footNote = "";
         for (int i = 0; i < rows.size(); i++) {
             float in = Ui.ease((now - pageAt - i * ROW_STAGGER_MS) / (float) OPEN_MS);
-            rows.get(i).draw(gfx, font, i, mouseX, mouseY, dt, open * in, lift);
+            rows.get(i).draw(gfx, font, i, localMouseX, localMouseY, dt, open * in, lift);
         }
 
         footer(gfx, font, px, py, open);
+        gfx.pose().popMatrix();
     }
 
     private void header(GuiGraphicsExtractor gfx, Font font, int px, int py, float a) {
@@ -309,12 +334,14 @@ public final class PinionSettingsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        double mx = localX(event.x());
+        double my = localY(event.y());
         if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             Page[] pages = Page.values();
             for (int i = 0; i < pages.length; i++) {
                 int y = railItemY(i);
-                if (event.x() >= panelX + 6 && event.x() <= panelX + RAIL_W - 6
-                        && event.y() >= y && event.y() < y + 16) {
+                if (mx >= panelX + 6 && mx <= panelX + RAIL_W - 6
+                        && my >= y && my < y + 16) {
                     if (page != pages[i]) {
                         page = pages[i];
                         buildRows();
@@ -323,7 +350,7 @@ public final class PinionSettingsScreen extends Screen {
                 }
             }
             for (int i = 0; i < rows.size(); i++) {
-                if (inRow(event.x(), event.y(), i) && rows.get(i).click(event.x(), rowY(i))) {
+                if (inRow(mx, my, i) && rows.get(i).click(mx, rowY(i))) {
                     return true;
                 }
             }
@@ -338,7 +365,7 @@ public final class PinionSettingsScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double dx, double dy) {
         if (dy != 0) {
             for (int i = 0; i < rows.size(); i++) {
-                if (inRow(mouseX, mouseY, i) && rows.get(i).scroll(dy > 0 ? 1 : -1)) {
+                if (inRow(localX(mouseX), localY(mouseY), i) && rows.get(i).scroll(dy > 0 ? 1 : -1)) {
                     return true;
                 }
             }

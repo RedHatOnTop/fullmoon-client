@@ -293,6 +293,12 @@ M6 증거 (2026-07-28, 전부 실행 후 확인):
   `scripts/panel-drive.mjs`(합류를 `list`로 확인 → 레이아웃 write → 장비/효과 →
   HUD·키홀드·패널 3페이지 촬영). `shot-game.ps1`에 `-HoldKey/-HoldMs` 추가 —
   키스트로크 모듈은 키가 실제로 눌린 동안에만 보여줄 게 있다.
+- 바닐라 효과 아이콘은 potion 모듈이 켜져 있으면 물러난다
+  (`HudElementRegistry.replaceElement(MOB_EFFECTS, …)` 래핑 — Gui 믹스인이 아니라
+  리베이스를 넘긴다). 같은 정보가 두 벌 뜨는 건 두 개의 리드아웃이 아니라 중복.
+- 미검증 하나: 패널의 `fit` 축소는 바닐라가 GUI 스케일을 논리 320x240 이상으로
+  clamp 하기 때문에 트리거되지 않는다(스케일 4로 강제해도 854x480 창에서는 2로 클램프).
+  방어용으로 남긴다.
 - 함정: 데브 빌드의 `paths::resources`는 `target/debug/resources`로 풀린다. 런처가
   실행 때마다 그 jar를 인스턴스로 복사하므로, 거기 갱신하지 않으면 새 jar를 넣어도
   **옛 GUI가 뜬다**(한 번 당함).

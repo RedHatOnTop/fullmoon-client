@@ -265,7 +265,8 @@ public final class PinionHud {
     private static void plate(GuiGraphicsExtractor gfx, int w, int h) {
         Ui.rect(gfx, 0, 0, w, h, PLATE, 2);
         Ui.border(gfx, 0, 0, w, h, Ui.alpha(Ui.LINE_STRONG, 0.55f), 2);
-        gfx.fillGradient(0, 1, 1, h - 1, Ui.EMBER, Ui.alpha(Ui.EMBER_DEEP, 0.35f));
+        // inside the chamfer, or the rule juts past the plate's own silhouette
+        gfx.fillGradient(0, 2, 1, h - 2, Ui.EMBER, Ui.alpha(Ui.EMBER_DEEP, 0.35f));
     }
 
     private static void cap(GuiGraphicsExtractor gfx, Font font, int x, int y, int width, int index) {
