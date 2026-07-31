@@ -253,7 +253,7 @@ export function SettingsScreen() {
 
               {/* the pledge — every competitor broke one of these lines */}
               <ul className="pledge">
-                {(["noAds", "noForced", "noSell", "openSource"] as const).map((k) => (
+                {(["noAds", "noForced", "noSell"] as const).map((k) => (
                   <li key={k}>
                     <Icon name="check" size={14} strokeWidth={2.4} />
                     <div>
