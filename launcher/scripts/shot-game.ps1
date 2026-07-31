@@ -45,6 +45,13 @@ param(
   # PostMessage was tried first and GLFW ignores it: with the mod logging every
   # fullbright toggle, a posted VK_B produced no line at all.
   [string]$SendKey = "",
+  # Virtual keys held down across the capture itself, same format as -SendKey.
+  # The keystroke module only has something to show while a key is actually
+  # down, and a down/up pair is over long before the frame is written.
+  [string]$HoldKey = "",
+  # How long the held keys stay down before the capture. Long enough to be
+  # movement rather than a twitch, when a shot needs the tutorial toasts gone.
+  [int]$HoldMs = 250,
   [int]$SettleMs = 700
 )
 
@@ -167,16 +174,25 @@ if ($HideOnly) { Write-Output ("HIDDEN pid={0} hwnd={1}" -f $ProcessId, $h); exi
 # The keys go in as real input, which means the window has to hold focus for the
 # moment it takes. It is parked off the desktop throughout, so nothing appears
 # on screen, and whatever had focus before gets it straight back.
-function Send-GameKeys([IntPtr]$hwnd, [int[]]$keys, [int]$holdMs = 70, [int]$gapMs = 450) {
+function Send-GameKeys([IntPtr]$hwnd, [int[]]$keys, [int]$holdMs = 70, [int]$gapMs = 450, [int[]]$down = @()) {
   $prev = [GameWin]::GetForegroundWindow()
   [void][GameWin]::SetForegroundWindow($hwnd)
   Start-Sleep -Milliseconds 350
+  # held keys go down after the window has focus, or they land on whatever the
+  # user was typing into instead
+  foreach ($k in $down) {
+    [GameWin]::keybd_event([byte]$k, [byte][GameWin]::MapVirtualKey([uint32]$k, 0), 0, [UIntPtr]::Zero)
+  }
+  if ($down.Count -gt 0) { Start-Sleep -Milliseconds $HoldMs }
   foreach ($k in $keys) {
     $scan = [byte][GameWin]::MapVirtualKey([uint32]$k, 0)
     [GameWin]::keybd_event([byte]$k, $scan, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds $holdMs
     [GameWin]::keybd_event([byte]$k, $scan, 2, [UIntPtr]::Zero)  # KEYEVENTF_KEYUP
     Start-Sleep -Milliseconds $gapMs
+  }
+  foreach ($k in $down) {
+    [GameWin]::keybd_event([byte]$k, [byte][GameWin]::MapVirtualKey([uint32]$k, 0), 2, [UIntPtr]::Zero)
   }
   if ($prev -ne [IntPtr]::Zero) { [void][GameWin]::SetForegroundWindow($prev) }
   Start-Sleep -Milliseconds 250
@@ -197,7 +213,8 @@ if (-not $PrintWindow) {
   $before = @{}
   if (Test-Path $shots) { Get-ChildItem $shots -Filter *.png | ForEach-Object { $before[$_.Name] = $true } }
 
-  Send-GameKeys $h @(113) 70 200   # VK_F2
+  $holds = @($HoldKey -split '[,\s]+' | Where-Object { $_ -ne "" } | ForEach-Object { [int]$_ })
+  Send-GameKeys $h @(113) 70 200 $holds   # VK_F2
 
   # the png is written off the render thread, so wait for a file that has
   # stopped growing rather than for one that merely exists

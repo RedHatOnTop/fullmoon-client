@@ -63,6 +63,24 @@ public final class HudSettings {
         save();
     }
 
+    /** Resize from inside the game. Placement stays the launcher's — this
+     *  screen switches modules and sizes them, it does not move them. */
+    public static void setScale(String id, float scale) {
+        Module m = get(id);
+        modules.put(id, new Module(m.enabled(), m.x(), m.y(), Math.max(0.5f, Math.min(2f, scale))));
+        save();
+    }
+
+    static int enabledCount() {
+        int n = 0;
+        for (String id : moduleIds()) {
+            if (get(id).enabled()) {
+                n++;
+            }
+        }
+        return n;
+    }
+
     private static void save() {
         JsonObject root = new JsonObject();
         JsonArray arr = new JsonArray();
@@ -138,6 +156,8 @@ public final class HudSettings {
         out.put("coords", new Module(true, 4, 27, 1));
         out.put("ping", new Module(true, 93, 6, 1));
         out.put("keystrokes", new Module(true, 86, 74, 1));
+        out.put("gear", new Module(true, 4, 60, 1));
+        out.put("potion", new Module(true, 93, 16, 1));
         return out;
     }
 }

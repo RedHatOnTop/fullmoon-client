@@ -22,16 +22,10 @@ public final class PinionKeys {
     private static KeyMapping zoom;
     private static KeyMapping fullbright;
 
-    /** vanilla's own floor; anything under it the option rejects outright,
-     *  logs "Illegal option value" and snaps back to the player's setting */
-    private static final int ZOOM_FOV = 30;
-
     /** fov the player picked, held while the zoom key is down */
     private static int savedFov;
     private static double savedSensitivity;
     private static boolean zooming;
-
-    private static boolean bright;
 
     private PinionKeys() {
     }
@@ -67,10 +61,10 @@ public final class PinionKeys {
         if (want && !zooming) {
             savedFov = mc.options.fov().get();
             savedSensitivity = mc.options.sensitivity().get();
-            mc.options.fov().set(ZOOM_FOV);
+            mc.options.fov().set(ClientSettings.zoomFov());
             /* aim has to stay usable at 4x: without scaling the sensitivity the
                same wrist movement sweeps four times as far across the target */
-            mc.options.sensitivity().set(savedSensitivity * 0.35);
+            mc.options.sensitivity().set(savedSensitivity * ClientSettings.zoomSensitivity());
             zooming = true;
         } else if (!want && zooming) {
             releaseZoom(mc);
@@ -86,16 +80,30 @@ public final class PinionKeys {
         zooming = false;
     }
 
-    private static void toggleFullbright() {
-        bright = !bright;
-        PinionClient.LOG.info("fullbright {}", bright ? "on" : "off");
+    static void toggleFullbright() {
+        ClientSettings.setFullbright(!ClientSettings.fullbright());
+        PinionClient.LOG.info("fullbright {}", ClientSettings.fullbright() ? "on" : "off");
     }
 
     public static boolean isFullbright() {
-        return bright;
+        return ClientSettings.fullbright();
     }
 
     public static boolean isZooming() {
         return zooming;
+    }
+
+    /** The panel's Keys page shows what these are actually bound to, which is
+     *  whatever vanilla Controls last said — not the defaults registered here. */
+    static KeyMapping settingsKey() {
+        return settings;
+    }
+
+    static KeyMapping zoomKey() {
+        return zoom;
+    }
+
+    static KeyMapping fullbrightKey() {
+        return fullbright;
     }
 }

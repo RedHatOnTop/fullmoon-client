@@ -275,6 +275,28 @@ M6 증거 (2026-07-28, 전부 실행 후 확인):
   `version_manifest_v2.json`(272 KB)이 생성 = 네트워크까지 산 채로 동작.
   `dirs`는 Known Folder API를 쓰므로 `%APPDATA%` 오버라이드로는 이 테스트가 불가능하다.
 
+인게임 GUI 패스 (2026-07-31, 전부 로컬 26.1.2 서버에서 실행 후 확인):
+- 모드 GUI를 런처와 같은 언어로 다시 그림. 새 `Ui.java` = 팔레트(런처 `tokens.css`
+  dark 값 그대로) + 모서리 깎은 rect/border + 그림자 + 가로 그라디언트 + 자간 준 대문자
+  + 애니메이션 pill. 배경을 모르는 채 떠 있는 표면이라 둥근 모서리는 "덮어 그리기"가
+  불가능 — 픽셀을 **버려서** 만든다.
+- `PinionSettingsScreen` = 좌측 레일(MODULES/VISUALS/KEYS) + 페이지 행. 열릴 때
+  9px 상승 + 행 stagger, hover/토글은 프레임 독립 approach. 휠로 모듈 크기 조절,
+  TAB/←→로 페이지 이동(키로 연 패널은 키로 걸을 수 있어야 한다).
+- 새 페이지 VISUALS/KEYS. VISUALS(fullbright·zoom fov·zoom 감도)는 모드 소유 파일
+  `pinion/client.json`에 저장 — 런처가 `hud.json`을 통째로 다시 쓰기 때문에 거기 넣으면
+  지워진다. fullbright가 재시작을 넘겨 살아남는 게 요점.
+- HUD 모듈 2개 완성(§7 v1 잔여): **gear**(투구·갑옷·주손·오프핸드 아이콘 + 바닐라
+  내구 표시), **potion**(효과별 고유 색 눈금 + 남은 시간, 200틱 미만은 poppy).
+  FPS/PING은 값에 따라 bone→ochre→poppy. 키캡은 뗀 뒤 잔광이 사라진다.
+- 촬영 리그: `scripts/_rcon.mjs`(서버 콘솔이 없어 장비·효과를 줄 방법이 없었다) +
+  `scripts/panel-drive.mjs`(합류를 `list`로 확인 → 레이아웃 write → 장비/효과 →
+  HUD·키홀드·패널 3페이지 촬영). `shot-game.ps1`에 `-HoldKey/-HoldMs` 추가 —
+  키스트로크 모듈은 키가 실제로 눌린 동안에만 보여줄 게 있다.
+- 함정: 데브 빌드의 `paths::resources`는 `target/debug/resources`로 풀린다. 런처가
+  실행 때마다 그 jar를 인스턴스로 복사하므로, 거기 갱신하지 않으면 새 jar를 넣어도
+  **옛 GUI가 뜬다**(한 번 당함).
+
 M6 착수 상태:
 - 개발 내내 `cargo build` + 수동 vite였고 tauri CLI가 없어 인스톨러를 만들 수 없었다.
   `@tauri-apps/cli`를 devDependency로 넣고 `npm run bundle`로 nsis 타깃을 돈다.

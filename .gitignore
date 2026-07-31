@@ -23,3 +23,6 @@ launcher/src-tauri/gen/schemas/
 # gradle (pinion-mod)
 .gradle/
 build/
+
+# capture rig output
+launcher/shots/
