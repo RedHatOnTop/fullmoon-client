@@ -26,3 +26,4 @@ build/
 
 # capture rig output
 launcher/shots/
+launcher/*.png

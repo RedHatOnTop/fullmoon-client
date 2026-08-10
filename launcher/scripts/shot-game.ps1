@@ -89,6 +89,9 @@ public class GameWin {
   [DllImport("user32.dll")] public static extern uint MapVirtualKey(uint code, uint mapType);
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint from, uint to, bool attach);
+  [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
   [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
   [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);
   [DllImport("user32.dll", EntryPoint="GetWindowLongPtrW")] public static extern IntPtr GetWindowLongPtr(IntPtr h, int idx);
@@ -113,6 +116,27 @@ public class GameWin {
     Owner = pid; Found = IntPtr.Zero; Seen.Clear();
     EnumWindows(new EnumProc(Visit), IntPtr.Zero);
     return Found;
+  }
+
+  /* Windows refuses foreground to a process that did not last handle input, and
+     SetForegroundWindow then fails silently — the keys land on whoever really
+     has focus and the capture waits for a screenshot nobody took. Borrowing the
+     current foreground thread's input queue for the length of the call is the
+     documented way past the lock; the result is checked, never assumed. */
+  public static bool Activate(IntPtr h) {
+    uint pid;
+    for (int i = 0; i < 4; i++) {
+      IntPtr fg = GetForegroundWindow();
+      if (fg == h) return true;
+      uint self = GetCurrentThreadId();
+      uint other = fg == IntPtr.Zero ? 0 : GetWindowThreadProcessId(fg, out pid);
+      bool attached = other != 0 && other != self && AttachThreadInput(self, other, true);
+      BringWindowToTop(h);
+      SetForegroundWindow(h);
+      if (attached) AttachThreadInput(self, other, false);
+      System.Threading.Thread.Sleep(120);
+    }
+    return GetForegroundWindow() == h;
   }
 
   static bool Visit(IntPtr h, IntPtr p) {
@@ -176,7 +200,10 @@ if ($HideOnly) { Write-Output ("HIDDEN pid={0} hwnd={1}" -f $ProcessId, $h); exi
 # on screen, and whatever had focus before gets it straight back.
 function Send-GameKeys([IntPtr]$hwnd, [int[]]$keys, [int]$holdMs = 70, [int]$gapMs = 450, [int[]]$down = @()) {
   $prev = [GameWin]::GetForegroundWindow()
-  [void][GameWin]::SetForegroundWindow($hwnd)
+  if (-not [GameWin]::Activate($hwnd)) {
+    Write-Error "the game window would not take focus — keys would have gone to whatever did"
+    exit 10
+  }
   Start-Sleep -Milliseconds 350
   # held keys go down after the window has focus, or they land on whatever the
   # user was typing into instead

@@ -8,7 +8,9 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -61,6 +63,11 @@ public final class PinionSettingsScreen extends Screen {
     private static final int PILL_W = 20;
     private static final int PILL_H = 10;
     private static final int STEP_W = 9;
+
+    private static final float PITCH_ON = 1f;
+    private static final float PITCH_OFF = 0.8f;
+    private static final float PITCH_STEP = 1.15f;
+    private static final float PITCH_PAGE = 0.9f;
 
     /** the screen this replaced, so Escape goes back where the player was */
     private final Screen parent;
@@ -188,8 +195,13 @@ public final class PinionSettingsScreen extends Screen {
         int py = panelY + lift;
         Font font = this.font;
 
+        /* Vanilla's own menu blur, then a thinner scrim than an unblurred
+           backdrop would need. The HUD keeps drawing underneath either way, so
+           a module switched here still visibly comes and goes — softened, but
+           the panel has to be the thing in focus. */
+        extractBlurredBackground(gfx);
         gfx.fillGradient(0, 0, width, height,
-                Ui.alpha(0xFF06070A, 0.52f * open), Ui.alpha(0xFF06070A, 0.78f * open));
+                Ui.alpha(0xFF06070A, 0.34f * open), Ui.alpha(0xFF06070A, 0.58f * open));
 
         int localMouseX = (int) Math.round(localX(mouseX));
         int localMouseY = (int) Math.round(localY(mouseY));
@@ -345,6 +357,7 @@ public final class PinionSettingsScreen extends Screen {
                     if (page != pages[i]) {
                         page = pages[i];
                         buildRows();
+                        click(PITCH_PAGE);
                     }
                     return true;
                 }
@@ -397,6 +410,14 @@ public final class PinionSettingsScreen extends Screen {
         Page[] pages = Page.values();
         page = pages[Math.floorMod(page.ordinal() + dir, pages.length)];
         buildRows();
+        click(PITCH_PAGE);
+    }
+
+    /** Vanilla's button click, pitched by what happened: a switch going on
+     *  sounds different from one going off, and a size step different from
+     *  both. Silence is the one thing a client control must not be. */
+    private void click(float pitch) {
+        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, pitch));
     }
 
     @Override
@@ -502,7 +523,9 @@ public final class PinionSettingsScreen extends Screen {
             if (lit() && mx >= plusX() && mx < plusX() + STEP_W) {
                 return step(1);
             }
-            HudSettings.setEnabled(id, !lit());
+            boolean on = !lit();
+            HudSettings.setEnabled(id, on);
+            PinionSettingsScreen.this.click(on ? PITCH_ON : PITCH_OFF);
             return true;
         }
 
@@ -513,6 +536,7 @@ public final class PinionSettingsScreen extends Screen {
 
         private boolean step(int dir) {
             HudSettings.setScale(id, Math.round((HudSettings.get(id).scale() + dir * 0.1f) * 10f) / 10f);
+            PinionSettingsScreen.this.click(PITCH_STEP);
             return true;
         }
 
@@ -523,13 +547,19 @@ public final class PinionSettingsScreen extends Screen {
 
             /* the size control only exists while the module does — showing a
                stepper for something that is not drawn invites a click that
-               changes nothing on screen */
-            float s = Ui.clamp(knob * 1.4f - 0.4f, 0f, 1f) * a;
-            if (s > 0.01f) {
+               changes nothing on screen. It also only appears under the
+               pointer: seven rows of minus-value-plus is a wall of chrome, and
+               the size is worth reading even when it is not being changed */
+            float shown = Ui.clamp(knob * 1.4f - 0.4f, 0f, 1f) * a;
+            if (shown > 0.01f) {
                 String value = String.format(Locale.ROOT, "%.1f", HudSettings.get(id).scale()) + "×";
-                stepBox(gfx, font, minusX(), y + (ROW_H - 11) / 2, "-", s);
-                gfx.text(font, value, minusX() + STEP_W + 5, y + (ROW_H - 8) / 2, Ui.alpha(Ui.TEXT_2, s), false);
-                stepBox(gfx, font, plusX(), y + (ROW_H - 11) / 2, "+", s);
+                gfx.text(font, value, minusX() + STEP_W + 5, y + (ROW_H - 8) / 2,
+                        Ui.alpha(Ui.TEXT_2, shown * (0.55f + 0.45f * hover)), false);
+                float ctl = shown * hover;
+                if (ctl > 0.01f) {
+                    stepBox(gfx, font, minusX(), y + (ROW_H - 11) / 2, "-", ctl);
+                    stepBox(gfx, font, plusX(), y + (ROW_H - 11) / 2, "+", ctl);
+                }
             }
             Ui.pill(gfx, pillX(), y + (ROW_H - PILL_H) / 2, PILL_W, PILL_H, knob, a);
         }
@@ -554,7 +584,9 @@ public final class PinionSettingsScreen extends Screen {
 
         @Override
         boolean click(double mx, int y) {
-            set.accept(!get.getAsBoolean());
+            boolean on = !get.getAsBoolean();
+            set.accept(on);
+            PinionSettingsScreen.this.click(on ? PITCH_ON : PITCH_OFF);
             return true;
         }
 
@@ -586,30 +618,36 @@ public final class PinionSettingsScreen extends Screen {
         @Override
         boolean click(double mx, int y) {
             if (mx >= minusX() && mx < minusX() + STEP_W) {
-                step.accept(-1);
-                return true;
+                return step(-1);
             }
             if (mx >= plusX() && mx < plusX() + STEP_W) {
-                step.accept(1);
-                return true;
+                return step(1);
             }
             return false;
         }
 
         @Override
         boolean scroll(int dir) {
+            return step(dir);
+        }
+
+        private boolean step(int dir) {
             step.accept(dir);
+            PinionSettingsScreen.this.click(PITCH_STEP);
             return true;
         }
 
         @Override
         void control(GuiGraphicsExtractor gfx, Font font, int y, float dt, float a) {
             int top = y + (ROW_H - 11) / 2;
-            stepBox(gfx, font, minusX(), top, "-", a);
             String v = value.get();
             gfx.text(font, v, (minusX() + STEP_W + plusX() - font.width(v)) / 2, y + (ROW_H - 8) / 2,
                     Ui.alpha(Ui.TEXT, a), false);
-            stepBox(gfx, font, plusX(), top, "+", a);
+            float ctl = a * hover;
+            if (ctl > 0.01f) {
+                stepBox(gfx, font, minusX(), top, "-", ctl);
+                stepBox(gfx, font, plusX(), top, "+", ctl);
+            }
         }
     }
 

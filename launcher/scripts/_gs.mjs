@@ -1,0 +1,11 @@
+import puppeteer from "puppeteer-core";
+const b = await puppeteer.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null });
+const p = (await b.pages()).find((x) => x.url().includes("4173"));
+const call = async (cmd, args) => p.evaluate((c, a) => window.__TAURI_INTERNALS__.invoke(c, a), cmd, args);
+console.log("status:", JSON.stringify(await call("game_status")));
+const log = await call("game_log");
+console.log("buffered lines:", log.length);
+console.log(log.slice(0, 3).map((l) => `${l.level} ${l.line}`).join("\n"));
+console.log("...");
+console.log(log.slice(-3).map((l) => `${l.level} ${l.line}`).join("\n"));
+await b.disconnect();

@@ -288,7 +288,21 @@ async fn sync(
             if !enabled.iter().any(|e| e == id) {
                 continue;
             }
-            let Some(res) = resolve(client, source, game, resources).await? else {
+            /* A host being down is not a reason to ground a launch: if the jar
+               this instance already runs is still on disk, keep running it and
+               resolve again next time. Only a mod with nothing on disk can
+               fail the sync. */
+            let res = match resolve(client, source, game, resources).await {
+                Ok(res) => res,
+                Err(e) => match managed.get(id).filter(|f| dir.join(f.as_str()).is_file()) {
+                    Some(file) => {
+                        next.insert(id.clone(), file.clone());
+                        continue;
+                    }
+                    None => return Err(e),
+                },
+            };
+            let Some(res) = res else {
                 continue; // no build for this game version
             };
             let target = dir.join(&res.file);
