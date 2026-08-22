@@ -36,7 +36,7 @@ import type {
 } from "../core/bindings";
 import { useT } from "../i18n";
 
-export type Screen = "home" | "instances" | "mods" | "cosmetics" | "accounts" | "settings" | "console";
+export type Screen = "home" | "mods" | "cosmetics" | "accounts" | "settings" | "console";
 export type SettingsTab = "java" | "perf" | "look" | "hud" | "privacy" | "about";
 
 export interface Toast {

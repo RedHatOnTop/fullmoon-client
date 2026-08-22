@@ -104,7 +104,8 @@ const ko = {
     launching: "시작 중…",
     running: "실행 중",
     viewConsole: "콘솔 보기",
-    selectInstance: "인스턴스 선택",
+    selectInstance: "설치 상태",
+    preparing: "인스턴스 준비 중…",
     selectAccount: "계정 선택",
     stage: {
       manifest: "매니페스트 해석",

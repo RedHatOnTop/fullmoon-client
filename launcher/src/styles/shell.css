@@ -393,6 +393,8 @@
   transition: background var(--dur-fast) var(--ease-standard);
 }
 .dock-chip:hover { background: var(--sunken); }
+.dock-chip-static { cursor: default; }
+.dock-chip-static:hover { background: var(--surface); }
 .dock-chip-label { font-size: var(--text-small); font-weight: 600; display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
 .dock-chip-label em { font-style: normal; font-family: var(--font-mono); font-size: 10px; font-weight: 400; color: var(--text-3); }
 .dock-chip-label.dim { color: var(--text-3); font-weight: 500; }

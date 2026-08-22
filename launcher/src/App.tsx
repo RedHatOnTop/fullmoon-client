@@ -8,7 +8,6 @@ import { ProgressDock, Toasts } from "./components/Docks";
 import { LaunchOverlay } from "./widgets/LaunchOverlay";
 import { Logo } from "./components/Logo";
 import { HomeScreen } from "./screens/Home";
-import { InstancesScreen } from "./screens/Instances";
 import { ModsScreen } from "./screens/Mods";
 import { CosmeticsScreen } from "./screens/Cosmetics";
 import { AccountsScreen } from "./screens/Accounts";
@@ -19,7 +18,6 @@ import { useT } from "./i18n";
 
 const SCREENS = {
   home: HomeScreen,
-  instances: InstancesScreen,
   mods: ModsScreen,
   cosmetics: CosmeticsScreen,
   accounts: AccountsScreen,

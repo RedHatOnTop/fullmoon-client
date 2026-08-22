@@ -14,7 +14,6 @@ type Action = {
 
 const NAV: Array<{ id: Screen; icon: IconName }> = [
   { id: "home", icon: "home" },
-  { id: "instances", icon: "layers" },
   { id: "mods", icon: "puzzle" },
   { id: "cosmetics", icon: "feather" },
   { id: "accounts", icon: "users" },

@@ -63,7 +63,7 @@ Target MC = `26.1.2` 고정 (Paper 26.1.2 + Velocity 프록시, 로비 `fullmoon
 | Upstream screen | Fullmoon 처리 |
 |---|---|
 | `HomeScreen` | **서버 허브로 재설계.** 워드마크 + 달 무드, `PlayButton`(로비 직행), `ServerStatusCard`(ping), `NewsFeed`(공지·패치노트 탭), `EconomyCard`(잔액·입출 스탯), `AccountChip`. 인스턴스 선택 개념 노출 안 함. 첫 설치 완료 후엔 홈 스킵 원클릭 접속(설정 해제 가능) |
-| `InstancesScreen` | `AdvancedScreen`으로 강등. 평소엔 자동 관리, 고장 시에만 진입 유도 |
+| `InstancesScreen` | **제거** (사용자 피드백: 단일 버전만 유지보수). 인스턴스는 선택지가 아니라 상태 — PlayDock에 정적 칩으로 표시, 설치·복구는 큰 버튼과 Settings가 담당. 코어가 관리형 인스턴스를 자가 프로비전 |
 | `AccountsScreen` | 유지 (멀티계정은 가족 공유 PC 케이스가 있어 남긴다) |
 | `ModsScreen` | 유지, 카탈로그 = Sodium/Lithium/fullmoon-mod 고정 3종 |
 | `CosmeticsScreen` | 유지 |

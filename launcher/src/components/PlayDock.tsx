@@ -43,12 +43,11 @@ function DockMenu({
 export function PlayDock() {
   const {
     accounts, activeAccount, selectAccount,
-    instances, selectedInstance, selectInstance,
+    selectedInstance,
     installInstance, launch, game, setScreen,
   } = useStore();
   const { t } = useT();
   const [accOpen, setAccOpen] = useState(false);
-  const [instOpen, setInstOpen] = useState(false);
 
   const installing = selectedInstance?.installing ?? null;
   const sessionIsMine = game.sessionId && game.instanceId === selectedInstance?.id;
@@ -70,13 +69,15 @@ export function PlayDock() {
     playClass += " playbtn-warn";
     playAction = () => setScreen("accounts");
   } else if (!selectedInstance) {
+    /* the core provisions the managed instance itself; until then there is
+       nothing to choose and nothing to click */
     playContent = (
       <>
-        <Icon name="plus" size={18} />
-        <span>{t("dock.needsInstance")}</span>
+        <span className="spinner spinner-light" />
+        <span>{t("dock.preparing")}</span>
       </>
     );
-    playAction = () => setScreen("instances");
+    playClass += " playbtn-busy";
   } else if (installing) {
     playContent = (
       <>
@@ -176,65 +177,26 @@ export function PlayDock() {
           )}
         </DockMenu>
 
-        <DockMenu
-          open={instOpen}
-          setOpen={setInstOpen}
-          trigger={
-            <button className="dock-chip" title={t("dock.selectInstance")}>
-              {selectedInstance ? (
-                <>
-                  <span
-                    className="dock-chip-cube"
-                    style={{ "--h": selectedInstance.iconHue }}
-                  >
-                    <Icon name="layers" size={13} />
-                  </span>
-                  <span className="dock-chip-label">
-                    {selectedInstance.name}
-                    <em className="num">{selectedInstance.versionId}</em>
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="dock-chip-none"><Icon name="layers" size={14} /></span>
-                  <span className="dock-chip-label dim">{t("dock.needsInstance")}</span>
-                </>
-              )}
-              <Icon name="chevronDown" size={13} className="dock-chip-caret" />
-            </button>
-          }
-        >
-          {() => (
+        {/* the instance is not a choice — one managed install, shown as state.
+            Repair lives in Settings; there is no picker and no "+ new". */}
+        <div className="dock-chip dock-chip-static" title={t("dock.selectInstance")}>
+          {selectedInstance ? (
             <>
-              {instances.map((i) => (
-                <button
-                  key={i.id}
-                  className={`dockmenu-item ${i.id === selectedInstance?.id ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    selectInstance(i.id);
-                    setInstOpen(false);
-                  }}
-                >
-                  <span className="dock-chip-cube sm" style={{ "--h": i.iconHue }}>
-                    <Icon name="layers" size={11} />
-                  </span>
-                  <span>{i.name}</span>
-                  <span className="dockmenu-ver num">{i.versionId}</span>
-                  {i.installed ? (
-                    <span className="dockmenu-ok" />
-                  ) : (
-                    <Icon name="download" size={12} />
-                  )}
-                </button>
-              ))}
-              <button className="dockmenu-item dockmenu-add" onClick={() => setScreen("instances")}>
-                <Icon name="plus" size={14} />
-                <span>{t("instances.new")}</span>
-              </button>
+              <span className="dock-chip-cube" style={{ "--h": selectedInstance.iconHue }}>
+                <Icon name="layers" size={13} />
+              </span>
+              <span className="dock-chip-label">
+                {selectedInstance.name}
+                <em className="num">{selectedInstance.versionId}</em>
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="dock-chip-none"><Icon name="layers" size={14} /></span>
+              <span className="dock-chip-label dim">{t("dock.preparing")}</span>
             </>
           )}
-        </DockMenu>
+        </div>
       </div>
 
       <span className="dock-divider" aria-hidden />

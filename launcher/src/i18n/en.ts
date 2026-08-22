@@ -106,7 +106,8 @@ const en: Dict = {
     launching: "Launching…",
     running: "Running",
     viewConsole: "View console",
-    selectInstance: "Select instance",
+    selectInstance: "Install state",
+    preparing: "Preparing install…",
     selectAccount: "Select account",
     stage: {
       manifest: "Resolving manifest",
