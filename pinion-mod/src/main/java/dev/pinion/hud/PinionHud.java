@@ -19,7 +19,7 @@ import java.util.Locale;
 
 /** Everything the client draws over the game.
  *
- *  Every module sits on the same plate — chamfered ink, an ember rule down the
+ *  Every module sits on the same plate — chamfered ink, a moonlight rule down the
  *  left that fades as it falls, label in tracked caps and value in bone — so
  *  the HUD reads as one product rather than as seven debug lines that happen to
  *  share a screen. It is {@link Ui}'s palette, which is the launcher's, on
@@ -251,7 +251,7 @@ public final class PinionHud {
         plate(gfx, plateW, plateH);
 
         int ty = PAD_Y - 1;
-        Ui.tracked(gfx, font, label, PAD_X, ty, Ui.EMBER_PALE, 1);
+        Ui.tracked(gfx, font, label, PAD_X, ty, Ui.MOON_PALE, 1);
         int vx = PAD_X + labelW + 6;
         gfx.text(font, value, vx, ty, valueColor, false);
         if (tail != null) {
@@ -260,20 +260,20 @@ public final class PinionHud {
         gfx.pose().popMatrix();
     }
 
-    /** The shared surface: chamfered ink, a hairline edge, and an ember rule
+    /** The shared surface: chamfered ink, a hairline edge, and a moonlight rule
      *  down the left that fades out as it falls. */
     private static void plate(GuiGraphicsExtractor gfx, int w, int h) {
         Ui.rect(gfx, 0, 0, w, h, PLATE, 2);
         Ui.border(gfx, 0, 0, w, h, Ui.alpha(Ui.LINE_STRONG, 0.55f), 2);
         // inside the chamfer, or the rule juts past the plate's own silhouette
-        gfx.fillGradient(0, 2, 1, h - 2, Ui.EMBER, Ui.alpha(Ui.EMBER_DEEP, 0.35f));
+        gfx.fillGradient(0, 2, 1, h - 2, Ui.MOON, Ui.alpha(Ui.MOON_DEEP, 0.35f));
     }
 
     private static void cap(GuiGraphicsExtractor gfx, Font font, int x, int y, int width, int index) {
         float g = KEY_GLOW[index];
         String label = KEY_ORDER[index];
-        Ui.rect(gfx, x, y, width, KEY, Ui.lerp(g, PLATE, Ui.EMBER), 2);
-        Ui.border(gfx, x, y, width, KEY, Ui.lerp(g, Ui.alpha(Ui.LINE_STRONG, 0.6f), Ui.EMBER_PALE), 2);
+        Ui.rect(gfx, x, y, width, KEY, Ui.lerp(g, PLATE, Ui.MOON), 2);
+        Ui.border(gfx, x, y, width, KEY, Ui.lerp(g, Ui.alpha(Ui.LINE_STRONG, 0.6f), Ui.MOON_PALE), 2);
         int textX = x + (width - font.width(label)) / 2;
         int textY = y + (KEY - font.lineHeight) / 2 + 1;
         gfx.text(font, label, textX, textY, Ui.lerp(g, Ui.TEXT_2, 0xFF1A0E07), false);

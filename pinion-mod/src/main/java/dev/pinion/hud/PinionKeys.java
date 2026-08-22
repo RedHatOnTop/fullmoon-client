@@ -21,6 +21,7 @@ public final class PinionKeys {
     private static KeyMapping settings;
     private static KeyMapping zoom;
     private static KeyMapping fullbright;
+    private static KeyMapping warp;
 
     /** fov the player picked, held while the zoom key is down */
     private static int savedFov;
@@ -34,6 +35,7 @@ public final class PinionKeys {
         settings = bind("key.pinion.settings", GLFW.GLFW_KEY_RIGHT_SHIFT);
         zoom = bind("key.pinion.zoom", GLFW.GLFW_KEY_C);
         fullbright = bind("key.pinion.fullbright", GLFW.GLFW_KEY_B);
+        warp = bind("key.pinion.warp", GLFW.GLFW_KEY_K);
 
         ClientTickEvents.END_CLIENT_TICK.register(PinionKeys::tick);
     }
@@ -55,6 +57,11 @@ public final class PinionKeys {
         }
         while (fullbright.consumeClick()) {
             toggleFullbright();
+        }
+        while (warp.consumeClick()) {
+            if (mc.player != null) {
+                mc.setScreen(new dev.pinion.bridge.WarpScreen(null));
+            }
         }
 
         boolean want = zoom.isDown() && mc.screen == null;
@@ -105,5 +112,9 @@ public final class PinionKeys {
 
     static KeyMapping fullbrightKey() {
         return fullbright;
+    }
+
+    static KeyMapping warpKey() {
+        return warp;
     }
 }

@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  *  Drawn out of {@link Ui} rather than assembled from vanilla widgets, because
  *  a stack of grey 200x20 buttons is what every other mod's options screen
  *  looks like and this one has to look like the launcher instead: chamfered
- *  surfaces, an ember rule, tracked caps. The price is hand hit-testing, which
+ *  surfaces, a moonlight rule, tracked caps. The price is hand hit-testing, which
  *  is what {@link Row#click} is.
  *
  *  The world keeps rendering behind it and so does the HUD, so a module
@@ -137,6 +137,7 @@ public final class PinionSettingsScreen extends Screen {
                 rows.add(new KeyRow("This panel", PinionKeys.settingsKey()));
                 rows.add(new KeyRow("Zoom", PinionKeys.zoomKey()));
                 rows.add(new KeyRow("Fullbright", PinionKeys.fullbrightKey()));
+                rows.add(new KeyRow("Warp menu", PinionKeys.warpKey()));
             }
         }
     }
@@ -231,17 +232,17 @@ public final class PinionSettingsScreen extends Screen {
     }
 
     private void header(GuiGraphicsExtractor gfx, Font font, int px, int py, float a) {
-        /* an ember wash that dies out across the header, so the brand corner is
+        /* a moonlit wash that dies out across the header, so the brand corner is
            the brightest thing on the panel and the eye starts there */
         Ui.hGradient(gfx, px + 1, py + 1, PANEL_W - 2, HEAD_H - 1,
-                Ui.alpha(Ui.EMBER_DEEP, 0.38f * a), Ui.alpha(Ui.EMBER_DEEP, 0f));
-        gfx.fill(px + 1, py + 1, px + 4, py + HEAD_H - 1, Ui.alpha(Ui.EMBER, a));
+                Ui.alpha(Ui.MOON_DEEP, 0.38f * a), Ui.alpha(Ui.MOON_DEEP, 0f));
+        gfx.fill(px + 1, py + 1, px + 4, py + HEAD_H - 1, Ui.alpha(Ui.MOON, a));
 
         int ty = py + 10;
         int tx = px + 12;
-        tx += Ui.tracked(gfx, font, "PINION", tx, ty, Ui.alpha(Ui.TEXT, a), 1) + 8;
+        tx += Ui.tracked(gfx, font, "FULLMOON", tx, ty, Ui.alpha(Ui.TEXT, a), 1) + 8;
         gfx.fill(tx, ty - 1, tx + 1, ty + 9, Ui.alpha(Ui.LINE_STRONG, a));
-        Ui.tracked(gfx, font, page.label.toUpperCase(Locale.ROOT), tx + 8, ty, Ui.alpha(Ui.EMBER_PALE, a), 1);
+        Ui.tracked(gfx, font, page.label.toUpperCase(Locale.ROOT), tx + 8, ty, Ui.alpha(Ui.MOON_PALE, a), 1);
 
         String v = version();
         int vw = font.width(v) + 10;
@@ -269,8 +270,8 @@ public final class PinionSettingsScreen extends Screen {
             boolean active = p == page;
 
             if (active) {
-                Ui.rect(gfx, px + 6, y, RAIL_W - 12, 16, Ui.alpha(Ui.EMBER_DEEP, 0.45f * a), 1);
-                gfx.fill(px + 6, y, px + 8, y + 16, Ui.alpha(Ui.EMBER, a));
+                Ui.rect(gfx, px + 6, y, RAIL_W - 12, 16, Ui.alpha(Ui.MOON_DEEP, 0.45f * a), 1);
+                gfx.fill(px + 6, y, px + 8, y + 16, Ui.alpha(Ui.MOON, a));
             } else if (railHover[i] > 0.01f) {
                 Ui.rect(gfx, px + 6, y, RAIL_W - 12, 16, Ui.alpha(Ui.SURFACE, 0.9f * railHover[i] * a), 1);
                 gfx.fill(px + 6, y, px + 7, y + 16, Ui.alpha(Ui.LINE_STRONG, railHover[i] * a));
@@ -288,7 +289,7 @@ public final class PinionSettingsScreen extends Screen {
         int total = HudSettings.moduleIds().size();
         stat(gfx, font, px + 12, fy, "ACTIVE", HudSettings.enabledCount() + " / " + total, Ui.TEXT, a);
         stat(gfx, font, px + 12, fy + 22, "FRAMES", Integer.toString(Minecraft.getInstance().getFps()),
-                Ui.EMBER_PALE, a);
+                Ui.MOON_PALE, a);
     }
 
     private void stat(GuiGraphicsExtractor gfx, Font font, int x, int y,
@@ -304,7 +305,7 @@ public final class PinionSettingsScreen extends Screen {
         gfx.fill(px + 1, y + 1, px + PANEL_W - 1, y + RADIUS + 1, Ui.alpha(Ui.SUNKEN, 0.8f * a));
 
         if (!footNote.isEmpty()) {
-            gfx.fill(px + 12, y + 8, px + 14, y + 15, Ui.alpha(Ui.EMBER, a));
+            gfx.fill(px + 12, y + 8, px + 14, y + 15, Ui.alpha(Ui.MOON, a));
             gfx.text(font, trim(font, footNote, PANEL_W - 34), px + 19, y + 7, Ui.alpha(Ui.TEXT_2, a), false);
             return;
         }
@@ -474,12 +475,12 @@ public final class PinionSettingsScreen extends Screen {
                         Ui.alpha(Ui.SURFACE, 0.85f * hover * a), 2);
                 int bar = Math.round((ROW_H - 6) * hover);
                 gfx.fill(contentX() + 4, y + 1 + (ROW_H - 2 - bar) / 2,
-                        contentX() + 6, y + 1 + (ROW_H - 2 + bar) / 2, Ui.alpha(Ui.EMBER, a));
+                        contentX() + 6, y + 1 + (ROW_H - 2 + bar) / 2, Ui.alpha(Ui.MOON, a));
             }
 
             boolean lit = lit();
             gfx.fill(rowX0(), y + ROW_H / 2 - 2, rowX0() + 3, y + ROW_H / 2 + 1,
-                    Ui.alpha(lit ? Ui.EMBER : Ui.LINE_STRONG, a));
+                    Ui.alpha(lit ? Ui.MOON : Ui.LINE_STRONG, a));
             gfx.text(font, title, rowX0() + 9, y + (ROW_H - 8) / 2,
                     Ui.alpha(lit ? Ui.TEXT : Ui.TEXT_3, a), false);
 
@@ -669,7 +670,7 @@ public final class PinionSettingsScreen extends Screen {
             int top = y + (ROW_H - 13) / 2;
             Ui.rect(gfx, x, top, w, 13, Ui.alpha(Ui.OVERLAY, a), 1);
             Ui.border(gfx, x, top, w, 13, Ui.alpha(Ui.LINE_STRONG, a), 1);
-            Ui.tracked(gfx, font, cap, x + 5, top + 3, Ui.alpha(Ui.EMBER_PALE, a), 1);
+            Ui.tracked(gfx, font, cap, x + 5, top + 3, Ui.alpha(Ui.MOON_PALE, a), 1);
         }
     }
 

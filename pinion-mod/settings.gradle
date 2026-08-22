@@ -9,4 +9,10 @@ pluginManagement {
     }
 }
 
+/* The toolchain wants JDK 25 (26.1.2's runtime level); machines that only ship
+   a JRE get it auto-provisioned into the Gradle JDK dir instead of failing. */
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'pinion-mod'

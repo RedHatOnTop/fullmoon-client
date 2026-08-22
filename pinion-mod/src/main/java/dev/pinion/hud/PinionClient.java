@@ -35,6 +35,7 @@ public final class PinionClient implements ClientModInitializer {
                 });
 
         PinionKeys.register();
+        dev.pinion.bridge.FullmoonBridge.register();
         LOG.info("Pinion HUD ready");
     }
 }

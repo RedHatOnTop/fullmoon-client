@@ -14,36 +14,36 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  *  Nothing here paints over the backdrop to fake a rounded corner. A panel
  *  floats above a running game, so corners are <em>dropped</em> rather than
  *  covered: {@link #rect} steps its first and last rows inward. */
-final class Ui {
+public final class Ui {
     // ── palette — launcher tokens.css, [data-theme="dark"] ────────
-    static final int INK = 0xFF0F100F;
-    static final int SURFACE = 0xFF191A19;
-    static final int SUNKEN = 0xFF141514;
-    static final int OVERLAY = 0xFF1E201E;
-    static final int LINE = 0xFF2A2C2A;
-    static final int LINE_STRONG = 0xFF3D403D;
-    static final int TEXT = 0xFFE8EAE3;
-    static final int TEXT_2 = 0xFF9BA38F;
-    static final int TEXT_3 = 0xFF79816F;
-    static final int EMBER = 0xFFB0481A;
-    static final int EMBER_LIT = 0xFFCF6E33;
-    static final int EMBER_PALE = 0xFFDE9160;
-    static final int EMBER_DEEP = 0xFF6B2A0E;
-    static final int MOSS = 0xFF7A9A64;
-    static final int OCHRE = 0xFFC9A33F;
-    static final int POPPY = 0xFFD97D72;
+    public static final int INK = 0xFF0F100F;
+    public static final int SURFACE = 0xFF191A19;
+    public static final int SUNKEN = 0xFF141514;
+    public static final int OVERLAY = 0xFF1E201E;
+    public static final int LINE = 0xFF2A2C2A;
+    public static final int LINE_STRONG = 0xFF3D403D;
+    public static final int TEXT = 0xFFE8EAE3;
+    public static final int TEXT_2 = 0xFF9BA38F;
+    public static final int TEXT_3 = 0xFF79816F;
+    public static final int MOON = 0xFF9D7CE8;
+    public static final int MOON_LIT = 0xFFB79BF2;
+    public static final int MOON_PALE = 0xFFD8C8F8;
+    public static final int MOON_DEEP = 0xFF453078;
+    public static final int MOSS = 0xFF7A9A64;
+    public static final int OCHRE = 0xFFC9A33F;
+    public static final int POPPY = 0xFFD97D72;
 
     private Ui() {
     }
 
     // ── colour ────────────────────────────────────────────────────
 
-    static int alpha(int argb, float a) {
+    public static int alpha(int argb, float a) {
         int aa = (int) (((argb >>> 24) & 0xFF) * clamp(a, 0f, 1f));
         return (aa << 24) | (argb & 0x00FFFFFF);
     }
 
-    static int lerp(float t, int from, int to) {
+    public static int lerp(float t, int from, int to) {
         t = clamp(t, 0f, 1f);
         int a = mix(t, from >>> 24, to >>> 24);
         int r = mix(t, (from >> 16) & 0xFF, (to >> 16) & 0xFF);
@@ -58,13 +58,13 @@ final class Ui {
 
     // ── motion ────────────────────────────────────────────────────
 
-    static float clamp(float v, float lo, float hi) {
+    public static float clamp(float v, float lo, float hi) {
         return v < lo ? lo : Math.min(v, hi);
     }
 
     /** The launcher's `--ease-out`, near enough: fast out of the gate, long
      *  settle. Anything linear reads as a jump cut at 60 Hz. */
-    static float ease(float t) {
+    public static float ease(float t) {
         t = clamp(t, 0f, 1f);
         float inv = 1f - t;
         return 1f - inv * inv * inv;
@@ -72,7 +72,7 @@ final class Ui {
 
     /** Frame-rate independent approach — a hover that takes the same 120 ms at
      *  30 fps and at 240. */
-    static float approach(float now, float target, float dt, float rate) {
+    public static float approach(float now, float target, float dt, float rate) {
         float k = 1f - (float) Math.exp(-rate * dt);
         return now + (target - now) * k;
     }
@@ -80,7 +80,7 @@ final class Ui {
     // ── shapes ────────────────────────────────────────────────────
 
     /** Filled rect whose corners step inward by `r` pixels. */
-    static void rect(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int fill, int r) {
+    public static void rect(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int fill, int r) {
         if (w <= 0 || h <= 0 || (fill >>> 24) == 0) {
             return;
         }
@@ -94,7 +94,7 @@ final class Ui {
 
     /** The matching 1px outline. Drawn as edges plus the corner staircase, so
      *  it lands exactly on the silhouette {@link #rect} produced. */
-    static void border(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int color, int r) {
+    public static void border(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int color, int r) {
         if ((color >>> 24) == 0) {
             return;
         }
@@ -114,7 +114,7 @@ final class Ui {
     /** Three widening rings of near-black under a floating surface. The game
      *  behind is arbitrary — bright sky, dark cave — and a panel with no
      *  shadow loses its edge against both. */
-    static void shadow(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int r, float a) {
+    public static void shadow(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int r, float a) {
         for (int k = 3; k >= 1; k--) {
             rect(gfx, x - k, y - k + 1, w + k * 2, h + k * 2, alpha(0xFF000000, 0.13f * a), r + k);
         }
@@ -122,7 +122,7 @@ final class Ui {
 
     /** Left-to-right ramp. `fillGradient` only runs top to bottom, and a
      *  header rule that fades sideways is worth the handful of strips. */
-    static void hGradient(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int from, int to) {
+    public static void hGradient(GuiGraphicsExtractor gfx, int x, int y, int w, int h, int from, int to) {
         int steps = Math.max(1, Math.min(w, 28));
         for (int i = 0; i < steps; i++) {
             int x0 = x + w * i / steps;
@@ -135,13 +135,13 @@ final class Ui {
 
     /** Sliding switch. `t` is the animated position, not the state, so a row
      *  that was just clicked shows the knob travelling. */
-    static void pill(GuiGraphicsExtractor gfx, int x, int y, int w, int h, float t, float a) {
-        int track = lerp(t, alpha(LINE, a), alpha(EMBER_DEEP, a));
+    public static void pill(GuiGraphicsExtractor gfx, int x, int y, int w, int h, float t, float a) {
+        int track = lerp(t, alpha(LINE, a), alpha(MOON_DEEP, a));
         rect(gfx, x, y, w, h, track, 1);
-        border(gfx, x, y, w, h, lerp(t, alpha(LINE_STRONG, a * 0.8f), alpha(EMBER, a)), 1);
+        border(gfx, x, y, w, h, lerp(t, alpha(LINE_STRONG, a * 0.8f), alpha(MOON, a)), 1);
         int knobW = h - 2;
         int knobX = Math.round(x + 1 + (w - knobW - 2) * t);
-        rect(gfx, knobX, y + 1, knobW, h - 2, lerp(t, alpha(TEXT_3, a), alpha(EMBER_PALE, a)), 1);
+        rect(gfx, knobX, y + 1, knobW, h - 2, lerp(t, alpha(TEXT_3, a), alpha(MOON_PALE, a)), 1);
     }
 
     // ── text ──────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ final class Ui {
     /** Letter-spaced caps. The launcher's overlines carry 0.14em of tracking
      *  and the game font has none, so the spacing is dealt out by hand — it is
      *  what keeps a header from reading as chat. */
-    static int tracked(GuiGraphicsExtractor gfx, Font font, String s, int x, int y, int color, int gap) {
+    public static int tracked(GuiGraphicsExtractor gfx, Font font, String s, int x, int y, int color, int gap) {
         int cx = x;
         for (int i = 0; i < s.length(); i++) {
             String ch = s.substring(i, i + 1);
@@ -159,7 +159,7 @@ final class Ui {
         return cx - x - gap;
     }
 
-    static int trackedWidth(Font font, String s, int gap) {
+    public static int trackedWidth(Font font, String s, int gap) {
         int w = 0;
         for (int i = 0; i < s.length(); i++) {
             w += font.width(s.substring(i, i + 1)) + gap;
@@ -167,7 +167,7 @@ final class Ui {
         return Math.max(0, w - gap);
     }
 
-    static void rightText(GuiGraphicsExtractor gfx, Font font, String s, int right, int y, int color, boolean shadow) {
+    public static void rightText(GuiGraphicsExtractor gfx, Font font, String s, int right, int y, int color, boolean shadow) {
         gfx.text(font, s, right - font.width(s), y, color, shadow);
     }
 }
