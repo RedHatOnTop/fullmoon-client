@@ -1,11 +1,11 @@
 {
-  "name": "Pinion",
-  "slug": "pinion",
-  "bin": "pinion",
-  "appId": "dev.pinion.launcher",
-  "scheme": "pinion",
-  "tagline": "Flight-feather. Gear-tight.",
-  "accent": "#B0481A",
-  "accentDim": "#8E3813",
+  "name": "Fullmoon",
+  "slug": "fullmoon",
+  "bin": "fullmoon",
+  "appId": "dev.fullmoon.launcher",
+  "scheme": "fullmoon",
+  "tagline": "만월 아래, 모두가 모이는 정원.",
+  "accent": "#9D7CE8",
+  "accentDim": "#7A5FC0",
   "msClientId": ""
 }

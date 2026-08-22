@@ -1,17 +1,19 @@
-# Pinion
+# Fullmoon Client
 
-Custom Minecraft **Java** client — launcher + client(Fabric mod). Feather/Lunar-grade,
-**UI/UX-focused**: performance (Sodium) + a polished shell + in-game HUD/cosmetics.
-Not a cheat client. Target MC `26.1.2`.
+풀문 네트워크 전용 Minecraft **Java** 클라이언트 — [Pinion](https://github.com/RedHatOnTop/pinion)
+포크. launcher + in-game Fabric mod 두 조각 구조와 core 계약을 그대로 이어받되, 스코프를
+**풀문 서버 접속** 하나로 좁히고 UI를 서버 중심으로 재구성한다. 치트 클라이언트가 아니다.
+Target MC `26.1.2` (서버 = Paper 26.1.2 + Velocity).
 
-- **[PLAN.md](./PLAN.md)** — feature-centric plan, IPC contract, milestones (source of truth).
-- **[UI-BRIEF.md](./UI-BRIEF.md)** — paste-ready brief to hand any LLM for a UI variant.
-- **[brand.json](./brand.json)** — single source of the product name; `npm run rebrand` propagates.
+- **[PLAN.md](./PLAN.md)** — 풀문 클라이언트 플랜 (source of truth).
+- **[docs/BRIDGE.md](./docs/BRIDGE.md)** — 서버↔클라 bridge payload 프로토콜 스펙.
+- **[docs/pinion-plan.md](./docs/pinion-plan.md)** — 업스트림 Pinion 플랜 (IPC 계약 §4, 마일스톤 증거 포함).
+- **[brand.json](./brand.json)** — 제품명 단일 출처; `npm run rebrand`로 전파.
 
 Two-piece:
-- `pinion/` — launcher (Tauri v2 + Rust core + React/TS skin). Core logic + fixed contract.
-- `pinion-mod/` — in-game client (Fabric mod, Java/Kotlin). Starts after launcher M3.
+- `launcher/` — 런처 (Tauri v2 + Rust core + React/TS skin).
+- `pinion-mod/` — 인게임 클라 (Fabric mod). HUD·설정 GUI에 bridge 클라이언트(워프 GUI, 지도)를 얹는다.
 
-Fusion model: Rust core exposes a fixed typed contract (tauri-specta → `bindings.ts`). Two UI
-variants are built over the same contract + component inventory + design tokens, then fused
-component-by-component.
+Fork 관례:
+- 업스트림은 `upstream` remote로 남긴다 (`git remote rename origin upstream` 완료).
+- 공개 시 이 레포만 큐레이션해 올린다. GPL-3.0 계열 적용 예정.

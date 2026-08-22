@@ -1,327 +1,111 @@
-# Pinion — Feature Plan (launcher)
+# Fullmoon Client — Plan
 
-> Custom Minecraft **Java** client. **런처 + 클라이언트(Fabric mod)** 2-piece.
-> Feather-grade = **UI/UX 중심**: 성능(Sodium) + 예쁜 껍데기 + 인게임 HUD/코스메틱.
-> 치트·게임플레이핵 **아님**. 클라UI + 클라측 표시물만.
+> **풀문 네트워크 전용 클라이언트.** Pinion 포크. 일반 런처 용도의 가치는 낮다는 걸 전제로,
+> UI 구성을 "범용 런처"에서 **"풀문 접속기"**로 재구성한다. 업스트림의 core 계약(`bindings.ts`),
+> 설치·실행 파이프라인, HUD mod 자산은 그대로 출발점.
+> 업스트림 원문은 [docs/pinion-plan.md](./docs/pinion-plan.md) (§4 IPC 계약 유효).
 
-이 문서는 **core(백엔드) 쪽 기능 중심 스펙**이다. 여기 담긴 계약·인벤토리·토큰(§4~§6)은
-**core 내부용**이며 UI 경쟁자에게 넘기지 않는다. UI 바이크오프는 의도적으로 **스코프 + 레퍼런스
-(Lunar/Feather)만** 준다(→ `UI-BRIEF.md`). 두 갈래(UI-A: Claude, UI-B: 타 LLM)를 무제약으로
-뽑아 **품질로 겨루고**, 이긴 쪽/좋은 아이디어를 사후에 core 계약에 어댑트·융합한다.
+Target MC = `26.1.2` 고정 (Paper 26.1.2 + Velocity 프록시, 로비 `fullmoon_v5`).
 
 ---
 
-## 0. 이름 / 리브랜드 (one-touch)
+## 0. 제품 정의
 
-- 제품명 단일 출처 = `brand.json` (`name`/`slug`/`bin`/`appId`/`scheme`/`accent`).
-- `npm run rebrand` → `scripts/rebrand.mjs`가 전파:
-  - `src-tauri/tauri.conf.json` → `productName`, `identifier`, `mainBinaryName`
-  - `src-tauri/Cargo.toml` → `[[bin]] name`
-  - Vite `define` → `__BRAND__` (프론트에서 `import`)
-  - `src-tauri/build.rs` → `brand.json` 읽어 `PINION_NAME` 등 `env!` 상수 emit
-- **Zed/Zetile식 compile-time assert(`APP_NAME == CARGO_BIN_NAME`) 안 씀.** assert는
-  이름을 두 곳에 강제로 묶어 리네임을 아프게 만든다. 여기선 **generate**한다 —
-  한 출처에서 파생. 리네임 = `brand.json` 한 줄 + `npm run rebrand` 1회. 끝.
+한 문장: **설치하면 곧바로 풀문 로비로 떨어지는, 예쁜 접속기.**
 
----
+- 런처 = 계정 1개 + 관리형 인스턴스 1개 + 큰 Play 버튼. 멀티인스턴스/버즈워드 탐색 같은
+  범용 기능은 고급 화면으로 강등하거나 잘라낸다.
+- 인게임 mod = HUD(업스트림 자산) + **bridge**: 서버가 주는 데이터로 워프 GUI·지도 모드를
+  네이티브 스크린으로 렌더. ChestGUI 때우기를 대체하는 게 이 포크의 존재 이유.
+- 바닐라/타 클라 접속자가 2등 시민이 되지 않게, 편의 기능은 전부 서버 측 폴백을 갖는다
+  (`/워프` 커맨드 + ChestGUI). 클라는 그걸 **더 보기 좋게** 보여줄 뿐이다.
 
 ## 1. 스코프
 
-**IN (v1)**
-- 계정/인증 (Microsoft OAuth → Minecraft, 멀티계정, 공식 런처 계정 import)
-- 버전·인스턴스 설치 (piston-meta 매니페스트 구동, 격리 인스턴스 = MultiMC식)
-- Fabric 통합 (loader + intermediary + Fabric API 자동)
-- 실행 + 라이브 로그 콘솔 + 크래시 감지 + Quick Play(서버 직행)
-- 1st-party 모드 번들: **Pinion HUD**(우리 Fabric mod) + Sodium/Lithium(성능)
-- 클라측 코스메틱 (본인에게 보이는 cape/wings; config→mod)
-- 설정 (Java/메모리/동시성/테마/언어/telemetry off) + HUD 모듈 설정
-- 홈/뉴스/체인지로그 + 서버 즐겨찾기 → Quick Play 연동
+**IN**
+- 계정 (device-code + 공식계정 import — 업스트림 M1 완료 자산)
+- 관리형 단일 인스턴스: `26.1.2` + Fabric + Sodium/Lithium + `fullmoon-mod` 번들,
+  손상 시 자가 복구 (업스트림 M2 파이프라인 재사용)
+- 홈 = 서버 허브: Play(Quick Play → 로비), **서버 상태**(server-list ping: 온라인/접속자 수),
+  뉴스(JSON 구동), 계정 칩
+- bridge 클라이언트(mod): handshake, 웨이포인트 동기화, **워프 네이티브 스크린**,
+  **지도 모드**(BlueMap 타일 뷰어)
+- HUD/설정 GUI/zoom/fullbright/cosmetic — 업스트림 M4–M5 자산 유지
+- 한국어 기본 (`i18n.ko` default)
 
-**OUT (후속)**
-- 서버-가시 코스메틱(백엔드 필요), Modrinth 브라우징, 런처 자동업데이트, 스킨 에디터
+**OUT (후속 재판단)**
+- 멀티서버 즐겨찾기 관리 (풀문 하나면 된다 — 설정에 주소 필드만)
+- Modrinth 브라우징, 스킨 에디터
+- 자동 업데이트 — **배포(FM6) 시점에 IN-scope로 승격 여부 결정**. 디스코드 멤버에게
+  뿌리는 순간 MC 패치마다 수동재배포는 불가능하다.
 
-**Target MC = `26.1.2` (고정).**
-버전은 하드코딩 아님 — live version-manifest의 config 값. 그 버전의 Java 레벨과 Fabric
-아티팩트는 **설치 시 metadata에서 해석**한다. 추측/날조 금지 — 매니페스트가 정본이며,
-매니페스트에 없으면 런처가 런타임에 그 사실을 보고한다(가짜 성공 X).
+## 2. 런처 UI 재구성 (Pinion component inventory → Fullmoon)
 
----
+| Upstream screen | Fullmoon 처리 |
+|---|---|
+| `HomeScreen` | **서버 허브로 재설계.** 워드마크 + 달 무드, `PlayButton`(로비 직행), `ServerStatusCard`(ping), `NewsFeed`, `AccountChip`. 인스턴스 선택 개념 노출 안 함 |
+| `InstancesScreen` | `AdvancedScreen`으로 강등. 평소엔 자동 관리, 고장 시에만 진입 유도 |
+| `AccountsScreen` | 유지 (멀티계정은 가족 공유 PC 케이스가 있어 남긴다) |
+| `ModsScreen` | 유지, 카탈로그 = Sodium/Lithium/fullmoon-mod 고정 3종 |
+| `CosmeticsScreen` | 유지 |
+| `SettingsScreen` | 유지 + 서버 주소(기본 고정, override 가능) |
+| `Console`/shell | 유지 |
 
-## 2. 아키텍처 — 융합의 seam
+디자인 언어: 업스트림 tokens.css 구조 유지, accent는 brand.json(`#9D7CE8` 만월 보라)에서
+주입 — 이미 반영. 홈 배경에 달/야경 무드를 얹는 건 FM1에서 눈으로 보면서 조절한다.
+품질 바 동일: **스캐폴드처럼 보이면 실패.**
 
-```
-                brand.json ──┐
-                             ▼
-        ┌───────────────────────────────────────┐
-        │  Rust core  (Tauri v2 commands)        │   ← 모든 로직. 안정 IPC 계약.
-        │  auth · install · fabric · launch · fs │      (Claude가 소유·고정)
-        └───────────────────┬───────────────────┘
-                            │ tauri-specta (auto TS gen)
-                            ▼
-                   bindings.ts  (typed commands + events)   ← 고정 계약
-                            │
-                 ┌──────────┴──────────┐
-            [ UI-A : Claude ]     [ UI-B : 타 LLM ]        ← 같은 계약 위 skin ×2
-                 └──────────┬──────────┘
-                     component-level 융합
-                   (screen/component 단위 최고 파츠 조합)
-```
+## 3. 인게임 mod 트랙 (pinion-mod → fullmoon-mod)
 
-**원칙: core 계약을 먼저 못박는다**(안정 seam). 단 이 계약은 **경쟁 UI엔 주지 않는다** —
-경쟁자는 스코프 + Lunar/Feather 레퍼런스만 받고 자유롭게 뽑는다(품질 비교가 목적).
-바이크오프 뒤, 이긴/융합된 UI를 아래 3개에 어댑트해 배선한다:
-1. `bindings.ts` — 타입된 command/event 계약 (§4)
-2. **Component inventory** — core가 기대하는 뷰 표면 (§5, 어댑트 참조)
-3. **Design tokens** — `tokens.css` CSS 변수 (§6, 어댑트 참조)
+- 기반: 업스트림 HUD 모듈 + `PinionSettingsScreen`(런처 디자인 언어 Ui.java) 그대로.
+- 신규: **bridge 클라이언트** ([docs/BRIDGE.md](./docs/BRIDGE.md))
+  - login/config phase에서 `fullmoon:v1` 채널 등록 → 서버 handshake 응답 대기(5s timeout,
+    실패 시 조용히 비활성 — mod만 깔렸고 서버가 구버전인 경우 등)
+  - `waypoint_sync` 수신 → 워프 목록 상태 보관
+  - `screen_open` 수신 → 네이티브 스크린 렌더 (v1: `warp`)
+  - 워프 스크린에서 선택 → `tp_request` 전송. 실행/거절은 서버 몫, 클라는 결과 toast만.
+  - **지도 모드**: fullscreen map screen. v1 = BlueMap flat 타일 HTTP fetch + pan/zoom +
+    자기 마커(서버가 `waypoint_sync`에 self 좌표 포함 or 로컬 coords 모듈 재사용).
+    Xaero식 로컬 미니맵은 OUT — bluemap-serve가 이미 돌고 있으니 재투자.
+- 감지 규칙(중요): 채널 등록·handshake 성공 = **UX 스위치일 뿐 신뢰 아님.** tp/상거래 검증은
+  서버가 감지 결과와 무관하게 수행. 위조 클라가 payload를 흉내 내도 서버 권위가 전부 흡수.
 
-Stack: **Tauri v2** + **Rust** core, **React + TS + Vite** front, **tauri-specta** 바인딩,
-`keyring`(토큰 보관), `reqwest`(다운로드), `sha1`(무결성). 인게임 클라 = 별도 Fabric mod(§7).
+## 4. 서버 측 컴포넌트 (minecraft-server-project/plugins-src/fullmoon-bridge)
 
----
+- Paper plugin, moonportals 형식 준수. v1 기능:
+  - join 시 채널 등록 감지 → handshake → `waypoint_sync`(POI 스냅샷: 로비 프로그램
+    zones 2–15 확정 좌표에서 생성)
+  - `tp_request` 검증(권한·쿨다운·같은 월드·거리) 후 teleport, 결과 응답
+  - 미지원 클라 폴백: `/워프` 커맨드 (+ 필요시 ChestGUI)
+- 열린 검증 항목: **custom plugin channel의 Velocity 통과.** BungeeCord 채널(moonportals)은
+  증명됐으나 임의 채널 relay는 FM2에서 로컬로 먼저 확인한다.
 
-## 3. 기능 (domain별)
+## 5. Bridge 프로토콜
 
-### 3.1 Accounts / Auth
-- Microsoft OAuth: **device-code** (헤드리스/편함) + **auth-code PKCE** (임베드 웹뷰) 둘 다.
-- 체인: MSA token → Xbox Live → XSTS → Minecraft token → profile(uuid/name/skin/capes).
-- 멀티계정, 전환, 추가/삭제, 토큰 자동 refresh, **OS keychain 보관**(평문 파일 금지).
-- **Fast-path**: 공식 런처 `launcher_accounts.json` import (이미 로그인된 계정 흡수).
-- **Offline/dev 모드**: 인증 없이 UI 개발 가능(타 LLM이 UI-B 만들 때 계정 불필요).
+스펙 본문: [docs/BRIDGE.md](./docs/BRIDGE.md). 요약:
+`fullmoon:v1` 등록 → C→S `hello{proto}` → S→C `welcome{proto, waypoints[]}` (5s 내) →
+운영 페이로드(`waypoint_sync`, `screen_open`, `tp_request`, `tp_result`). 버전 필드로
+양방향 하위호환. 전부 서버 권위, 프로토콜 문서는 공개(오픈소스 전제).
 
-### 3.2 Versions / Instances
-- Version manifest fetch(piston-meta) → release/snapshot 목록, `26.1.2` 타겟.
-- 설치 파이프라인: client jar + libraries + asset-index + assets + native 추출 +
-  **매칭 JRE 프로비저닝**(없으면 다운로드). 병렬 다운로드, SHA1 검증, resume.
-- Instances = 격리 게임 디렉터리(버전/모드팩별 own mods·config·saves·resourcepacks).
-- 무결성: 파일 해시 검증, 손상 감지 → 재다운.
+## 6. 마일스톤
 
-### 3.3 Fabric
-- fabric-meta에서 loader + intermediary mappings 해석·설치, `26.1.2` 호환 조합 선택.
-- Fabric API 및 1st-party 모드 번들을 인스턴스 mods/에 배치.
+| M   | 내용 | 검증 (launch & look) | 상태 |
+|-----|------|----------------------|------|
+| FM0 | 포크 + 리브랜드 + 빌드 green | `npm run rebrand` diff + tsc/vite/cargo 통과 | wip (rebrand 완료, 빌드 미검증) |
+| FM1 | 런처 홈 = 서버 허브 재설계 | 홈 스크린샷 — 인스턴스 개념 노출 0, ping 표시 | |
+| FM2 | fullmoon-bridge(Paper) v1 | 바닐라 클라 폴백(`/워프`) + mod 클라 handshake 로그 | |
+| FM3 | mod 워프 네이티브 스크린 | 인게임 스크린샷 + 실제 tp 이동 | |
+| FM4 | 지도 모드 (BlueMap tiles) | 인게임 맵에서 만월 궁 식별 스샷 | |
+| FM5 | 런처 폴리시 + 상태/뉴스 살리기 | 전체 플로우 스샷 세트 | |
+| FM6 | 배포: NSIS(+upstream M6 완수) + 업데이터 결정 | 클린 PC 설치 → 로비 접속까지 | |
 
-### 3.4 Mods
-- 1st-party: **Pinion HUD**(§7), Sodium, Lithium — 번들, 버전호환 체크.
-- 인스턴스별 enable/disable, 충돌/버전 경고.
+FM0–FM3가 최소 제품. FM4부터가 차별화.
 
-### 3.5 Launch
-- JVM args 빌드(메모리 슬라이더 + GC 플래그), game args, auth 주입, Quick Play(서버 직행).
-- 프로세스 관리: 실행, **라이브 로그 콘솔(event stream)**, 크래시 감지, "running" 상태.
-- Pre-launch 체크: Java 존재/버전, 파일 무결성.
+## 7. 검증 바 / 법적
 
-### 3.6 Cosmetics (클라측)
-- Cape / wings / cosmetic item — **본인 클라에 렌더**(우리 mod가 그림).
-- 런처 picker → HUD/cosmetic config 파일 write → mod가 read.
-- (서버-가시 코스메틱은 백엔드 필요 = OUT.)
-
-### 3.7 Settings + HUD config
-- Java 경로/args, 메모리, 다운로드 동시성, 테마, 언어, telemetry OFF.
-- HUD 모듈 설정(런처 ↔ 인게임 모드메뉴 미러): FPS/CPS/keystrokes/coords/장비/포션/핑
-  각 toggle + 위치/스케일. 인스턴스별 `hud.json`으로 저장, mod가 읽음.
-
-### 3.8 Home / Shell
-- 뉴스/체인지로그(JSON 구동), Play 버튼, 선택 인스턴스/계정, 상태.
-- 서버 즐겨찾기/최근 → Quick Play 직행.
-
----
-
-## 4. IPC 계약 (융합 seam — 두 UI 공통, Rust가 tauri-specta로 생성)
-
-```ts
-// ── commands (invoke) ──────────────────────────────────────────
-// auth
-auth_begin_device_code(): DeviceCodePrompt          // { userCode, verificationUri, expiresIn }
-auth_poll(session: string): AuthStatus              // pending | Account
-auth_login_authcode(): Account
-auth_import_official(): Account[]                    // launcher_accounts.json fast-path
-auth_list(): Account[]
-auth_select(uuid: string): void
-auth_remove(uuid: string): void
-auth_refresh(uuid: string): Account
-
-// versions / instances
-versions_manifest(): VersionSummary[]
-instances_list(): Instance[]
-instance_create(spec: InstanceSpec): Instance
-instance_update(id: string, patch: InstancePatch): Instance
-instance_delete(id: string): void
-instance_install(id: string): string                // -> taskId; 진행은 event로
-
-// mods
-mods_available(): ModCatalog                         // 1st-party bundle
-mods_list(instanceId: string): Mod[]
-mod_toggle(instanceId: string, modId: string, enabled: boolean): void
-
-// launch
-launch(instanceId: string, opts?: LaunchOpts): string     // -> sessionId
-launch_quickplay(instanceId: string, server: string): string
-game_kill(sessionId: string): void
-game_status(): GameState
-
-// cosmetics / hud
-cosmetics_catalog(): Cosmetic[]
-cosmetics_equipped(uuid: string): Loadout
-cosmetics_equip(uuid: string, slot: string, itemId: string | null): void
-hud_get(instanceId: string): HudConfig
-hud_set(instanceId: string, cfg: HudConfig): void
-
-// settings
-settings_get(): Settings
-settings_set(patch: Partial<Settings>): Settings
-java_detect(): JavaRuntime[]
-
-// home
-news_feed(): NewsItem[]
-servers_list(): ServerEntry[]
-servers_save(list: ServerEntry[]): void
-
-// ── events (emit) ──────────────────────────────────────────────
-"auth://device"     { userCode, verificationUri, expiresIn }
-"download://progress" { taskId, file, done, total, bytesPerSec }
-"install://stage"   { instanceId, stage, pct }        // manifest|libraries|assets|jre|fabric|mods|done
-"game://log"        { sessionId, level, line }
-"game://state"      { sessionId, state, exitCode? }   // starting|running|crashed|closed
-```
-
-이 `bindings.ts`가 계약이다. UI는 **여기 정의된 것만** 호출/구독한다. 새 니즈 →
-Claude가 Rust core에 command/event 추가 → 바인딩 재생성 → 두 UI 모두 즉시 사용.
-
----
-
-## 5. Component inventory (core 어댑트 참조 — 경쟁 UI엔 미제공)
-
-core가 기대하는 뷰 표면. **경쟁자에겐 주지 않는다** — 바이크오프 승자/융합본을 계약에
-배선할 때 이 표면으로 매핑하는 용도. 경쟁 UI가 다른 이름/구성을 써도 무방, 어댑터가 흡수.
-
-| 화면 (Screen)        | 핵심 컴포넌트                                             |
-|----------------------|----------------------------------------------------------|
-| `HomeScreen`         | `PlayButton`, `AccountChip`, `InstancePicker`, `NewsFeed`, `ServerFavorites` |
-| `AccountsScreen`     | `AccountCard`, `AddAccountFlow(device-code)`, `SkinPreview` |
-| `InstancesScreen`    | `InstanceCard`, `CreateInstanceDialog`, `InstallProgress`  |
-| `ModsScreen`         | `ModRow`, `ModToggle`, `PerfBadge`                        |
-| `CosmeticsScreen`    | `CosmeticGrid`, `LoadoutSlots`, `PlayerRender`            |
-| `SettingsScreen`     | `JavaPicker`, `MemorySlider`, `HudModuleEditor`, `ThemeToggle` |
-| `LaunchConsole`      | `LogStream`, `StateBadge`, `KillButton`                  |
-| shell                | `Sidebar`, `TitleBar`, `Toast`, `ProgressDock`            |
-
-배선 시 각 컴포넌트는 §4 계약만 소비하는 순수 view로 어댑트한다(로직은 core에).
-
----
-
-## 6. Design tokens (core 어댑트 레이어 — 경쟁 UI엔 미제공)
-
-`src/styles/tokens.css` — CSS 변수 한 파일, accent는 `brand.json`에서 주입. 융합본을 브랜드에
-맞출 때의 스왑 레이어. **경쟁자에겐 토큰을 강제하지 않는다** — 각자 디자인 언어대로 뽑고,
-융합 단계에서 이 토큰으로 정규화한다.
-
-```
---bg, --bg-elev, --surface, --border,
---text, --text-dim, --accent, --accent-dim,
---radius, --radius-lg, --shadow-1, --shadow-2,
---font-ui, --font-mono, --ease, --dur
-```
-
-품질 바(글로벌 output style): 프레임워크 기본 스캐폴드처럼 보이면 실패.
-Feather/Lunar급으로 **의도적으로 디자인된, 눈에 띄게 구별되는** 껍데기여야 한다.
-
----
-
-## 7. 인게임 클라 = Pinion HUD (Fabric mod, 별도 트랙)
-
-- 별 디렉터리 `pinion-mod/` (Java/Kotlin, Fabric Loom, target `26.1.2`).
-- v1 모듈: FPS·CPS·keystrokes·coords·장비·포션·핑 HUD + **인게임 모드설정 GUI**(런처 톤 일치)
-  + zoom + fullbright + 클라측 cosmetic 렌더.
-- 런처 ↔ mod 계약 = 인스턴스 dir의 `pinion/hud.json` + `pinion/cosmetics.json`(런처 write, mod read).
-- 런처 마일스톤 뒤(M4)에 시작 — 지금은 계약(파일 스키마)만 예약.
-
----
-
-## 8. 마일스톤
-
-| M  | 내용                                                              | 검증 (launch & look)                    | 상태 |
-|----|-------------------------------------------------------------------|-----------------------------------------|------|
-| M0 | repo + brand + rebrand + tauri-specta 배선 + `versions_manifest` live | `26.1.2` 매니페스트가 실제로 떠온다      | done |
-| M1 | Auth: device-code + 공식계정 import, refresh                       | 6년차 실계정 로그인 성공, 프로필 표시    | done |
-| M2 | 설치 파이프라인: `26.1.2` + Fabric, 해시검증, JRE 프로비전          | 인스턴스 파일 디스크에 무결성 통과       | done |
-| M3 | **Launch** — 우리 런처가 진짜 MC 창을 띄운다 (auth 주입)            | **MC 창 뜸. 스크린샷.** ← 핵심 증명      | done |
-| M4 | Mods + Pinion HUD 첫 컷(FPS/coords/keystrokes) 인게임               | 인게임 HUD 렌더 스샷                     | done |
-| M5 | Cosmetics + 폴리시 + rebrand 테스트                                | cape 본인 렌더 + 리네임 1회 동작         | done |
-| M6 | 배포 산출물 — 릴리스 빌드 + NSIS 인스톨러 + 클린 첫 실행           | 설치된 exe가 계정 없는 상태에서 뜬다     | wip  |
-
-M4 = 로컬 26.1.2 서버에 quick play로 접속한 실게임에서 FPS·CPS·XYZ·PING·키스트로크가
-전부 렌더된 스샷. 인게임 모드설정 GUI·zoom·fullbright(§7 v1 잔여)는 M5로 넘어간다.
-
-M5 증거 (전부 실행 후 확인, 로컬 26.1.2 서버):
-- 인게임 모드설정 GUI 렌더 + 행 토글이 `pinion/hud.json`을 쓰고 HUD에서 모듈이 사라짐.
-- zoom = C 홀드 fov 30(바닐라 하한. 20은 `Illegal option value`로 되돌아간다).
-- fullbright = `LightmapMixin`이 ambient를 흰색으로. 자정 프레임 48% → 97% 밝기.
-- cape = 런처 `cosmetics_equip` → 인스턴스 `pinion/cosmetics.json` → 본인 등에 렌더,
-  해제하면 사라짐. 재시작 없음. 케이프 PNG는 런처 `public/capes/`에서 빌드 때 복사되므로
-  미리보기와 인게임이 갈라질 수 없다.
-- rebrand = `brand.json`을 Talon으로 바꾸고 `npm run rebrand` + 빌드 → `talon.exe`,
-  창 제목·워드마크·뉴스 카피·데이터 루트(`%APPDATA%/Talon`)까지 Talon. 되돌리면 Pinion.
-  숨은 하드코딩 4곳(워드마크, index.html title, 번들 카탈로그, pledge 문구)을 이 테스트가
-  잡아냈다.
-- 촬영 리그는 게임 자체 F2를 쓴다. 창을 화면 밖으로 파킹하면 DWM이 리다이렉션 표면 갱신을
-  멈춰 `PrintWindow`가 옛 프레임을 돌려준다(측정: 켠 뒤 온스크린 97% vs 파킹 48%).
-
-M6 증거 (2026-07-28, 전부 실행 후 확인):
-- `npm run bundle` EXIT=0, 14m47s → `target/release/pinion.exe` 13.4 MB +
-  `bundle/nsis/Pinion_1.0.0_x64-setup.exe` 3.5 MB.
-- 무인 설치 `/S` exit 0 → `%LOCALAPPDATA%\Pinion\`에 exe + uninstall.exe +
-  `resources\mods\pinion-hud.jar`(번들 모드가 인스톨러에 실제로 들어간다).
-  제어판 항목 등록됨(DisplayName Pinion, DisplayVersion 1.0.0, UninstallString).
-- 클린 첫 실행 = `PINION_DATA_ROOT`를 빈 디렉터리로 지정하고 설치본 실행. 계정 0·인스턴스 0
-  상태로 렌더(우상단·독 CTA가 전부 "계정 추가"), 루트에 `settings.json`과 라이브
-  `version_manifest_v2.json`(272 KB)이 생성 = 네트워크까지 산 채로 동작.
-  `dirs`는 Known Folder API를 쓰므로 `%APPDATA%` 오버라이드로는 이 테스트가 불가능하다.
-
-인게임 GUI 패스 (2026-07-31, 전부 로컬 26.1.2 서버에서 실행 후 확인):
-- 모드 GUI를 런처와 같은 언어로 다시 그림. 새 `Ui.java` = 팔레트(런처 `tokens.css`
-  dark 값 그대로) + 모서리 깎은 rect/border + 그림자 + 가로 그라디언트 + 자간 준 대문자
-  + 애니메이션 pill. 배경을 모르는 채 떠 있는 표면이라 둥근 모서리는 "덮어 그리기"가
-  불가능 — 픽셀을 **버려서** 만든다.
-- `PinionSettingsScreen` = 좌측 레일(MODULES/VISUALS/KEYS) + 페이지 행. 열릴 때
-  9px 상승 + 행 stagger, hover/토글은 프레임 독립 approach. 휠로 모듈 크기 조절,
-  TAB/←→로 페이지 이동(키로 연 패널은 키로 걸을 수 있어야 한다).
-- 새 페이지 VISUALS/KEYS. VISUALS(fullbright·zoom fov·zoom 감도)는 모드 소유 파일
-  `pinion/client.json`에 저장 — 런처가 `hud.json`을 통째로 다시 쓰기 때문에 거기 넣으면
-  지워진다. fullbright가 재시작을 넘겨 살아남는 게 요점.
-- HUD 모듈 2개 완성(§7 v1 잔여): **gear**(투구·갑옷·주손·오프핸드 아이콘 + 바닐라
-  내구 표시), **potion**(효과별 고유 색 눈금 + 남은 시간, 200틱 미만은 poppy).
-  FPS/PING은 값에 따라 bone→ochre→poppy. 키캡은 뗀 뒤 잔광이 사라진다.
-- 촬영 리그: `scripts/_rcon.mjs`(서버 콘솔이 없어 장비·효과를 줄 방법이 없었다) +
-  `scripts/panel-drive.mjs`(합류를 `list`로 확인 → 레이아웃 write → 장비/효과 →
-  HUD·키홀드·패널 3페이지 촬영). `shot-game.ps1`에 `-HoldKey/-HoldMs` 추가 —
-  키스트로크 모듈은 키가 실제로 눌린 동안에만 보여줄 게 있다.
-- 바닐라 효과 아이콘은 potion 모듈이 켜져 있으면 물러난다
-  (`HudElementRegistry.replaceElement(MOB_EFFECTS, …)` 래핑 — Gui 믹스인이 아니라
-  리베이스를 넘긴다). 같은 정보가 두 벌 뜨는 건 두 개의 리드아웃이 아니라 중복.
-- 미검증 하나: 패널의 `fit` 축소는 바닐라가 GUI 스케일을 논리 320x240 이상으로
-  clamp 하기 때문에 트리거되지 않는다(스케일 4로 강제해도 854x480 창에서는 2로 클램프).
-  방어용으로 남긴다.
-- 함정: 데브 빌드의 `paths::resources`는 `target/debug/resources`로 풀린다. 런처가
-  실행 때마다 그 jar를 인스턴스로 복사하므로, 거기 갱신하지 않으면 새 jar를 넣어도
-  **옛 GUI가 뜬다**(한 번 당함).
-
-M6 착수 상태:
-- 개발 내내 `cargo build` + 수동 vite였고 tauri CLI가 없어 인스톨러를 만들 수 없었다.
-  `@tauri-apps/cli`를 devDependency로 넣고 `npm run bundle`로 nsis 타깃을 돈다.
-- `brand.json.msClientId`가 비어 있어 클린 머신에서 device-code/브라우저 로그인은
-  Azure 앱 등록 전까지 `no Microsoft application id is configured`로 막힌다.
-  공식 런처 계정 import와 오프라인 프로필은 영향 없음.
-
-UI 바이크오프(UI-A/UI-B)는 **스코프 + Lunar/Feather 레퍼런스만** 주고 무제약 병렬 →
-품질로 겨뤄 승자/융합본을 M3 이후 core 계약에 어댑트·배선.
-
----
-
-## 9. 검증 바 (project CLAUDE.md)
-
-시각 프로젝트. **green 테스트 = 렌더 증거 아님.** 각 마일스톤은 띄워서 눈으로 본다.
-M3에서 실제 Minecraft 창이 우리 런처 auth로 떠야 "런처 됨"이라 부른다. 스샷 남긴다.
-
-## 10. 툴체인 / 법적 메모
-
-- 박스 현황: **JDK 25.0.3**(2026 MC의 Java 21+ 요구 커버), Node v22.12, Tauri v2.
-- 법적: 런처는 Mojang piston-meta/CDN에서 에셋 다운(재배포 X). 우리 mod = 클라UI/표시물만.
-  이름 `Pinion` = Feather/Minecraft 상표 회피. Mojang EULA·브랜드 가이드라인 준수.
+- 업스트림과 동일: **green 테스트 = 렌더 증거 아님.** 각 마일스톤 띄워서 눈으로 보고 스샷 남긴다.
+- 라이선스: GPL-3.0 계열 (launcher + mod). 에셋은 별도 고지. 릴리스는 CI 태그 빌드 + 산출물
+  해시 공개로 "이 바이너리 == 이 커밋" 성립시킨다.
+- Mojang piston-meta/CDN 다운로드(재배포 금지) 준수 — 업스트림 파이프라인이 이미 그렇게 동작.
+- 공개 레포는 이 히스토리에서 큐레이션해 분리. distribution-project 루트의 키 파일들이
+  섞이지 않게 한다.
