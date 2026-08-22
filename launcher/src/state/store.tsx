@@ -132,7 +132,7 @@ const BOOT_SETTINGS: Settings = {
   memoryMb: 4096,
   concurrency: 8,
   theme: "dark",
-  accent: "#B0481A",
+  accent: "#F5D06E",
   language: "ko",
   telemetry: false,
 };

@@ -131,7 +131,7 @@ public final class WarpScreen extends Screen {
 
         extractBlurredBackground(gfx);
         gfx.fillGradient(0, 0, width, height,
-                Ui.alpha(0xFF06070A, 0.34f * open), Ui.alpha(0xFF06070A, 0.58f * open));
+                Ui.alpha(0xFF050914, 0.34f * open), Ui.alpha(0xFF050914, 0.58f * open));
 
         int mx = (int) Math.round((mouseX - width / 2.0) / fit + width / 2.0);
         int my = (int) Math.round((mouseY - height / 2.0) / fit + height / 2.0);

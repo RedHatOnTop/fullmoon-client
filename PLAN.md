@@ -70,8 +70,10 @@ Target MC = `26.1.2` 고정 (Paper 26.1.2 + Velocity 프록시, 로비 `fullmoon
 | `SettingsScreen` | 유지 + 서버 주소(기본 고정, override 가능) |
 | `Console`/shell | 유지 |
 
-디자인 언어: 업스트림 tokens.css 구조 유지, accent는 brand.json(`#9D7CE8` 만월 보라)에서
-주입 — 이미 반영. 홈 배경에 달/야경 무드를 얹는 건 FM1에서 눈으로 보면서 조절한다.
+디자인 언어: **fullmoon.ink("달빛 밤하늘")가 단일 출처다.** 런처 tokens.css와 mod Ui.java
+팔레트는 사이트(cardTheme.js 유래)의 밤하늘 네이비 + 문라이트 골드 + Pretendard를 값 그대로
+미러링한다 — 폰트도 자체 호스팅(Pretendard 3 weights, font CDN 없음). 홈 배경의 달/별
+무드는 FM1에서 사이트의 #sky 캔버스 모티프를 따라 눈으로 보면서 조절한다.
 품질 바 동일: **스캐폴드처럼 보이면 실패.**
 
 ## 3. 인게임 mod 트랙 (pinion-mod → fullmoon-mod)

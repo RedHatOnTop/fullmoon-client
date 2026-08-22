@@ -444,10 +444,10 @@
 .playbtn-orb { display: grid; place-items: center; }
 .playbtn-warn { background: var(--danger-fill); }
 .playbtn-warn:hover { background: var(--danger-fill-hover); }
-.playbtn-busy { background: var(--sage-700); pointer-events: auto; }
-.playbtn-busy:hover { background: var(--sage-700); }
-.playbtn-running { background: var(--sage-800); }
-.playbtn-running:hover { background: var(--sage-700); }
+.playbtn-busy { background: var(--sky-700); pointer-events: auto; }
+.playbtn-busy:hover { background: var(--sky-700); }
+.playbtn-running { background: var(--sky-800); }
+.playbtn-running:hover { background: var(--sky-700); }
 .playbtn-progress {
   display: flex;
   align-items: baseline;
@@ -565,8 +565,8 @@
 }
 .toast-icon { display: grid; place-items: center; }
 .toast-info .toast-icon { color: var(--accent); }
-.toast-success .toast-icon { color: var(--moss-400); }
-.toast-error .toast-icon { color: var(--poppy-300); }
+.toast-success .toast-icon { color: var(--teal-400); }
+.toast-error .toast-icon { color: var(--rose-300); }
 
 /* ── launch overlay — E3 dialog over scrim ── */
 .lov-backdrop {

@@ -202,7 +202,7 @@ public final class PinionSettingsScreen extends Screen {
            the panel has to be the thing in focus. */
         extractBlurredBackground(gfx);
         gfx.fillGradient(0, 0, width, height,
-                Ui.alpha(0xFF06070A, 0.34f * open), Ui.alpha(0xFF06070A, 0.58f * open));
+                Ui.alpha(0xFF050914, 0.34f * open), Ui.alpha(0xFF050914, 0.58f * open));
 
         int localMouseX = (int) Math.round(localX(mouseX));
         int localMouseY = (int) Math.round(localY(mouseY));

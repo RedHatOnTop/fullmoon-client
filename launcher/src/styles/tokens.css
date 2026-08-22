@@ -1,128 +1,136 @@
 /* ============================================================
-   Pinion tokens — the Imprint design language (new-design-system)
-   carried to desktop density. Pine ink on cool vellum, one
-   verdigris plate. Korean text falls back to Noto Serif KR
-   (display) and Pretendard (interface).
+   Fullmoon tokens — the fullmoon.ink design system ("달빛 밤하늘")
+   carried to desktop density.
+
+   Source of truth is the website (dalbit-site/assets/css/main.css),
+   whose tokens were lifted 1:1 from cardTheme.js. Night-navy sky,
+   moonlight gold as the only warm voice, lavender/teal/rose/amber
+   kept for function. Pretendard is self-hosted in public/fonts —
+   no font CDN, same rule as every other asset we ship.
    ============================================================ */
 
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-ExtraBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  /* ---------- Neutral ramp: "sage" ---------- */
-  --sage-0:   #FFFFFF;
-  --sage-25:  #F7F8F5;
-  --sage-50:  #F1F3EE;
-  --sage-100: #E8EAE3;
-  --sage-200: #D9DCD2;
-  --sage-300: #C2C7B9;
-  --sage-400: #9BA38F;
-  --sage-500: #79816F;
-  --sage-600: #5C6453;
-  --sage-700: #42483B;
-  --sage-800: #2C3128;
-  --sage-900: #1B201A;
-  --sage-950: #111511;
+  /* ---------- Neutral ramp: "sky" — the night navy ---------- */
+  --sky-0:   #FFFFFF;
+  --sky-25:  #F2F4FA;
+  --sky-50:  #E4E9F3;
+  --sky-100: #CBD3E6;
+  --sky-200: #ADB8D4;
+  --sky-300: #8B97B6;
+  --sky-400: #9AA3B8;   /* site --muted */
+  --sky-500: #6B7490;   /* site --faint */
+  --sky-600: #4C5670;
+  --sky-700: #333C55;
+  --sky-800: #20283F;
+  --sky-900: #141A30;
+  --sky-950: #070B1A;   /* site --bg-deep */
 
-  /* ---------- Accent: "ember" — fired clay, not safety orange ---------- */
-  --ember-50:  #FBEEE6;
-  --ember-100: #F6DCCB;
-  --ember-200: #EBB794;
-  --ember-300: #DE9160;
-  --ember-400: #CF6E33;
-  --ember-500: #C4551F;
-  --ember-600: #B0481A;
-  --ember-700: #8E3813;
-  --ember-800: #6B2A0E;
-  --ember-900: #481C09;
+  /* ---------- Accent: "moon" — gold, the site's one warm voice ---------- */
+  --moon-50:  #FEFAEC;
+  --moon-100: #FCF3D2;
+  --moon-200: #FAE7A8;
+  --moon-300: #F5D06E;  /* site --gold */
+  --moon-400: #FFE9B0;  /* site --moon */
+  --moon-500: #EDBF52;
+  --moon-600: #E3B84F;  /* btn gradient tail */
+  --moon-700: #A67C28;
+  --moon-800: #6E5619;
+  --moon-900: #46360F;
 
-  /* ---------- Alternate accent: "verdigris" ---------- */
-  --verdigris-50:  #E9F3EF;
-  --verdigris-100: #D2E8E0;
-  --verdigris-200: #A6D1C3;
-  --verdigris-300: #6FB29F;
-  --verdigris-400: #38937D;
-  --verdigris-500: #16775F;
-  --verdigris-600: #0E6B57;
-  --verdigris-700: #0B5445;
-  --verdigris-800: #083F35;
-  --verdigris-900: #062B24;
+  /* ---------- Function colours (site secondaries) ---------- */
+  --teal-200:    #A8F2E6;
+  --teal-400:    #5EE6D0;
+  --teal-600:    #1BA391;
+  --teal-700:    #128273;
 
-  /* ---------- Semantic ramps ---------- */
-  --moss-50:  #EFF3EA;
-  --moss-200: #C9D6BC;
-  --moss-400: #7A9A64;
-  --moss-600: #4A6B3E;
-  --moss-700: #3B5632;
+  --lavender-200: #C7D0FF;
+  --lavender-300: #A9B6FF;
+  --lavender-400: #8B9DFF;
+  --lavender-600: #5566DB;
 
-  --ochre-50:  #FAF2DC;
-  --ochre-200: #E9D8A4;
-  --ochre-400: #C9A33F;
-  --ochre-600: #8F6B12;
-  --ochre-700: #75570D;
+  --rose-200: #FFC9D3;
+  --rose-300: #FF8FA3;
+  --rose-500: #D94F66;
+  --rose-600: #BE3B52;
 
-  --slate-50:  #EDF1F4;
-  --slate-200: #C7D3DB;
-  --slate-400: #6E93AC;
-  --slate-600: #3E5C72;
-  --slate-700: #314A5C;
+  --amber-200: #FFD1AE;
+  --amber-400: #FF9D5C;
+  --amber-600: #D17734;
+  --amber-700: #A65A24;
 
-  --poppy-50:  #FAECEA;
-  --poppy-200: #EAB5AE;
-  --poppy-300: #D97D72;
-  --poppy-500: #CE4834;
-  --poppy-600: #BE3B2E;
-  --poppy-700: #9E2F24;
-  --poppy-800: #7E261D;
+  /* ---------- Semantic surfaces (light: "종일빛" moonlit paper) ---------- */
+  --bg:        var(--sky-25);
+  --surface:   var(--sky-0);
+  --sunken:    var(--sky-50);
+  --overlay:   var(--sky-0);
+  --scrim:     rgb(7 11 26 / 0.44);
 
-  /* ---------- Semantic surfaces (light: "vellum") ---------- */
-  --bg:        var(--sage-25);
-  --surface:   var(--sage-0);
-  --sunken:    var(--sage-50);
-  --overlay:   var(--sage-0);
-  --scrim:     rgb(17 21 17 / 0.44);
+  --line:        #DCE1EF;
+  --line-strong: #BCC6DC;
+  --line-ink:    var(--sky-900);
 
-  --line:        var(--sage-200);
-  --line-strong: var(--sage-300);
-  --line-ink:    var(--sage-900);
+  --text:        var(--sky-900);
+  --text-2:      var(--sky-600);
+  --text-3:      var(--sky-500);
+  --text-invert: var(--sky-25);
 
-  --text:        var(--sage-900);
-  --text-2:      var(--sage-600);
-  --text-3:      var(--sage-500);
-  --text-invert: var(--sage-25);
-
-  --accent:            var(--ember-700);
-  --accent-hover:      var(--ember-800);
-  --accent-fill:       var(--ember-600);
-  --accent-fill-hover: var(--ember-700);
-  --accent-soft:       rgb(176 72 26 / 0.10);
-  --accent-line:       rgb(176 72 26 / 0.30);
+  --accent:            var(--moon-700);
+  --accent-hover:      var(--moon-800);
+  --accent-fill:       var(--moon-600);
+  --accent-fill-hover: var(--moon-700);
+  --accent-soft:       rgb(166 124 40 / 0.10);
+  --accent-line:       rgb(166 124 40 / 0.32);
   /* the hero backdrop only — thinner than -soft, since it lies over a whole
      panel rather than a chip and has to stay a hint of weather, not a tint */
-  --accent-wash:       rgb(176 72 26 / 0.07);
-  --on-accent:         #FFFFFF;
+  --accent-wash:       rgb(245 208 110 / 0.16);
+  --on-accent:         #231A04;   /* the site's button ink on gold */
 
-  --success:      var(--moss-600);
-  --success-soft: var(--moss-50);
-  --success-line: var(--moss-200);
-  --warning:      var(--ochre-700);
-  --warning-soft: var(--ochre-50);
-  --warning-line: var(--ochre-200);
-  --danger:       var(--poppy-700);
-  --danger-soft:  var(--poppy-50);
-  --danger-line:  var(--poppy-200);
-  --danger-fill:  var(--poppy-600);
-  --danger-fill-hover: var(--poppy-700);
-  --info:         var(--slate-600);
-  --info-soft:    var(--slate-50);
-  --info-line:    var(--slate-200);
+  --success:      var(--teal-700);
+  --success-soft: #E4F6F2;
+  --success-line: #B5E4DB;
+  --warning:      var(--amber-700);
+  --warning-soft: #FDF0E4;
+  --warning-line: #F5D2B8;
+  --danger:       var(--rose-600);
+  --danger-soft:  #FDECEF;
+  --danger-line:  #F7C4CD;
+  --danger-fill:  var(--rose-500);
+  --danger-fill-hover: var(--rose-600);
+  --info:         var(--lavender-600);
+  --info-soft:    #EAEDFD;
+  --info-line:    #CDD4FB;
 
-  --selection-bg:   var(--ember-100);
-  --selection-text: var(--sage-900);
+  --selection-bg:   var(--moon-100);
+  --selection-text: var(--sky-900);
 
   /* ---------- Typography ----------
-     Display = Space Grotesk (techy grotesque, English headlines); Korean
-     falls to Pretendard so the KR/EN tonal jump stays small (both sans).
-     UI/body = Pretendard for one KR+Latin family. Data = JetBrains Mono. */
-  --font-display: "Space Grotesk", "Pretendard Variable", "Segoe UI", system-ui, sans-serif;
-  --font-sans: "Pretendard Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+     The site's whole voice is Pretendard; weight (400/600/800) does the
+     hierarchy, not a second family. Self-hosted above. Data = JetBrains
+     Mono if present, else the platform mono. */
+  --font-display: 'Pretendard', -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif;
+  --font-sans: 'Pretendard', -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif;
   --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
 
   --text-display-md: 2.4375rem;  /* 39px */
@@ -141,26 +149,26 @@
   --leading-ui:      1.45;
 
   --ls-tight:   -0.022em;
-  --ls-snug:    -0.011em;
+  --ls-snug:   -0.011em;
   --ls-wide:     0.01em;
   --ls-overline: 0.14em;
 
-  /* ---------- Radius: 4/6/8 ladder ---------- */
-  --radius-1: 4px;   /* controls  */
-  --radius-2: 6px;   /* surfaces  */
-  --radius-3: 8px;   /* floaters  */
+  /* ---------- Radius: the site is generous; desktop keeps a hand of it ---------- */
+  --radius-1: 6px;    /* controls  */
+  --radius-2: 10px;   /* surfaces  */
+  --radius-3: 14px;   /* floaters  */
   --radius-round: 999px; /* geometry only */
 
   /* ---------- Elevation: borders first ---------- */
-  --shadow-1: 0 1px 2px rgb(17 21 17 / 0.05);
-  --shadow-2: 0 1px 2px rgb(17 21 17 / 0.06), 0 8px 24px -12px rgb(17 21 17 / 0.18);
-  --shadow-3: 0 2px 4px rgb(17 21 17 / 0.06), 0 20px 48px -16px rgb(17 21 17 / 0.28);
+  --shadow-1: 0 1px 2px rgb(7 11 26 / 0.05);
+  --shadow-2: 0 1px 2px rgb(7 11 26 / 0.06), 0 8px 24px -12px rgb(7 11 26 / 0.18);
+  --shadow-3: 0 2px 4px rgb(7 11 26 / 0.06), 0 20px 48px -16px rgb(7 11 26 / 0.28);
 
-  /* ---------- Motion ---------- */
+  /* ---------- Motion — the site's own curve ---------- */
   --dur-fast: 120ms;
   --dur-base: 180ms;
   --dur-slow: 280ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   /* ---------- Density: compact (desktop software) ---------- */
@@ -172,52 +180,53 @@
   --content-max: 1440px;
 }
 
-/* ---------- Dark theme: "Ink" ----------
-   Neutral graphite, not sage-tinted: a Minecraft client sits on a near-black
-   charcoal so the verdigris accent is the only real colour on screen. The
-   green cast was muddying it. */
+/* ---------- Dark theme: "밤하늘" — canonical, like the site ----------
+   The launcher is dark-first because the game behind it is. Values are the
+   website's night sky read as solids: white-alpha panels over the navy
+   gradient, resolved against --bg so panels stay opaque where the layout
+   needs them to be. */
 [data-theme="dark"] {
-  --bg:        #0F100F;
-  --surface:   #191A19;
-  --sunken:    #141514;
-  --overlay:   #1E201E;
-  --scrim:     rgb(0 0 0 / 0.62);
+  --bg:        #0B101F;
+  --surface:   #151B2E;
+  --sunken:    #0F1526;
+  --overlay:   #1B2340;
+  --scrim:     rgb(7 11 26 / 0.72);
 
-  --line:        #2A2C2A;
-  --line-strong: #3D403D;
-  --line-ink:    var(--sage-100);
+  --line:        #232B47;
+  --line-strong: #30395C;
+  --line-ink:    #D6DEED;
 
-  --text:        var(--sage-100);
-  --text-2:      var(--sage-400);
-  --text-3:      var(--sage-500);
-  --text-invert: var(--sage-950);
+  --text:        #F4F6FB;
+  --text-2:      var(--sky-400);
+  --text-3:      var(--sky-500);
+  --text-invert: var(--sky-950);
 
-  --accent:            var(--ember-300);
-  --accent-hover:      var(--ember-200);
-  --accent-fill:       var(--ember-600);
-  --accent-fill-hover: var(--ember-500);
-  --accent-soft:       rgb(176 72 26 / 0.16);
-  --accent-line:       rgb(176 72 26 / 0.42);
-  --accent-wash:       rgb(176 72 26 / 0.13);
-  --on-accent:         #FFFFFF;
+  --accent:            var(--moon-300);
+  --accent-hover:      var(--moon-400);
+  --accent-fill:       var(--moon-600);
+  --accent-fill-hover: var(--moon-500);
+  --accent-soft:       rgb(245 208 110 / 0.15);
+  --accent-line:       rgb(245 208 110 / 0.40);
+  --accent-wash:       rgb(245 208 110 / 0.08);
+  --on-accent:         #231A04;
 
-  --success:      var(--moss-400);
-  --success-soft: #182012;
-  --success-line: #2E4024;
-  --warning:      var(--ochre-400);
-  --warning-soft: #241E10;
-  --warning-line: #4A3D1C;
-  --danger:       var(--poppy-300);
-  --danger-soft:  #2A1713;
-  --danger-line:  #4E241D;
-  --danger-fill:  var(--poppy-600);
-  --danger-fill-hover: var(--poppy-500);
-  --info:         var(--slate-400);
-  --info-soft:    #161D22;
-  --info-line:    #2B3B47;
+  --success:      var(--teal-400);
+  --success-soft: #0D2226;
+  --success-line: #17453F;
+  --warning:      var(--amber-400);
+  --warning-soft: #241A0E;
+  --warning-line: #4A3320;
+  --danger:       var(--rose-300);
+  --danger-soft:  #26141C;
+  --danger-line:  #4A2230;
+  --danger-fill:  var(--rose-500);
+  --danger-fill-hover: var(--rose-300);
+  --info:         var(--lavender-400);
+  --info-soft:    #141A33;
+  --info-line:    #2A3560;
 
-  --selection-bg:   var(--ember-800);
-  --selection-text: var(--sage-100);
+  --selection-bg:   #3A3013;
+  --selection-text: var(--sky-25);
 
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-2: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);

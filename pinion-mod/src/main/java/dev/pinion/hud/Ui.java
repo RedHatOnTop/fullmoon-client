@@ -15,21 +15,20 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  *  floats above a running game, so corners are <em>dropped</em> rather than
  *  covered: {@link #rect} steps its first and last rows inward. */
 public final class Ui {
-    // ── palette — launcher tokens.css, [data-theme="dark"] ────────
-    public static final int INK = 0xFF0F100F;
-    public static final int SURFACE = 0xFF191A19;
-    public static final int SUNKEN = 0xFF141514;
-    public static final int OVERLAY = 0xFF1E201E;
-    public static final int LINE = 0xFF2A2C2A;
-    public static final int LINE_STRONG = 0xFF3D403D;
-    public static final int TEXT = 0xFFE8EAE3;
-    public static final int TEXT_2 = 0xFF9BA38F;
-    public static final int TEXT_3 = 0xFF79816F;
-    public static final int MOON = 0xFF9D7CE8;
-    public static final int MOON_LIT = 0xFFB79BF2;
-    public static final int MOON_PALE = 0xFFD8C8F8;
-    public static final int MOON_DEEP = 0xFF453078;
-    public static final int MOSS = 0xFF7A9A64;
+    // ── palette — fullmoon.ink tokens.css dark theme ──────────────
+    public static final int INK = 0xFF0B101F;
+    public static final int SURFACE = 0xFF151B2E;
+    public static final int SUNKEN = 0xFF0F1526;
+    public static final int OVERLAY = 0xFF1B2340;
+    public static final int LINE = 0xFF232B47;
+    public static final int LINE_STRONG = 0xFF30395C;
+    public static final int TEXT = 0xFFF4F6FB;
+    public static final int TEXT_2 = 0xFF9AA3B8;
+    public static final int TEXT_3 = 0xFF6B7490;
+    public static final int MOON = 0xFFF5D06E;
+    public static final int MOON_LIT = 0xFFFFE9B0;
+    public static final int MOON_PALE = 0xFFFAE7A8;
+    public static final int MOON_DEEP = 0xFF6E5619;
     public static final int OCHRE = 0xFFC9A33F;
     public static final int POPPY = 0xFFD97D72;
 
