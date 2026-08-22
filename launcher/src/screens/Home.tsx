@@ -5,7 +5,7 @@ import { useStore } from "../state/store";
 import { useT } from "../i18n";
 import BRAND from "../brand";
 import Skin3D from "../widgets/Skin3D";
-import VoxelIsland from "../widgets/VoxelIsland";
+import Moonrise from "../widgets/Moonrise";
 
 /* four tags, four corners of the wheel — a warm accent puts update, dev and
    cosmetic in the same family unless dev is pushed to the cool side */
@@ -85,7 +85,7 @@ export function HomeScreen() {
           </div>
         </div>
         <div className="fhero-art" aria-hidden>
-          <VoxelIsland className="fhero-island" />
+          <Moonrise className="fhero-moonrise" />
         </div>
         <div className="fhero-build">
           <span>{BRAND.name.toUpperCase()} BUILD</span>

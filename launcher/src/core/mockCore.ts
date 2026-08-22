@@ -170,37 +170,37 @@ const NEWS: NewsItem[] = [
   {
     id: "n1",
     tag: "update",
-    title: `${BRAND.name} 1.0 — 날개를 달다`,
-    summary: `첫 정식 릴리스. 26.1.2 타겟, Fabric 번들, ${BRAND.name} HUD 탑재. 깃털처럼 가볍게, 기어처럼 정확하게.`,
+    title: `${BRAND.name} 1.0 — 만월의 정원으로`,
+    summary: `첫 정식 릴리스. 26.1.2 타겟, Fabric 번들, 풀문 HUD와 브리지 탑재. 만월 아래, 모두가 모이는 정원.`,
     date: "2026-07-20",
-    hue: 214,
+    hue: 45,
     featured: true,
   },
   {
     id: "n2",
     tag: "dev",
-    title: "개발 노트: 설치 파이프라인은 어떻게 3배 빨라졌나",
-    summary: "병렬 다운로드 + SHA1 사전검증 + JRE 프로비전 캐시. 코어 팀의 최적화 기록.",
+    title: "로비 리뉴얼 — 만월궁이 다시 떠오르는 중",
+    summary: "백악 벽과 곡선 지붕의 히메지형 궁궐. 워프 메뉴(K)로 정문에서 바로 이동하세요.",
     date: "2026-07-17",
-    hue: 268,
+    hue: 258,
     featured: false,
   },
   {
     id: "n3",
     tag: "cosmetic",
-    title: "코스메틱 드롭: 이클립스 날개",
-    summary: "일식의 코로나에서 영감받은 레전더리 날개. 내 클라이언트에만 보이는, 나만의 과시.",
+    title: "패치노트 — 생야생 첫 시즌 밸런스",
+    summary: "몹 난이도 곡선과 드롭 테이블 조정. 재화 반영 내역은 런처 월렛 카드에서 확인할 수 있습니다.",
     date: "2026-07-14",
-    hue: 258,
+    hue: 170,
     featured: false,
   },
   {
     id: "n4",
     tag: "event",
-    title: "여름 빌드 배틀 — 커뮤니티 인스턴스 콘테스트",
-    summary: "나만의 인스턴스 프리셋을 공유하고 투표받자. 우승 프리셋은 다음 릴리스에 기본 탑재.",
+    title: "보름달 채집축제 — 이번 달 보름날 밤 8시",
+    summary: "광장에 뜨는 달 조각을 모아 한정 코스메틱으로 교환하세요. 디스코드 공지 채널에서 일정 확인.",
     date: "2026-07-10",
-    hue: 152,
+    hue: 45,
     featured: false,
   },
   {
@@ -215,10 +215,8 @@ const NEWS: NewsItem[] = [
 ];
 
 const SERVERS: ServerEntry[] = [
-  { id: "s1", name: "Ember SMP", address: "play.embersmp.net", motd: "시즌 4 — 불꽃의 섬", players: 842, maxPlayers: 1000, pingMs: 23, hue: 22 },
-  { id: "s2", name: "Crystal PvP", address: "crystal.gg", motd: "랭크 시즌 12 · 듀얼 오픈", players: 3210, maxPlayers: 5000, pingMs: 41, hue: 190 },
-  { id: "s3", name: "Moonrise", address: "moonrise.network", motd: "스카이블록 · 신규 차원 업데이트", players: 12764, maxPlayers: 20000, pingMs: 57, hue: 268 },
-  { id: "s4", name: "Skyfall", address: "skyfall.gg", motd: "베드워즈 · 듀오 토너먼트", players: 534, maxPlayers: 800, pingMs: 12, hue: 330 },
+  { id: "s1", name: "풀문 로비", address: "lobby.fullmoon.ink", motd: "만월의 정원 — 26.1.2", players: 14, maxPlayers: 120, pingMs: 9, hue: 45 },
+  { id: "s2", name: "생야생", address: "wild.fullmoon.ink", motd: "시즌 1 — 첫 야생", players: 37, maxPlayers: 120, pingMs: 11, hue: 170 },
 ];
 
 const JAVA_RUNTIMES: JavaRuntime[] = [
@@ -233,7 +231,7 @@ const DEFAULT_SETTINGS: Settings = {
   memoryMb: 6144,
   concurrency: 8,
   theme: "dark",
-  accent: "#B0481A",
+  accent: "#F5D06E",
   language: "ko",
   telemetry: false,
 };

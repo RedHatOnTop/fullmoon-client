@@ -147,7 +147,7 @@
 .fhero-meta svg { color: var(--text-3); }
 
 .fhero-art { display: grid; place-items: center; padding-right: 88px; align-self: end; }
-.fhero-island { width: 288px; height: auto; }
+.fhero-moonrise { width: 300px; height: auto; }
 
 .fhero-build {
   position: absolute;

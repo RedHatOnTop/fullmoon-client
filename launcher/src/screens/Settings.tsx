@@ -12,7 +12,7 @@ import brand from "../brand";
 declare const __APP_VERSION__: string;
 const APP_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
 
-const ACCENTS = ["#B0481A", "#0E6B57", "#3E5C72", "#4A6B3E", "#75570D", "#9E2F24"];
+const ACCENTS = ["#F5D06E", "#5EE6D0", "#8B9DFF", "#FF8FA3", "#FF9D5C"];
 
 /* Mirrors java.rs `major_of` — Java 8 reports itself as 1.8.0_x. The floor is
    MIN_MAJOR there; the two have to move together. */
