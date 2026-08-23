@@ -44,7 +44,7 @@ export function PlayDock() {
   const {
     accounts, activeAccount, selectAccount,
     selectedInstance,
-    installInstance, launch, game, setScreen,
+    installInstance, launch, game, setScreen, setOverlayHidden,
   } = useStore();
   const { t } = useT();
   const [accOpen, setAccOpen] = useState(false);
@@ -105,7 +105,7 @@ export function PlayDock() {
       </>
     );
     playClass += " playbtn-busy";
-    playAction = () => setScreen("console");
+    playAction = () => setOverlayHidden(null);
   } else if (running) {
     playContent = (
       <>
@@ -115,7 +115,8 @@ export function PlayDock() {
       </>
     );
     playClass += " playbtn-running";
-    playAction = () => setScreen("console");
+    /* re-show the live surface — the console screen is gone, the overlay is it */
+    playAction = () => setOverlayHidden(null);
   } else {
     playContent = (
       <>

@@ -122,7 +122,7 @@ Target MC = `26.1.2` 고정 (Paper 26.1.2 + Velocity 프록시, 로비 `fullmoon
 | FM2 | fullmoon-bridge(Paper) v1 | 바닐라 클라 폴백(`/워프`) + mod 클라 handshake 로그 | |
 | FM3 | mod 워프 네이티브 스크린 | 인게임 스크린샷 + 실제 tp 이동 | |
 | FM4 | 지도 모드 (BlueMap tiles) | 인게임 맵에서 만월 궁 식별 스샷 | |
-| FM5 | 런처 폴리시: 소식 센터 + 경제 카드 + 원클릭 접속 플로우 | 전체 플로우 스샷 세트 — 잔액·공지가 홈에 실제 데이터로 렌더 | |
+| FM5 | 런처 폴리시: 소식 센터 + 경제 카드 + 원클릭 접속 플로우 | 전체 플로우 스샷 세트 — 잔액·공지가 홈에 실제 데이터로 렌더 | wip (UI 착상·mock 완료: 재화/서버 상태 카드, 콘솔 화면 제거하고 오버레이가 실세계면. 실데이터는 bridge 세션 토큰 후) |
 | FM6 | 배포: NSIS + OTA(Tauri updater, 서명 manifest) + 신뢰 스택(§1.5) | 클린 PC 설치 → 로비 접속까지 + SHA256SUMS·VT 링크 게시 | |
 
 FM0–FM3가 최소 제품. FM4부터가 차별화.

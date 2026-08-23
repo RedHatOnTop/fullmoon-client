@@ -27,6 +27,8 @@ import type {
   LogLevel,
   ModCatalog,
   NewsItem,
+  WalletInfo,
+  WalletTx,
   PinionCore,
   ServerEntry,
   ServerStatus,
@@ -235,6 +237,19 @@ const DEFAULT_SETTINGS: Settings = {
   language: "ko",
   telemetry: false,
 };
+
+/* Wallet fixtures use the economy backend's own TX_LABELS vocabulary
+   (coin-bridge-bot/src/economy/cardTheme.js) — a launcher panel that
+   renames 출석 보상 or 알바 is a panel that drifts from the bot. */
+const WALLET: WalletInfo = { currency: "코인", balance: 128450, updatedAt: "2026-08-22T21:40:00Z" };
+
+const TXS: WalletTx[] = [
+  { delta: -3500, reason: "discord.shop.buy", label: "상점 구매", balanceAfter: 128450, at: "2026-08-22T20:12:00Z" },
+  { delta: 1200, reason: "discord.daily", label: "출석 보상", balanceAfter: 131950, at: "2026-08-22T09:02:00Z" },
+  { delta: 800, reason: "discord.work", label: "알바", balanceAfter: 130750, at: "2026-08-21T23:30:00Z" },
+  { delta: 640, reason: "discord.drop.pick", label: "돈뿌리기 줍기", balanceAfter: 129950, at: "2026-08-21T22:58:00Z" },
+  { delta: 320, reason: "discord.chat", label: "채팅 활동", balanceAfter: 129310, at: "2026-08-21T21:47:00Z" },
+];
 
 const DEFAULT_HUD: HudConfig = {
   modules: [
@@ -807,6 +822,16 @@ export class MockCore implements PinionCore {
   async news_feed(): Promise<NewsItem[]> {
     await latency();
     return NEWS.map((n) => ({ ...n }));
+  }
+
+  async economy_wallet(): Promise<WalletInfo> {
+    await latency();
+    return { ...WALLET };
+  }
+
+  async economy_transactions(): Promise<WalletTx[]> {
+    await latency();
+    return TXS.map((t) => ({ ...t }));
   }
 
   async servers_list(): Promise<ServerEntry[]> {

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, IconButton } from "../components/ui";
 import { useStore } from "../state/store";
+import { isRealCore } from "../core/client";
 import { useT } from "../i18n";
 import BRAND from "../brand";
 import Skin3D from "../widgets/Skin3D";
@@ -16,10 +17,17 @@ const TAG_TONE: Record<string, "accent" | "ok" | "warn" | "err" | "info" | "dim"
   cosmetic: "err",
 };
 
+/** "8/22 20:12" — a wallet row dates itself, it does not narrate */
+function fmtWhen(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export function HomeScreen() {
   const {
-    news, servers, serverStatus, pingingServers, refreshServers, addServer,
-    versions, settings, modCatalog, cosmetics, loadout, javaRuntimes,
+    news, wallet, walletTxs, servers, serverStatus, pingingServers, refreshServers, addServer,
+    versions, settings, modCatalog, cosmetics, loadout,
     activeAccount, instances, selectedInstance, launch, removeServer, toast, setScreen,
   } = useStore();
   const { t } = useT();
@@ -28,12 +36,6 @@ export function HomeScreen() {
   const target = useMemo(() => versions.find((v) => v.isTarget), [versions]);
   const installedAny = instances.some((i) => i.installed);
   const memGb = selectedInstance ? Math.round(selectedInstance.memoryMb / 1024) : null;
-  /* the version is the fact worth a row here — every runtime on the box is
-     called java.exe, so the file name told the user nothing */
-  const javaLabel =
-    javaRuntimes.find((j) => j.path === settings?.javaPath)?.version ??
-    settings?.javaPath?.split("\\").pop() ??
-    "—";
 
   const cape = useMemo(() => {
     const id = loadout?.cape;
@@ -140,8 +142,75 @@ export function HomeScreen() {
           </div>
         </section>
 
-        {/* ── right rail: the player, then the machine ── */}
+        {/* ── right rail: the wallet, the network, then the player ── */}
         <aside className="home-rail">
+          <section className="wallet-card card" aria-live="polite">
+            <div className="section-head">
+              <h3>{t("home.walletTitle")}</h3>
+              {wallet && <span className="section-sub">{wallet.currency}</span>}
+            </div>
+            {wallet ? (
+              <>
+                <div className="wallet-balance num">
+                  {wallet.balance.toLocaleString("ko-KR")}
+                  <small>{t("home.walletUnit")}</small>
+                </div>
+                <ul className="tx-rows">
+                  {walletTxs.map((tx) => (
+                    <li key={tx.at + tx.reason} className="tx-row">
+                      <div className="tx-meta">
+                        <strong>{tx.label}</strong>
+                        <span className="num">{fmtWhen(tx.at)}</span>
+                      </div>
+                      <span className={`tx-delta num ${tx.delta >= 0 ? "tx-in" : "tx-out"}`}>
+                        {tx.delta >= 0 ? "+" : "−"}{Math.abs(tx.delta).toLocaleString("ko-KR")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              /* real core without a bridge session yet — say so, don't pretend */
+              <p className="wallet-empty">{t("home.walletEmpty")}</p>
+            )}
+          </section>
+
+          <section className="srv-card card">
+            <div className="section-head">
+              <h3>{t("home.srvTitle")}</h3>
+              <button className="section-act" onClick={() => void refreshServers()} disabled={pingingServers}>
+                <Icon name="refresh" size={13} className={pingingServers ? "spin" : undefined} />
+                {t("home.refreshServers")}
+              </button>
+            </div>
+            <ul className="srv-rows">
+              {servers.map((sv) => {
+                const st = serverStatus[sv.address];
+                const online = st?.online === true;
+                return (
+                  <li key={sv.id} className="srv-row">
+                    <span className={`srv-dot ${online ? "is-on" : ""}`} />
+                    <div className="srv-meta">
+                      <strong>{sv.name}</strong>
+                      <span>{st?.motd || sv.motd || sv.address}</span>
+                    </div>
+                    <div className="srv-num num">
+                      {online ? (
+                        <>
+                          <b>{st.players}<em>/{st.maxPlayers}</em></b>
+                          <i>{st.pingMs}ms</i>
+                        </>
+                      ) : (
+                        <b className="dim">{st ? t("home.srvOffline") : "—"}</b>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            {!isRealCore && <p className="srv-note">{t("home.srvBrowserNote")}</p>}
+          </section>
+
           <section className="player-card card">
             <div className="player-stage">
               <Skin3D
@@ -161,26 +230,6 @@ export function HomeScreen() {
             </div>
           </section>
 
-          <section className="status-card card">
-            <div className="section-head">
-              <h3>{t("home.statusTitle")}</h3>
-              <span className="live-dot" />
-            </div>
-            <ul className="status-rows">
-              <li>
-                <span>{t("home.coreOk")}</span>
-                <Badge tone="ok">OK · {t("home.coreMock")}</Badge>
-              </li>
-              <li>
-                <span>{t("home.targetMc")}</span>
-                <strong className="num">{target?.id ?? "…"}</strong>
-              </li>
-              <li>
-                <span>{t("home.javaLabel")}</span>
-                <strong className="mono status-java">{javaLabel}</strong>
-              </li>
-            </ul>
-          </section>
         </aside>
       </div>
 

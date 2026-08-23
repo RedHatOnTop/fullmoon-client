@@ -68,6 +68,12 @@ const en: Dict = {
   },
   home: {
     quickJoin: "Quick join",
+    walletTitle: "Wallet",
+    walletUnit: "coins",
+    walletEmpty: "No economy link yet — your balance appears once you join the server.",
+    srvTitle: "Network status",
+    srvOffline: "Offline",
+    srvBrowserNote: "Browser builds cannot ping. The desktop build shows live status.",
     newsTitle: "News",
     featured: "Featured",
     serversTitle: "Favorite servers",

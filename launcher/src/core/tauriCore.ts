@@ -22,6 +22,8 @@ import type {
   Loadout,
   ModCatalog,
   NewsItem,
+  WalletInfo,
+  WalletTx,
   PinionCore,
   ServerEntry,
   ServerStatus,
@@ -123,6 +125,8 @@ export class TauriCore implements PinionCore {
 
   // home
   news_feed = () => this.call<NewsItem[]>("news_feed");
+  economy_wallet = () => this.call<WalletInfo>("economy_wallet");
+  economy_transactions = () => this.call<WalletTx[]>("economy_transactions");
   servers_list = () => this.call<ServerEntry[]>("servers_list");
   servers_save = (list: ServerEntry[]) => this.call<void>("servers_save", { list });
   servers_ping = (addresses: string[]) =>

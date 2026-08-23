@@ -17,7 +17,6 @@ const NAV: Array<{ id: Screen; icon: IconName }> = [
   { id: "mods", icon: "puzzle" },
   { id: "cosmetics", icon: "feather" },
   { id: "accounts", icon: "users" },
-  { id: "console", icon: "terminal" },
   { id: "settings", icon: "gear" },
 ];
 

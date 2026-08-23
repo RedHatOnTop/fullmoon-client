@@ -17,7 +17,7 @@ const LEVEL_CLASS: Record<LogLevel, string> = {
    No synthesized percentages — starting shows an indeterminate
    sweep, the moment of truth is game://state. */
 export function LaunchOverlay({ onHide }: { onHide: () => void }) {
-  const { game, logs, instances, killGame, setScreen } = useStore();
+  const { game, logs, instances, killGame } = useStore();
   const { t } = useT();
   const tailRef = useRef<HTMLDivElement>(null);
 
@@ -66,9 +66,6 @@ export function LaunchOverlay({ onHide }: { onHide: () => void }) {
         </div>
 
         <footer className="lov-actions">
-          <Button variant="ghost" size="sm" icon="terminal" onClick={() => { onHide(); setScreen("console"); }}>
-            {t("launchov.console")}
-          </Button>
           <div className="lov-actions-right">
             <Button variant="soft" size="sm" onClick={onHide}>
               {t("launchov.hide")}

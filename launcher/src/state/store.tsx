@@ -33,10 +33,12 @@ import type {
   ServerStatus,
   Settings,
   VersionSummary,
+  WalletInfo,
+  WalletTx,
 } from "../core/bindings";
 import { useT } from "../i18n";
 
-export type Screen = "home" | "mods" | "cosmetics" | "accounts" | "settings" | "console";
+export type Screen = "home" | "mods" | "cosmetics" | "accounts" | "settings";
 export type SettingsTab = "java" | "perf" | "look" | "hud" | "privacy" | "about";
 
 export interface Toast {
@@ -66,6 +68,9 @@ interface Store {
   /** `tab` deep-links into a settings section; ignored for every other screen */
   setScreen: (s: Screen, tab?: SettingsTab) => void;
   settingsTab: SettingsTab | null;
+  /** sessionId whose launch overlay the user dismissed; null re-shows it */
+  overlayHiddenFor: string | null;
+  setOverlayHidden: (sessionId: string | null) => void;
 
   accounts: Account[];
   activeAccount: Account | null;
@@ -98,6 +103,8 @@ interface Store {
   rescanJava: () => Promise<void>;
 
   news: NewsItem[];
+  wallet: WalletInfo | null;
+  walletTxs: WalletTx[];
   servers: ServerEntry[];
   /** live status by address; absent while the first probe is still out */
   serverStatus: Record<string, ServerStatus>;
@@ -160,6 +167,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [screen, setScreenState] = useState<Screen>("home");
   const [settingsTab, setSettingsTab] = useState<SettingsTab | null>(null);
+  /** sessionId whose launch overlay the user dismissed — null shows it again */
+  const [overlayHiddenFor, setOverlayHiddenFor] = useState<string | null>(null);
 
   /* screen switches ride the View Transitions API when available */
   const setScreen = useCallback((s: Screen, tab?: SettingsTab) => {
@@ -182,6 +191,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [cosmetics, setCosmetics] = useState<Cosmetic[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [walletTxs, setWalletTxs] = useState<WalletTx[]>([]);
   const [servers, setServers] = useState<ServerEntry[]>([]);
   const [serverStatus, setServerStatus] = useState<Record<string, ServerStatus>>({});
   const [pingingServers, setPingingServers] = useState(false);
@@ -216,7 +227,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     let alive = true;
     (async () => {
       const failed: string[] = [];
-      const [accs, vers, insts, mods, cos, st, nw, sv, gs] = await Promise.all([
+      const [accs, vers, insts, mods, cos, st, nw, sv, gs, wal, wtx] = await Promise.all([
         soft(core.auth_list(), [], failed),
         soft(core.versions_manifest(), [], failed),
         soft(core.instances_list(), [], failed),
@@ -226,6 +237,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         soft(core.news_feed(), [], failed),
         soft(core.servers_list(), [], failed),
         soft(core.game_status(), IDLE_GAME, failed),
+        /* economy panels degrade quietly — a core without the bridge yet is
+           normal, not an error worth a boot toast */
+        core.economy_wallet().catch(() => null),
+        core.economy_transactions().catch(() => [] as WalletTx[]),
       ]);
       if (!alive) return;
       setAccounts(accs);
@@ -237,6 +252,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSettings(st);
       settingsRef.current = st;
       setNews(nw);
+      setWallet(wal);
+      setWalletTxs(wtx);
       setServers(sv);
       setGame(gs);
       /* a run already in flight has been talking without us — take its tail so
@@ -574,13 +591,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value: Store = {
     ready, screen, setScreen, settingsTab,
+    overlayHiddenFor, setOverlayHidden: setOverlayHiddenFor,
     accounts, activeAccount, selectAccount, removeAccount, refreshAccount, importOfficial, syncAccounts,
     versions, instances, selectedInstanceId, selectInstance, selectedInstance,
     createInstance, deleteInstance, installInstance,
     modCatalog, cosmetics,
     settings, patchSettings,
     javaRuntimes, systemMemoryMb, scanningJava, rescanJava,
-    news, servers, serverStatus, pingingServers, refreshServers, addServer, removeServer,
+    news, wallet, walletTxs, servers, serverStatus, pingingServers, refreshServers, addServer, removeServer,
     game, logs, launch, killGame, clearLogs,
     loadout, equip,
     downloads, toasts, toast, dismissToast,

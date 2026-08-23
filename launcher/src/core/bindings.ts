@@ -188,6 +188,27 @@ export interface NewsItem {
   featured: boolean;
 }
 
+/** The server wallet, as the economy backend reports it. Auth is the
+ *  bridge session token — a launcher sees a wallet only while its player
+ *  is actually on the network (PLAN §1). */
+export interface WalletInfo {
+  currency: string;
+  balance: number;
+  /** ISO timestamp of the last mutation the backend knows about */
+  updatedAt: string;
+}
+
+export interface WalletTx {
+  /** signed amount — positive is income, negative is spend */
+  delta: number;
+  /** the economy backend's reason code ("discord.daily", "casino.jackpot…") */
+  reason: string;
+  /** display label already resolved server-side (TX_LABELS vocabulary) */
+  label: string;
+  balanceAfter: number | null;
+  at: string;
+}
+
 export interface ServerEntry {
   id: string;
   name: string;
@@ -291,6 +312,10 @@ export interface PinionCore {
   news_feed(): Promise<NewsItem[]>;
   servers_list(): Promise<ServerEntry[]>;
   servers_save(list: ServerEntry[]): Promise<void>;
+
+  // economy — fullmoon; live only while the bridge session token is fresh
+  economy_wallet(): Promise<WalletInfo>;
+  economy_transactions(): Promise<WalletTx[]>;
 
   // event subscription — returns an unsubscribe fn
   on<E extends CoreEventName>(event: E, cb: (payload: CoreEvents[E]) => void): () => void;

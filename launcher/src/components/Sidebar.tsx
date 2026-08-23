@@ -19,7 +19,6 @@ const GROUPS: Array<{ labelKey: string; items: Array<{ id: Screen; icon: IconNam
       { id: "accounts", icon: "users" },
     ],
   },
-  { labelKey: "nav.group3", items: [{ id: "console", icon: "terminal" }] },
 ];
 
 export function Sidebar() {
@@ -44,7 +43,6 @@ export function Sidebar() {
           {screen === item.id && <span className="sidebar-pill" aria-hidden />}
           <Icon name={item.icon} size={17} />
           <span>{t(`nav.${item.id}`)}</span>
-          {item.id === "console" && inGame && <span className="live-dot" aria-label="live" />}
         </button>,
       );
     }

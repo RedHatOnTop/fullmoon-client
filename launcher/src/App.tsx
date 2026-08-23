@@ -12,7 +12,6 @@ import { ModsScreen } from "./screens/Mods";
 import { CosmeticsScreen } from "./screens/Cosmetics";
 import { AccountsScreen } from "./screens/Accounts";
 import { SettingsScreen } from "./screens/Settings";
-import { ConsoleScreen } from "./screens/Console";
 import { useStore } from "./state/store";
 import { useT } from "./i18n";
 
@@ -22,20 +21,17 @@ const SCREENS = {
   cosmetics: CosmeticsScreen,
   accounts: AccountsScreen,
   settings: SettingsScreen,
-  console: ConsoleScreen,
 } as const;
 
 export default function App() {
-  const { ready, screen, settings, game } = useStore();
+  const { ready, screen, settings, game, overlayHiddenFor, setOverlayHidden } = useStore();
   const { setLang } = useT();
   const [paletteOpen, setPaletteOpen] = useState(false);
   /* the overlay shows once per session; hiding it pins that sessionId */
-  const [overlayHiddenFor, setOverlayHiddenFor] = useState<string | null>(null);
   const overlayOn =
     (game.state === "starting" || game.state === "running") &&
     game.sessionId !== null &&
-    overlayHiddenFor !== game.sessionId &&
-    screen !== "console";
+    overlayHiddenFor !== game.sessionId;
 
   /* keep the i18n provider in sync with the persisted setting */
   useEffect(() => {
@@ -83,7 +79,7 @@ export default function App() {
       <Toasts />
       <ProgressDock />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-      {overlayOn && <LaunchOverlay onHide={() => setOverlayHiddenFor(game.sessionId)} />}
+      {overlayOn && <LaunchOverlay onHide={() => setOverlayHidden(game.sessionId)} />}
     </div>
   );
 }

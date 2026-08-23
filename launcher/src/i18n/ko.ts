@@ -66,6 +66,12 @@ const ko = {
   },
   home: {
     quickJoin: "빠른 접속",
+    walletTitle: "재화",
+    walletUnit: "코인",
+    walletEmpty: "경제 연결이 아직 없습니다 — 서버에 접속하면 잔액이 표시됩니다.",
+    srvTitle: "서버 상태",
+    srvOffline: "오프라인",
+    srvBrowserNote: "브라우저 리그에서는 핑을 못 날립니다. 데스크톱 빌드에서 실시간 상태가 표시됩니다.",
     newsTitle: "뉴스",
     featured: "주요 소식",
     serversTitle: "즐겨찾는 서버",
