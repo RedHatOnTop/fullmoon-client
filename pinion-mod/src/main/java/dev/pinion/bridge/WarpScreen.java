@@ -129,7 +129,9 @@ public final class WarpScreen extends Screen {
         int py = panelY + lift;
         Font font = this.font;
 
-        extractBlurredBackground(gfx);
+        /* Scrim only — see PinionSettingsScreen: the vanilla menu blur is
+           already spent by the time screen extraction runs on 26.1.2, and a
+           second request crashes the frame. */
         gfx.fillGradient(0, 0, width, height,
                 Ui.alpha(0xFF050914, 0.34f * open), Ui.alpha(0xFF050914, 0.58f * open));
 

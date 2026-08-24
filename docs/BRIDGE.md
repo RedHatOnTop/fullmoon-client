@@ -18,7 +18,11 @@ C → S   {"type":"hello", "proto":1, "client":"fullmoon", "version":"0.1.0"}
 S → C   {"type":"welcome", "proto":1, "waypoints":[...]}
 ```
 
-- 인코딩: 채널 페이로드 = UTF-8 JSON 한 객체, 최상위에 항상 `"type"`.
+- 인코딩: 채널 페이로드 = **varint 길이 접두사 + UTF-8 JSON 한 객체**, 최상위에 항상
+  `"type"`. varint는 MC 표준 부호 없는 인코딩(LSB 우선, 7비트/바이트) — Fabric mod의
+  `FriendlyByteBuf.writeByteArray` 프레이밍과 정확히 일치한다. (v0 초안은 "bare JSON"이었는데,
+  양방향 구현·인게임 검증에서 프레이밍 없이는 Fabric 코덱이 못 읽는 걸 확인해 이렇게 확정했다.)
+  서버는 수신 시 bare JSON도 관용적으로 받는다(구 클라 하위호환).
 - `proto`: 정수, 호환 규칙 — 서버가 더 크면 클라는 bridge 비활성(구버전 서버 보호),
   클라가 더 크면 클라가 자기 기능을 clamp. minor 기능 추가는 proto 올리지 않고 필드 추가로.
 - **timeout 5s**: hello 후 welcome이 안 오면 클라는 이 세션 동안 조용히 비활성.
@@ -72,6 +76,13 @@ S → C   {"type":"welcome", "proto":1, "waypoints":[...]}
 ## 6. 열린 항목
 
 - **Velocity 통과 검증**: BungeeCord 채널은 증명됨(moonportals). 임의 커스텀 채널의
-  player↔backend relay는 FM2에서 로컬 Velocity로 먼저 확인. 막히면 velocity 설정/포크로 풀기.
+  player↔backend relay는 로컬 Velocity로 먼저 확인. 막히면 velocity 설정/포크로 풀기.
+- **구현 노트 (2026-08-24 로컬 검증에서 밝혀진 것)**:
+  - Bukkit은 플레이어가 `minecraft:register`로 채널을 신고하기 **전에** 보낸 S→C 페이로드를
+    **조용히 버린다.** Fabric 클라의 등록 패킷은 join 직후에 도착하므로, 서버는 hello를 받아도
+    곧장 welcome을 보내면 안 된다 — 스케줄러로 채널 등록을 기다렸다 보낸다 (main 스레드
+    sleep 금지: 그 스레드가 블록되면 등록 처리 자체가 멈춰 교착된다).
+  - 클라는 `ClientPlayConnectionEvents.JOIN`에서 곧장 hello를 보내는데, 이 시점엔 아직 등록이
+    안 떠 있어도 된다 — 서버 쪽 대기가 흡수한다.
 - `screen_open`의 v1 범위는 `warp` 하나. 상점·이벤트 스크린은 서버 콘텐츠 확정 후 proto 1 내
   필드 확장으로.

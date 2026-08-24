@@ -196,11 +196,11 @@ public final class PinionSettingsScreen extends Screen {
         int py = panelY + lift;
         Font font = this.font;
 
-        /* Vanilla's own menu blur, then a thinner scrim than an unblurred
-           backdrop would need. The HUD keeps drawing underneath either way, so
-           a module switched here still visibly comes and goes — softened, but
-           the panel has to be the thing in focus. */
-        extractBlurredBackground(gfx);
+        /* A scrim only — vanilla's menu blur is NOT available here: 26.1.2
+           allows exactly one blur request per frame and the screen extraction
+           pipeline has already spent it by the time this runs (crash:
+           "Can only blur once per frame"). The gradient alone has to carry the
+           backdrop; the panel border and shadow do the focusing. */
         gfx.fillGradient(0, 0, width, height,
                 Ui.alpha(0xFF050914, 0.34f * open), Ui.alpha(0xFF050914, 0.58f * open));
 

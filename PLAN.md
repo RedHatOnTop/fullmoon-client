@@ -119,7 +119,7 @@ Target MC = `26.1.2` 고정 (Paper 26.1.2 + Velocity 프록시, 로비 `fullmoon
 |-----|------|----------------------|------|
 | FM0 | 포크 + 리브랜드 + 빌드 green | `npm run rebrand` diff + tsc/vite/cargo 통과 | wip (rebrand 완료, 빌드 미검증) |
 | FM1 | 런처 홈 = 서버 허브 재설계 | 홈 스크린샷 — 인스턴스 개념 노출 0, ping 표시 | |
-| FM2 | fullmoon-bridge(Paper) v1 | 바닐라 클라 폴백(`/워프`) + mod 클라 handshake 로그 | |
+| FM2 | fullmoon-bridge(Paper) v1 | 바닐라 클라 폴백(`/워프`) + mod 클라 handshake 로그 | **done (2026-08-24)** — 로컬 로비에서 end-to-end 검증: welcome 6 웨이포인트 수신, 워프 스크린 K→ENTER 실 tp(68m→0m), `/워프` 폴백 목록/실행/쿨다운 거절. 플러그인 소스는 `servers-network/plugins-src/fullmoon-bridge/` |
 | FM3 | mod 워프 네이티브 스크린 | 인게임 스크린샷 + 실제 tp 이동 | |
 | FM4 | 지도 모드 (BlueMap tiles) | 인게임 맵에서 만월 궁 식별 스샷 | |
 | FM5 | 런처 폴리시: 소식 센터 + 경제 카드 + 원클릭 접속 플로우 | 전체 플로우 스샷 세트 — 잔액·공지가 홈에 실제 데이터로 렌더 | wip (UI 착상·mock 완료: 재화/서버 상태 카드, 콘솔 화면 제거하고 오버레이가 실세계면. 실데이터는 bridge 세션 토큰 후) |
