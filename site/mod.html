@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" class="no-js">
+<head>
+<meta charset="UTF-8">
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인게임 mod — 풀문 클라이언트 소스 해설</title>
+<meta name="description" content="풀문 클라이언트 인게임 Fabric mod의 소스 해설. HUD, 설정 GUI, 그리고 ChestGUI를 대체하는 네이티브 워프 스크린.">
+<meta name="theme-color" content="#0d1226">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M22.5 3.5A13 13 0 1 0 28.6 21 10.6 10.6 0 0 1 22.5 3.5Z" fill="#ffe9b0"/>
+        <path d="M25.4 6.2l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9.9-2.3Z" fill="#f5d06e"/>
+      </svg>
+      풀문 클라이언트<small>소스 해설</small>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#structure">구조</a>
+      <a href="launcher.html">런처</a>
+      <a href="mod.html">인게임 mod</a>
+      <a href="bridge.html">브리지 프로토콜</a>
+      <a href="trust.html">신뢰와 배포</a>
+      <a class="repo" href="https://github.com/RedHatOnTop/fullmoon-client" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap article">
+  <div class="page-head">
+    <p class="eyebrow">02&nbsp;&nbsp;║&nbsp;&nbsp;IN-GAME MOD</p>
+    <h1>인게임 mod</h1>
+    <p class="lead">
+      Fabric mod 하나가 세 일을 한다 — HUD, 설정 GUI, 그리고 서버와 대화하는
+      bridge. 세 가지가 같은 디자인 키트(<code>Ui.java</code>)로 그려져서,
+      게임 안 화면과 런처가 같은 제품으로 읽힌다.
+    </p>
+  </div>
+
+  <section>
+    <h2>디자인 키트가 단일 출처다</h2>
+    <span class="file-ref">pinion-mod/src/main/java/dev/pinion/hud/Ui.java</span>
+    <p>
+      런처의 <code>tokens.css</code>와 mod의 <code>Ui.java</code>는 같은 팔레트를
+      두 언어로 쓴다. 밤하늘 잉크(<code>0xFF0B101F</code>), 골드 액센트, 같은
+      라운딩과 이징. 색을 바꿀 곳은 두 곳이고, 그 둘이 어긋나면 제품이 어긋난
+      것으로 본다. 이게 ChestGUI 때우기와 결정적으로 다른 지점이다 — 상자
+      아이템으로 메뉴를 흉내 내면 게임의 어휘를 빌릴 수밖에 없지만, 자체 키트로
+      그리면 우리 어휘를 쓴다.
+    </p>
+  </section>
+
+  <section>
+    <h2>워프 스크린: 서버 데이터, 우리 레이아웃</h2>
+    <span class="file-ref">pinion-mod/src/main/java/dev/pinion/bridge/WarpScreen.java</span>
+    <p>
+      워프 메뉴의 데이터는 전부 서버가 보낸다(<code>FullmoonBridge.waypoints()</code>).
+      클라는 장소를 발명하지 않고, 좌표를 고치지 않고, 아무도 이동시키지 않는다.
+      클릭은 질문이고 푸터는 서버의 대답이다. 마우스와 키보드가 하나의 선택을
+      공유하고 — 가리키면 선택, 화살표로 순회, ENTER로 요청 — 선택 행에는 2px
+      골드 규칙이 선다.
+    </p>
+    <p>
+      서버가 응답하기 전엔 행이 "서버 응답 대기…"로 펄스하고, 결과는
+      <code>tp_result</code>의 성공/거절 그대로다. 클라가 성공을 추측하는 경로는
+      없다.
+    </p>
+  </section>
+
+  <section>
+    <h2>bridge 클라이언트의 세 규칙</h2>
+    <span class="file-ref">pinion-mod/src/main/java/dev/pinion/bridge/FullmoonBridge.java</span>
+    <p>클래스 머리 주석에 적힌 규칙이 곧 설계다.</p>
+    <ol>
+      <li><b>등록은 후보, handshake가 자격이다.</b> <code>welcome</code>이 안
+        오면 그 세션 내내 조용한 상태로 남는다 — mod가 깔렸는데 서버가 구버전인
+        경우에도 반쯤 동작하는 오답 대신, 폴백 표면(/워프)이 서브한다.</li>
+      <li><b>감지는 렌더 편의, 신뢰가 아니다.</b> 보내는 모든 페이로드는
+        질문이고, 서버의 검증이 대답이다.</li>
+      <li><b>서버 proto가 더 새면 스스로를 끈다.</b> 읽지 못할 프로토콜을
+        엉터리로 렌더하는 것보다 조용히 비활성이 낫다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>mixin은 세 개뿐</h2>
+    <span class="file-ref">pinion-mod/src/main/java/dev/pinion/hud/mixin/</span>
+    <p>
+      게임 코드에 손대는 지점은 아바타 렌더, 조명(lightmap, 풀브라이트),
+      마우스 핸들러(줌) 세 곳뿐이다. mixin을 늘리는 건 기능 추가가 아니라
+      책임 확산이므로, 새 기능은 가능한 한 게임 API와 자체 키트 안에서
+      해결한다. HUD 본체(<code>PinionHud.java</code>)와 설정 스크린
+      (<code>PinionSettingsScreen.java</code>)은 게임 위젯 스택이 아니라
+      <code>Ui.java</code>로 직접 그린다.
+    </p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-inner">
+    <p>
+      풀문 클라이언트는 GPL-3.0으로 공개된다. Minecraft는 Mojang Synergies AB의 상표이며,
+      이 프로젝트는 Mojang과 무관하다.
+    </p>
+    <p class="foot-links">
+      <a href="launcher.html">이전: 런처</a> ·
+      <a href="bridge.html">다음: 브리지 프로토콜</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

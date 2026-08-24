@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    name: Launcher frontend (tsc + vite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+      - run: npm ci
+        working-directory: launcher
+      - run: npm run build
+        working-directory: launcher
+
+  core:
+    name: Launcher core (cargo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: launcher/src-tauri
+      # Tauri's Linux deps are not needed for `cargo check` to type-check,
+      # but glib/soup headers are: install the minimal set.
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libglib2.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+      - run: cargo check
+        working-directory: launcher/src-tauri
+
+  mod:
+    name: Fabric mod (gradle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew build
+        working-directory: pinion-mod
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinion-hud
+          path: pinion-mod/build/libs/*.jar

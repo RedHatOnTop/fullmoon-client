@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko" class="no-js">
+<head>
+<meta charset="UTF-8">
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>풀문 클라이언트 — 소스 해설</title>
+<meta name="description" content="풀문 네트워크 전용 마인크래프트 클라이언트의 소스 해설. 런처와 인게임 mod, 두 조각이 어떻게 서버와 대화하는지 코드를 따라 걷는다. GPL-3.0, 전체 소스 공개.">
+<meta name="theme-color" content="#0d1226">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M22.5 3.5A13 13 0 1 0 28.6 21 10.6 10.6 0 0 1 22.5 3.5Z" fill="#ffe9b0"/>
+        <path d="M25.4 6.2l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9.9-2.3Z" fill="#f5d06e"/>
+      </svg>
+      풀문 클라이언트<small>소스 해설</small>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#structure">구조</a>
+      <a href="launcher.html">런처</a>
+      <a href="mod.html">인게임 mod</a>
+      <a href="bridge.html">브리지 프로토콜</a>
+      <a href="trust.html">신뢰와 배포</a>
+      <a class="repo" href="https://github.com/RedHatOnTop/fullmoon-client" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">SOURCE WALKTHROUGH&nbsp;&nbsp;║&nbsp;&nbsp;GPL-3.0</p>
+    <h1>코드를 읽으면<br><span class="accent">믿을 이유</span>가 생긴다</h1>
+    <p class="lead">
+      풀문 클라이언트는 두 조각이다 — 게임을 깔고 실행하는 런처, 그리고 게임 안에서
+      서버가 보낸 데이터를 그리는 mod. 이 사이트는 실제 소스 파일을 따라 걷는다.
+      파일 이름과 줄 수는 커밋 기준이고, 언제든 직접 열어 대조할 수 있다.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/RedHatOnTop/fullmoon-client" target="_blank" rel="noopener">저장소 열기</a>
+      <a class="btn btn-ghost" href="#structure">구조부터</a>
+    </div>
+  </div>
+</section>
+
+<section id="structure">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">STRUCTURE&nbsp;&nbsp;║&nbsp;&nbsp;두 조각, 하나의 계약</p>
+      <h2>디렉터리 지도</h2>
+      <p class="lead">
+        전체 트리는 짧다. 제품 코드는 런처와 mod, 그리고 둘을 잇는 프로토콜 문서뿐이다.
+      </p>
+    </div>
+    <div class="tree-grid">
+      <div class="panel tree">
+        <div class="tree-line">fullmoon-client/</div>
+        <div class="tree-line dir">launcher/</div>
+        <div class="tree-line">├ <span class="f">src/</span> — React UI (screens, state, widgets)</div>
+        <div class="tree-line">├ <span class="f">src/core/bindings.ts</span> — UI↔core 유일한 접점</div>
+        <div class="tree-line">└ <span class="f">src-tauri/</span> — Rust core (4,500줄, 19 모듈)</div>
+        <div class="tree-line dir">pinion-mod/</div>
+        <div class="tree-line">├ <span class="f">hud/</span> — HUD·설정 GUI·코스메틱</div>
+        <div class="tree-line">└ <span class="f">bridge/</span> — 서버 채널 클라이언트</div>
+        <div class="tree-line dir">docs/</div>
+        <div class="tree-line">└ <span class="f">BRIDGE.md</span> — 프로토콜 스펙 (공개 계약)</div>
+        <div class="tree-line dir">.github/workflows/</div>
+        <div class="tree-line">└ ci · release · site — 빌드와 배포 전부 자동</div>
+      </div>
+      <div class="panel">
+        <h3>계약이 먼저다</h3>
+        <p>
+          UI는 Rust core를 모른다. mod는 서버를 모른다. 둘 다 자기 옆 사람과의
+          계약만 안다 — <code>bindings.ts</code>(UI↔core)와
+          <code>fullmoon:v1</code> 채널(mod↔서버). 계약이 안정적이면 안쪽은
+          언제든 갈아끼운다. 실제로 UI는 mock core 위에서 먼저 완성됐고,
+          Rust core가 나중에 같은 계약으로 갈아탔다.
+        </p>
+        <h3>숫자로 보는 규모</h3>
+        <ul class="facts">
+          <li><b>37</b>개 Tauri 명령 — 계약의 전부, <code>commands.rs</code> 한 파일에</li>
+          <li><b>1</b>개 채널 페이로드 — varint 프레임 + JSON 한 객체</li>
+          <li><b>0</b>개 외부 에셋 다운로드 — Mojang 원본만, SHA1 검증해서</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="paths">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">READ&nbsp;&nbsp;║&nbsp;&nbsp;어디부터 읽을까</p>
+      <h2>읽는 순서</h2>
+    </div>
+    <div class="path-grid">
+      <a class="path-card" href="launcher.html">
+        <span class="n">01</span>
+        <h3>런처</h3>
+        <p>bindings.ts 계약, Rust core의 설치 파이프라인, 계정 흐름. UI가 먼저
+           완성된 희한한 순서의 이야기.</p>
+      </a>
+      <a class="path-card" href="mod.html">
+        <span class="n">02</span>
+        <h3>인게임 mod</h3>
+        <p>HUD와 설정 GUI가 런처 디자인 언어를 미러링하는 방식, 워프 스크린이
+           ChestGUI를 대체한 과정.</p>
+      </a>
+      <a class="path-card" href="bridge.html">
+        <span class="n">03</span>
+        <h3>브리지 프로토콜</h3>
+        <p>한 개의 커스텀 채널로 워프·스크린·텔레포트를 나르는 법. 위조를
+           전제한 설계가 왜 단순해지는지.</p>
+      </a>
+      <a class="path-card" href="trust.html">
+        <span class="n">04</span>
+        <h3>신뢰와 배포</h3>
+        <p>SHA256SUMS, 태그 빌드, 서명된 OTA. "이 exe가 이 커밋이다"를
+           성립시키는 장치들.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-inner">
+    <p>
+      풀문 클라이언트는 GPL-3.0으로 공개된다. Minecraft는 Mojang Synergies AB의 상표이며,
+      이 프로젝트는 Mojang과 무관하다. 서드파티 구성요소는 저장소의
+      THIRD-PARTY-NOTICES.md에 정리돼 있다.
+    </p>
+    <p class="foot-links">
+      <a href="https://fullmoon.ink">fullmoon.ink</a> ·
+      <a href="https://github.com/RedHatOnTop/fullmoon-client" target="_blank" rel="noopener">GitHub</a> ·
+      <a href="https://github.com/RedHatOnTop/fullmoon-client/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

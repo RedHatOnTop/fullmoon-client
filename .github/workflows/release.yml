@@ -1,0 +1,82 @@
+name: Release
+
+# A tag build is the release: the installer, the mod jar and a signed
+# SHA256SUMS land on the GitHub Release this tag creates. The checksum file
+# is what makes "this exe == this commit" verifiable — the workflow publishes
+# its own hashes, so a mirror can be checked against the release page alone.
+#
+# Signing the updater manifest requires a Tauri updater keypair; when
+# TAURI_SIGNING_PRIVATE_KEY is absent the workflow still ships the installer
+# and checksums, and the updater stays off (see tauri.conf.json).
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  installer:
+    name: Windows installer + checksums
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the mod and stage it into the bundle resources
+        run: ./gradlew build
+        working-directory: pinion-mod
+
+      - name: Copy fresh mod jar over the bundled one
+        shell: pwsh
+        run: |
+          Copy-Item pinion-mod/build/libs/pinion-hud-*.jar `
+            launcher/src-tauri/resources/mods/pinion-hud.jar -Force
+
+      - name: Build the frontend
+        run: npm ci && npm run build
+        working-directory: launcher
+
+      - name: Bundle the installer
+        working-directory: launcher
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npm run bundle -- --bundles nsis
+
+      - name: Collect release artifacts + SHA256SUMS
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item launcher/src-tauri/target/release/bundle/nsis/*.exe dist/
+          Copy-Item pinion-mod/build/libs/pinion-hud-*.jar dist/
+          If (Test-Path launcher/src-tauri/target/release/bundle/nsis/*.sig) {
+            Copy-Item launcher/src-tauri/target/release/bundle/nsis/*.sig dist/
+          }
+          # sha256sum format (<hash>  <name>) so `sha256sum -c SHA256SUMS` works everywhere
+          Get-ChildItem dist -File | ForEach-Object {
+            $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$h  $($_.Name)"
+          } | Set-Content dist/SHA256SUMS
+          Get-Content dist/SHA256SUMS
+
+      - name: Upload to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

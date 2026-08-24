@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko" class="no-js">
+<head>
+<meta charset="UTF-8">
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>런처 — 풀문 클라이언트 소스 해설</title>
+<meta name="description" content="풀문 클라이언트 런처의 소스 해설. bindings.ts 계약, Rust core의 설치 파이프라인, Microsoft 계정 흐름을 코드와 함께 읽는다.">
+<meta name="theme-color" content="#0d1226">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M22.5 3.5A13 13 0 1 0 28.6 21 10.6 10.6 0 0 1 22.5 3.5Z" fill="#ffe9b0"/>
+        <path d="M25.4 6.2l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9.9-2.3Z" fill="#f5d06e"/>
+      </svg>
+      풀문 클라이언트<small>소스 해설</small>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#structure">구조</a>
+      <a href="launcher.html">런처</a>
+      <a href="mod.html">인게임 mod</a>
+      <a href="bridge.html">브리지 프로토콜</a>
+      <a href="trust.html">신뢰와 배포</a>
+      <a class="repo" href="https://github.com/RedHatOnTop/fullmoon-client" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap article">
+  <div class="page-head">
+    <p class="eyebrow">01&nbsp;&nbsp;║&nbsp;&nbsp;LAUNCHER</p>
+    <h1>런처</h1>
+    <p class="lead">
+      Tauri v2 — 안쪽은 Rust core, 바깥은 React UI. 둘은 한 파일의 타입 계약으로만
+      만난다. 이 장은 그 계약부터 읽고, 설치 파이프라인과 계정 흐름을 따라간다.
+    </p>
+  </div>
+
+  <section>
+    <h2>계약: bindings.ts</h2>
+    <span class="file-ref">launcher/src/core/bindings.ts</span>
+    <p>
+      UI가 core에 시킬 수 있는 일의 전 목록이 타입과 함께 이 한 파일에 있다.
+      37개 함수 — 설정 조회부터 게임 실행까지. UI는 이 시그니처만 보고 짜였고,
+      core는 이 시그니처만 지키면 된다.
+    </p>
+<pre><span class="cm">// 계약의 일부 — 전문은 파일 참고</span>
+<span class="kw">export interface</span> Core {
+  versions_manifest(): Promise&lt;VersionManifest&gt;;
+  instance_install(id: string, version: string): Promise&lt;void&gt;;
+  auth_begin_device_code(): Promise&lt;DeviceCode&gt;;
+  launch_quickplay(req: QuickPlay): Promise&lt;void&gt;;
+  news_feed(): Promise&lt;NewsItem[]&gt;;
+  <span class="cm">// …37개 전체</span>
+}</pre>
+    <p>
+      이 계약의 구현은 두 개다. <code>mockCore.ts</code> — 가짜 데이터로 UI만
+      돌리는 구현. <code>tauriCore.ts</code> — 실제 Rust core로 위임하는 구현.
+      UI는 자기가 어느 쪽 위에서 도는지 모른다. 개발 순서가 UI 먼저였던 이유다.
+    </p>
+  </section>
+
+  <section>
+    <h2>Rust core: 설치 파이프라인</h2>
+    <span class="file-ref">launcher/src-tauri/src/ — meta · download · install · fabric · mods</span>
+    <p>
+      "설치"는 사실 다섯 단계다. <code>meta.rs</code>가 piston-meta에서 버전
+      정의를 읽고(이 문서가 무엇을 다운로드할지의 유일한 출처), <code>download.rs</code>가
+      각 파일을 Mojang CDN에서 받되 <b>공표된 SHA1과 대조</b>한다. 틀리면 그
+      파일은 버려진다. <code>install.rs</code>가 버전 JSON을 실제 실행 계획으로
+      분해하고(classpath, natives, JVM 인자), <code>fabric.rs</code>가 Fabric
+      loader를 얹고, <code>mods.rs</code>가 카탈로그의 mod를 채워 넣는다.
+    </p>
+    <pre><span class="cm">// download.rs — 검증 없으면 없는 것과 같다</span>
+<span class="kw">match</span> &amp;item.sha1 {
+    Some(want) =&gt; sha1_of(&amp;item.path).<span class="kw">await</span>.as_deref() == Some(want.as_str()),
+    <span class="cm">// Mojang이 해시를 안 공표한 항목은 없다 — 없으면 거절</span>
+    None =&gt; <span class="kw">false</span>,
+}</pre>
+    <p>
+      Sodium·Lithium·Fabric API는 설치 시점에 각각의 공식 배포처(Modrinth,
+      Fabric maven)에서 받는다. 우리 jar가 아닌 것은 우리가 만지지 않는다 —
+      대조표는 저장소의 THIRD-PARTY-NOTICES.md에 있다.
+    </p>
+  </section>
+
+  <section>
+    <h2>계정: 토큰이 UI에 닿지 않는다</h2>
+    <span class="file-ref">launcher/src-tauri/src/auth.rs</span>
+    <p>
+      로그인은 Microsoft OAuth(device code 또는 시스템 브라우저 + PKCE)로
+      시작해 Xbox Live → XSTS → Minecraft 서비스로 이어진다. 전 과정이 core
+      안에서 끝난다. UI는 프로필(이름·uuid·스킨 URL)만 받고, 액세스·리프레시
+      토큰은 IPC 경계를 넘지 않는다. 세션은 인스턴스 데이터 디렉터리에 저장되고,
+      만료 1분 전에 자동 갱신된다.
+    </p>
+    <p>
+      Azure 애플리케이션 id는 바이너리에 심지 않는다 — Microsoft가 Xbox Live
+      스코프를 애플리케이션에 묶기 때문에, 남의 id를 실어 나르는 건 정직하지
+      못하다. 포크하는 사람은 자기 id를 등록해 넣거나
+      <code>PINION_MS_CLIENT_ID</code> 환경변수로 개발 로그인을 쓴다.
+      이 사실이 코드 주석으로도, 이 문장으로도 기록돼 있는 건 같은 이유다.
+    </p>
+  </section>
+
+  <section>
+    <h2>실행: launch.rs</h2>
+    <span class="file-ref">launcher/src-tauri/src/launch.rs</span>
+    <p>
+      실행은 계약의 <code>launch_quickplay</code> 하나로 들어온다. core는 저장된
+      세션으로 인자를 조립하고(토큰은 프로세스 인자로만, 파일로는 남기지 않는다),
+      게임을 띄우고, stdout을 <code>game://log</code> 이벤트로 UI에 흘린다.
+      홈 화면의 "콘솔 없는 콘솔" — 실행 오버레이 — 이 그 로그를 그대로 보여준다.
+      크래시가 나면 마지막 줄이 오버레이에 남는다. 로그를 감추는 대신, 콘솔이라는
+      이름의 별도 화면을 없앴을 뿐이다.
+    </p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-inner">
+    <p>
+      풀문 클라이언트는 GPL-3.0으로 공개된다. Minecraft는 Mojang Synergies AB의 상표이며,
+      이 프로젝트는 Mojang과 무관하다.
+    </p>
+    <p class="foot-links">
+      <a href="index.html">목차</a> ·
+      <a href="mod.html">다음: 인게임 mod</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
