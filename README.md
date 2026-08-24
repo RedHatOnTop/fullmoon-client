@@ -44,8 +44,9 @@ cd pinion-mod && ./gradlew build              # build/libs/pinion-hud-*.jar
 - **감지는 편의일 뿐, 신뢰가 아니다.** 클라가 `fullmoon:v1` 채널을 열어도
   tp·상거래의 권한·쿨다운 검증은 서버가 감지와 무관하게 수행한다. 위조 클라를
   전제로 설계됐다 — 스펙 전문은 [docs/BRIDGE.md](./docs/BRIDGE.md).
-- **배포 경로는 GitHub Release 하나.** 릴리스마다 SHA256SUMS가 함께 올라가고,
-  OTA 업데이트는 서명된 manifest로만 이루어진다.
+- **배포 경로는 GitHub Release 하나.** 릴리스마다 SHA256SUMS가 함께 올라간다.
+  OTA는 Tauri updater 서명 키가 시크릿으로 준비된 뒤 켜진다 — 키가 없으면
+  릴리스는 인스톨러+해시로만 이루어진다.
 - **우리가 만든 것은 전부 exe 하나에 번들**된다. 유일한 예외는 Mojang 원본
   에셋(재배포 금지)이며, 런처가 다운로드해 Mojang이 공개한 SHA1으로 검증한다.
 
