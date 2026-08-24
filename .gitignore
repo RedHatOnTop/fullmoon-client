@@ -27,3 +27,10 @@ build/
 # capture rig output
 launcher/shots/
 launcher/*.png
+
+# internal working notes and the UI bake-off rigs — never published
+INTERNAL-*.md
+/ui-a/
+/ui-b/
+/ui-c/
+/pinion/
