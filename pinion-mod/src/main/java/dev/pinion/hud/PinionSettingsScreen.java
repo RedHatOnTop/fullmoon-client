@@ -36,9 +36,9 @@ import java.util.function.Supplier;
  *  everything on the Visuals page is the mod's own `pinion/client.json`. */
 public final class PinionSettingsScreen extends Screen {
     private enum Page {
-        MODULES("Modules"),
-        VISUALS("Visuals"),
-        KEYS("Keys");
+        MODULES("모듈"),
+        VISUALS("비주얼"),
+        KEYS("키");
 
         final String label;
 
@@ -118,26 +118,26 @@ public final class PinionSettingsScreen extends Screen {
             }
             case VISUALS -> {
                 rows.add(new ToggleRow(
-                        "Fullbright",
-                        "Floods the lightmap. Caves read as daylight; shadows do not.",
+                        "풀브라이트",
+                        "라이트맵을 밝게 밀어 올린다. 동굴이 낮처럼 보인다.",
                         ClientSettings::fullbright,
                         ClientSettings::setFullbright));
                 rows.add(new StepRow(
-                        "Zoom field of view",
-                        "How far the zoom key pulls in. Lower is closer.",
+                        "줌 시야각",
+                        "줌 키가 얼마나 좁혀지는지. 낮을수록 더 가깝다.",
                         () -> ClientSettings.zoomFov() + "°",
                         d -> ClientSettings.setZoomFov(ClientSettings.zoomFov() + d * 5)));
                 rows.add(new StepRow(
-                        "Zoom sensitivity",
-                        "Mouse speed while zoomed, against your normal setting.",
+                        "줌 감도",
+                        "줹 중 마우스 속도 — 평소 설정 대비.",
                         () -> Math.round(ClientSettings.zoomSensitivity() * 100) + "%",
                         d -> ClientSettings.setZoomSensitivity(ClientSettings.zoomSensitivity() + d * 0.05f)));
             }
             case KEYS -> {
-                rows.add(new KeyRow("This panel", PinionKeys.settingsKey()));
-                rows.add(new KeyRow("Zoom", PinionKeys.zoomKey()));
-                rows.add(new KeyRow("Fullbright", PinionKeys.fullbrightKey()));
-                rows.add(new KeyRow("Warp menu", PinionKeys.warpKey()));
+                rows.add(new KeyRow("이 패널", PinionKeys.settingsKey()));
+                rows.add(new KeyRow("줌", PinionKeys.zoomKey()));
+                rows.add(new KeyRow("풀브라이트", PinionKeys.fullbrightKey()));
+                rows.add(new KeyRow("워프 메뉴", PinionKeys.warpKey()));
             }
         }
     }
@@ -287,8 +287,8 @@ public final class PinionSettingsScreen extends Screen {
         int fy = py + panelH - FOOT_H - 46;
         gfx.fill(px + 12, fy - 9, px + RAIL_W - 12, fy - 8, Ui.alpha(Ui.LINE, a));
         int total = HudSettings.moduleIds().size();
-        stat(gfx, font, px + 12, fy, "ACTIVE", HudSettings.enabledCount() + " / " + total, Ui.TEXT, a);
-        stat(gfx, font, px + 12, fy + 22, "FRAMES", Integer.toString(Minecraft.getInstance().getFps()),
+        stat(gfx, font, px + 12, fy, "켜짐", HudSettings.enabledCount() + " / " + total, Ui.TEXT, a);
+        stat(gfx, font, px + 12, fy + 22, "프레임", Integer.toString(Minecraft.getInstance().getFps()),
                 Ui.MOON_PALE, a);
     }
 
@@ -310,9 +310,9 @@ public final class PinionSettingsScreen extends Screen {
             return;
         }
         int x = px + 12;
-        x = hint(gfx, font, "ESC", "close", x, y + 7, a);
-        x = hint(gfx, font, "WHEEL", "resize", x, y + 7, a);
-        hint(gfx, font, "LIVE", "changes apply as you click", x, y + 7, a);
+        x = hint(gfx, font, "ESC", "닫기", x, y + 7, a);
+        x = hint(gfx, font, "WHEEL", "크기", x, y + 7, a);
+        hint(gfx, font, "LIVE", "즉시 적용", x, y + 7, a);
     }
 
     private int hint(GuiGraphicsExtractor gfx, Font font, String key, String what, int x, int y, float a) {
@@ -658,7 +658,7 @@ public final class PinionSettingsScreen extends Screen {
         private final KeyMapping mapping;
 
         KeyRow(String title, KeyMapping mapping) {
-            super(title, "Rebind in Options / Controls — Pinion has its own category there.");
+            super(title, "재바인딩은 옵션/조작에서 — 이 mod 항목들이 거기 있습니다.");
             this.mapping = mapping;
         }
 
@@ -682,26 +682,26 @@ public final class PinionSettingsScreen extends Screen {
 
     private static String label(String id) {
         return switch (id) {
-            case "fps" -> "Frame rate";
-            case "cps" -> "Clicks per second";
-            case "coords" -> "Coordinates";
-            case "ping" -> "Ping";
-            case "keystrokes" -> "Keystrokes";
-            case "gear" -> "Gear";
-            case "potion" -> "Potions";
+            case "fps" -> "프레임";
+            case "cps" -> "클릭 속도";
+            case "coords" -> "좌표";
+            case "ping" -> "핑";
+            case "keystrokes" -> "키 입력";
+            case "gear" -> "장비";
+            case "potion" -> "포션";
             default -> id;
         };
     }
 
     private static String describe(String id) {
         return switch (id) {
-            case "fps" -> "Frames per second, coloured once it drops.";
-            case "cps" -> "Left and right clicks over the last second.";
-            case "coords" -> "Block position and the direction you face.";
-            case "ping" -> "Round trip to the server you are on.";
-            case "keystrokes" -> "WASD, both mouse buttons and jump, with an afterglow.";
-            case "gear" -> "Armour, held and offhand items with their wear.";
-            case "potion" -> "Active effects and what is left of them.";
+            case "fps" -> "초당 프레임 — 떨어지면 색이 바뀐다.";
+            case "cps" -> "최근 1초의 좌우 클릭 수.";
+            case "coords" -> "블록 위치와 바라보는 방향.";
+            case "ping" -> "접속 중인 서버까지의 왕복 시간.";
+            case "keystrokes" -> "WASD·마우스 버튼·점프, 누른 표시가 남는다.";
+            case "gear" -> "방어구·손에 든 아이템과 내구도.";
+            case "potion" -> "걸린 효과와 남은 시간.";
             default -> "";
         };
     }
