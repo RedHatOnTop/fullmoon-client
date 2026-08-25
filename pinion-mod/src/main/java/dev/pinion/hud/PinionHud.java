@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -46,7 +47,14 @@ public final class PinionHud {
 
     public static void render(GuiGraphicsExtractor gfx, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.options.hideGui) {
+        /* UI rig (-Dfullmoon.uiRig): the screens must be reviewable without a
+           world or a server. The HUD draws on fake values at the title screen;
+           in a real session nothing changes. */
+        boolean rig = Boolean.getBoolean("fullmoon.uiRig");
+        if (mc.player == null && !(rig && mc.level == null)) {
+            return;
+        }
+        if (!rig && mc.options.hideGui) {
             return;
         }
         HudSettings.poll();
@@ -66,6 +74,14 @@ public final class PinionHud {
         keystrokes(gfx, font, mc, w, h, dt);
         gear(gfx, font, mc, w, h);
         potion(gfx, font, mc, w, h);
+    }
+
+    /** True under -Dfullmoon.uiRig: the module draw calls below must survive
+     *  a null player. Modules that read real session state substitute rig
+     *  values instead of bailing — the point of the rig is to see them all
+     *  populated at once. */
+    static boolean uiRig() {
+        return Boolean.getBoolean("fullmoon.uiRig");
     }
 
     // ── modules ───────────────────────────────────────────────────
@@ -94,6 +110,10 @@ public final class PinionHud {
         if (!m.enabled()) {
             return;
         }
+        if (mc.player == null) {
+            readout(gfx, font, m, w, h, "XYZ", "512 72 -128", Ui.TEXT, "N");
+            return;
+        }
         Vec3 p = mc.player.position();
         String value = String.format(Locale.ROOT, "%.0f %.0f %.0f", p.x, p.y, p.z);
         readout(gfx, font, m, w, h, "XYZ", value, Ui.TEXT, facing(mc.player.getYRot()));
@@ -106,6 +126,9 @@ public final class PinionHud {
         }
         ClientPacketListener conn = mc.getConnection();
         if (conn == null) {
+            if (uiRig()) {
+                readout(gfx, font, m, w, h, "PING", "23ms", Ui.TEXT, null);
+            }
             return;
         }
         PlayerInfo self = conn.getPlayerInfo(mc.player.getUUID());
@@ -165,10 +188,16 @@ public final class PinionHud {
             EquipmentSlot.OFFHAND, EquipmentSlot.MAINHAND,
         };
         List<ItemStack> held = new ArrayList<>();
-        for (EquipmentSlot slot : slots) {
-            ItemStack stack = mc.player.getItemBySlot(slot);
-            if (!stack.isEmpty()) {
-                held.add(stack);
+        if (mc.player == null) {
+            // rig: two representative stacks so the plate layout is reviewable
+            held.add(new ItemStack(Items.DIAMOND_CHESTPLATE));
+            held.add(new ItemStack(Items.DIAMOND_SWORD));
+        } else {
+            for (EquipmentSlot slot : slots) {
+                ItemStack stack = mc.player.getItemBySlot(slot);
+                if (!stack.isEmpty()) {
+                    held.add(stack);
+                }
             }
         }
         if (held.isEmpty()) {
@@ -199,6 +228,9 @@ public final class PinionHud {
             return;
         }
         List<MobEffectInstance> live = new ArrayList<>();
+        if (mc.player == null) {
+            return; // rig: no fake effects — an empty state is the honest preview
+        }
         for (MobEffectInstance e : mc.player.getActiveEffects()) {
             if (e.isVisible()) {
                 live.add(e);

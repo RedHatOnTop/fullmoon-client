@@ -22,6 +22,8 @@ public final class PinionKeys {
     private static KeyMapping zoom;
     private static KeyMapping fullbright;
     private static KeyMapping warp;
+    /** UI rig one-shot: the auto-open fires exactly once per session. */
+    private static boolean rigOpened;
 
     /** fov the player picked, held while the zoom key is down */
     private static int savedFov;
@@ -46,25 +48,39 @@ public final class PinionKeys {
     }
 
     private static void tick(Minecraft mc) {
-        if (mc.player == null) {
+        /* UI rig (-Dfullmoon.uiRig): the panel opens on its own at the title
+           screen and the keys keep working without a world, so the screens can
+           be reviewed before any server exists. */
+        boolean rig = PinionHud.uiRig();
+        if (rig && !rigOpened && mc.player == null
+                && mc.screen instanceof net.minecraft.client.gui.screens.TitleScreen) {
+            // open over the TITLE SCREEN specifically: earlier in boot the
+            // screen is null or a splash, and the title assignment would
+            // replace whatever we set then
+            rigOpened = true;
+            mc.setScreen(new PinionSettingsScreen(null));
+        }
+        if (mc.player == null && !rig) {
             // leaving a world drops the holds; the options are the player's again
             releaseZoom(mc);
             return;
         }
 
         while (settings.consumeClick()) {
-            mc.setScreen(new PinionSettingsScreen(null));
+            if (mc.screen == null) {
+                mc.setScreen(new PinionSettingsScreen(null));
+            }
         }
         while (fullbright.consumeClick()) {
             toggleFullbright();
         }
         while (warp.consumeClick()) {
-            if (mc.player != null) {
+            if ((mc.player != null || rig) && mc.screen == null) {
                 mc.setScreen(new dev.pinion.bridge.WarpScreen(null));
             }
         }
 
-        boolean want = zoom.isDown() && mc.screen == null;
+        boolean want = zoom.isDown() && mc.screen == null && mc.player != null;
         if (want && !zooming) {
             savedFov = mc.options.fov().get();
             savedSensitivity = mc.options.sensitivity().get();

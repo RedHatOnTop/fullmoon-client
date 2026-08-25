@@ -36,6 +36,13 @@ public final class PinionClient implements ClientModInitializer {
 
         PinionKeys.register();
         dev.pinion.bridge.FullmoonBridge.register();
+        /* UI rig: with -Dfullmoon.uiRig the panel opens over the title screen
+           (PinionKeys.tick does the opening — CLIENT_STARTED is too early, the
+           title screen replaces whatever is set then) and the HUD draws on
+           preview values. No world, no server. */
+        if (Boolean.getBoolean("fullmoon.uiRig")) {
+            LOG.info("UI rig active — HUD preview on, panel opens at title");
+        }
         LOG.info("Pinion HUD ready");
     }
 }
