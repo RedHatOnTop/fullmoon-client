@@ -74,6 +74,9 @@ public final class PinionHud {
         keystrokes(gfx, font, mc, w, h, dt);
         gear(gfx, font, mc, w, h);
         potion(gfx, font, mc, w, h);
+
+        // casino result card — server-driven, presentation only
+        dev.pinion.bridge.CasinoResultCard.render(gfx, w, h);
     }
 
     /** True under -Dfullmoon.uiRig: the module draw calls below must survive

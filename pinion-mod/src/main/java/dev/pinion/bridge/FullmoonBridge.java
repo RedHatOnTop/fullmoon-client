@@ -128,6 +128,7 @@ public final class FullmoonBridge {
                 statusOk = ok;
                 statusAt = System.currentTimeMillis();
             }
+            case "casino_result" -> CasinoResultCard.handle(json);
             case "screen_open" -> {
                 if ("warp".equals(str(json, "screen"))) {
                     Minecraft mc = Minecraft.getInstance();

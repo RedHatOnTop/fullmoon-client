@@ -166,6 +166,11 @@ public final class Ui {
         return Math.max(0, w - gap);
     }
 
+    /** Horizontally centred text at [cx]. */
+    public static void centeredText(GuiGraphicsExtractor gfx, Font font, String s, int cx, int y, int color, boolean shadow) {
+        gfx.text(font, s, cx - font.width(s) / 2, y, color, shadow);
+    }
+
     public static void rightText(GuiGraphicsExtractor gfx, Font font, String s, int right, int y, int color, boolean shadow) {
         gfx.text(font, s, right - font.width(s), y, color, shadow);
     }
