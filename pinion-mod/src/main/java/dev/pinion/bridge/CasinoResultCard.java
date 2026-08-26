@@ -225,29 +225,49 @@ public final class CasinoResultCard {
         }
     }
 
-    /** Roulette: a row of pockets sweeping past, decelerating onto the landed
-     *  number. Red/black/green reads from vanilla's colouring. */
+    /** Roulette: the European WHEEL sweeping past in wheel order, braking on
+     *  the landed pocket. Win: gold rays behind the result — the same
+     *  celebration language as the Discord bot's win cards (drawRays). */
     private void roulette(GuiGraphicsExtractor gfx, Font font, int x, int y, long now, float a) {
         int bx = x + 14;
         int by = y + 24;
         int cw = 18;
         int visible = 7;
+        boolean landed = now >= 1300;
+        if (won && landed) {
+            rays(gfx, bx + (visible / 2) * cw + (cw - 3) / 2, by + 11, now, a);
+        }
         float t = Ui.clamp(now / 1300f, 0f, 1f);
         float eased = 1f - (1f - t) * (1f - t); // ease-out: the wheel brakes
-        int center = Math.round(pocket + (visible / 2f) * (eased - 1f) * 2.4f);
+        int landedIdx = wheelIndexOf(pocket);
+        int center = Math.round(landedIdx + (visible / 2f) * (eased - 1f) * 2.4f);
         for (int i = 0; i < visible; i++) {
-            int n = Math.floorMod(center - visible / 2 + i, 37);
+            int n = WHEEL[Math.floorMod(center - visible / 2 + i, WHEEL.length)];
             int px = bx + i * cw;
-            boolean landed = now >= 1300 && n == pocket && i == visible / 2;
+            boolean here = landed && n == pocket && i == visible / 2;
             Ui.rect(gfx, px, by, cw - 3, 22,
-                    Ui.alpha(landed ? Ui.MOON_DEEP : Ui.OVERLAY, a), 2);
+                    Ui.alpha(here ? Ui.MOON_DEEP : Ui.OVERLAY, a), 2);
             Ui.centeredText(gfx, font, Integer.toString(n), px + (cw - 3) / 2, by + 7,
-                    Ui.alpha(landed ? Ui.MOON_LIT : pocketColor(n), a), false);
+                    Ui.alpha(here ? Ui.MOON_LIT : pocketColor(n), a), false);
         }
-        String label = now < 1300 ? "" : ("포켓 " + pocket + " · " + betLabel(betType));
+        String label = landed ? ("포켓 " + pocket + " · " + betLabel(betType)) : "";
         if (!label.isEmpty()) {
             gfx.text(font, label, x + 14, y + CARD_H - 26,
                     Ui.alpha(won ? Ui.MOON : Ui.TEXT_3, a), false);
+        }
+    }
+
+    /** The bot's drawRays, cheaply: gold sparks around the landed pocket,
+     *  pulsing. A full radial-wedge gradient is not worth the fill count at
+     *  card scale — twelve bright points read as rays at this size. */
+    private void rays(GuiGraphicsExtractor gfx, int cx, int cy, long now, float a) {
+        float pulse = 0.55f + 0.45f * (float) Math.sin(now / 180.0);
+        for (int i = 0; i < 12; i++) {
+            float ang = (float) (Math.PI * 2 * i / 12);
+            int r = 9 + (i % 2) * 3;
+            int px = (int) (cx + Math.cos(ang) * r);
+            int py = (int) (cy + Math.sin(ang) * r);
+            gfx.fill(px, py, px + 2, py + 2, Ui.alpha(Ui.MOON, 0.65f * pulse * a));
         }
     }
 
@@ -320,9 +340,25 @@ public final class CasinoResultCard {
 
     private static int pocketColor(int n) {
         if (n == 0) {
-            return Ui.TEXT_3; // green zero
+            return 0xFF5EE6D0; // teal zero — the bot palette's green
         }
-        return redTable(n) ? Ui.POPPY : Ui.TEXT;
+        return redTable(n) ? 0xFFFF8FA3 : Ui.TEXT; // rose red — cardTheme.rose
+    }
+
+    /** European wheel order — the strip sweeps in WHEEL order, not numeric,
+     *  so it reads as the wheel instead of a table. */
+    private static final int[] WHEEL = {
+        0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10,
+        5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26,
+    };
+
+    private static int wheelIndexOf(int n) {
+        for (int i = 0; i < WHEEL.length; i++) {
+            if (WHEEL[i] == n) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     /** Vanilla roulette reds — the standard European layout. */

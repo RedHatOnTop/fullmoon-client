@@ -129,6 +129,15 @@ public final class FullmoonBridge {
                 statusAt = System.currentTimeMillis();
             }
             case "casino_result" -> CasinoResultCard.handle(json);
+            case "link_result" -> DiscordLink.handleResult(json);
+            case "link_prompt" -> {
+                // the player ran /link — if the launcher gave us a Discord id,
+                // complete the link without them touching Discord
+                String code = str(json, "code");
+                if (!code.isEmpty() && DiscordLink.available()) {
+                    DiscordLink.sendLink(code);
+                }
+            }
             case "screen_open" -> {
                 if ("warp".equals(str(json, "screen"))) {
                     Minecraft mc = Minecraft.getInstance();
@@ -177,6 +186,11 @@ public final class FullmoonBridge {
         req.addProperty("type", "tp_request");
         req.addProperty("id", wp.id());
         send(req);
+    }
+
+    /** Package-visible send for sibling handlers (DiscordLink). */
+    static void sendRaw(JsonObject json) {
+        send(json);
     }
 
     private static void send(JsonObject json) {
