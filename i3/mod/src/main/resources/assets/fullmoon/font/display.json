@@ -1,8 +1,10 @@
 {
     "providers": [
         {
-            "type": "reference",
-            "id": "minecraft:include/default"
+            "type": "ttf",
+            "file": "fullmoon:display.ttf",
+            "size": 22,
+            "oversample": 2
         },
         {
             "type": "ttf",
@@ -11,10 +13,8 @@
             "oversample": 2
         },
         {
-            "type": "ttf",
-            "file": "fullmoon:display.ttf",
-            "size": 22,
-            "oversample": 2
+            "type": "reference",
+            "id": "minecraft:include/space"
         }
     ]
 }

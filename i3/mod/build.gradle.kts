@@ -29,6 +29,9 @@ repositories {
 // widened field cannot silently miss its target the way a descriptor-matched hook can.
 loom {
     accessWidenerPath = file("src/main/resources/fullmoon.accesswidener")
+
+    // A fixed window so a capture of a layout is comparable to the last capture of it.
+    runs.named("client") { programArgs("--width", "1280", "--height", "720") }
 }
 
 dependencies {

@@ -26,6 +26,13 @@ import net.minecraft.resources.Identifier;
  * vertical rhythm comes from {@link Tokens.Type.Role#leading()} and never from the font.
  */
 public final class Typeset {
+    /**
+     * Distance from a draw origin to the baseline the glyphs actually sit on: the ascent of the
+     * game's one 9 px line box. It does not scale with the provider, so a 22 px face draws well
+     * above its origin and a band that wants a face centred in it has to work from here.
+     */
+    private static final int ASCENT = 7;
+
     private static final Map<String, Style> STYLES = new HashMap<>();
     private static final Map<String, Integer> DIGIT_CELLS = new HashMap<>();
 
@@ -69,6 +76,15 @@ public final class Typeset {
         return w;
     }
 
+    /**
+     * The draw origin that puts a role's ink in the optical middle of a band {@code h} tall,
+     * starting at {@code top}. A text face carries about a quarter of its size below the
+     * baseline, so its middle sits that far above it.
+     */
+    public static int centred(Tokens.Type.Role role, int top, int h) {
+        return top + h / 2 + role.px() / 4 - ASCENT;
+    }
+
     /** The advance of the widest digit in the role — one column of a tabular figure. */
     public static int digitCell(Tokens.Type.Role role) {
         return DIGIT_CELLS.computeIfAbsent(role.font(), id -> {
@@ -92,7 +108,8 @@ public final class Typeset {
     }
 
     /**
-     * Draws with digits on a fixed cell, right-aligned inside it as figures are set. Use this
+     * Draws with digits on a fixed cell, centred in it the way a tabular face cuts its own
+     * figures — a narrow 1 pushed to one side of the cell reads as a word space. Use this
      * for anything that changes while the player is looking at it: counters, coordinates,
      * timers, ping.
      */
@@ -102,7 +119,7 @@ public final class Typeset {
         for (int i = 0; i < text.length(); i++) {
             String glyph = String.valueOf(text.charAt(i));
             if (isDigit(text.charAt(i))) {
-                draw(painter, role, glyph, cursor + cell - width(role, glyph), y, color);
+                draw(painter, role, glyph, cursor + (cell - width(role, glyph)) / 2, y, color);
                 cursor += cell;
             } else {
                 cursor += draw(painter, role, glyph, cursor, y, color);

@@ -35,5 +35,8 @@ INTERNAL-*.md
 /ui-c/
 /pinion/
 
+# fabric dev client runtime
+i3/mod/run/
+
 # python bytecode (i3 design scripts)
 __pycache__/

@@ -25,9 +25,8 @@ import net.minecraft.client.gui.screens.Screen;
  */
 public final class SpecimenScreen extends Screen {
     private static final int MAX_CONTENT = 420;
-    private static final int NAME_COL = 54;
     private static final int LEFT_PERCENT = 62;
-    private static final String SAMPLE = "달빛 Fullmoon 0123";
+    private static final String[] SAMPLES = {"달빛 Fullmoon 0123", "달빛 Fullmoon", "달빛"};
 
     private int frames;
 
@@ -66,7 +65,7 @@ public final class SpecimenScreen extends Screen {
 
         painter.vRule(x + leftW + Tokens.Space.GUTTER / 2, top,
             Math.max(leftBottom, rightBottom) - top, Tokens.Color.LINE_HAIRLINE);
-        footer(painter, x, contentW, Math.max(leftBottom, rightBottom) + Tokens.Space.GUTTER);
+        footer(painter, x, contentW, height - Tokens.Space.SECTION - Tokens.Type.LABEL.leading());
     }
 
     private int header(Painter painter, int x, int y, int w) {
@@ -95,23 +94,28 @@ public final class SpecimenScreen extends Screen {
 
     private int typeRoll(Painter painter, int x, int y, int w) {
         int cursor = sectionHead(painter, "타입 스케일", x, y);
+        int nameCol = nameColumn();
         int metricW = Typeset.tabularWidth(Tokens.Type.LABEL, "22/28") + Tokens.Space.LOOSE;
-        int sampleW = w - NAME_COL - metricW;
+        int sampleW = w - nameCol - metricW;
 
         for (Map.Entry<String, Tokens.Type.Role> entry : Tokens.Type.ROLL) {
             Tokens.Type.Role role = entry.getValue();
             int rowH = role.leading() + Tokens.Space.SNUG;
+            // Name, sample and metric share the sample's baseline, so a row reads as one line
+            // however large the face in it is.
+            int textY = Typeset.centred(role, cursor, rowH);
 
-            Typeset.draw(painter, Tokens.Type.LABEL, entry.getKey(),
-                x, cursor + baseline(rowH, Tokens.Type.LABEL), Tokens.Color.INK_TERTIARY);
+            Typeset.draw(painter, Tokens.Type.LABEL, entry.getKey(), x, textY, Tokens.Color.INK_TERTIARY);
 
-            // Clipped so a wide sample can never collide with the metric column.
-            painter.pushClip(x + NAME_COL, cursor, sampleW, rowH);
-            Typeset.draw(painter, role, SAMPLE, x + NAME_COL, cursor + baseline(rowH, role), Tokens.Color.INK_PRIMARY);
+            // The column is clipped, not the row: the game hangs every face off one 9 px line
+            // box, so a 22 px sample legitimately draws taller than the band it is measured in,
+            // and cutting its ascenders would misrepresent the thing the row exists to show.
+            painter.pushClip(x + nameCol, 0, sampleW, painter.height());
+            Typeset.draw(painter, role, sample(role, sampleW), x + nameCol, textY, Tokens.Color.INK_PRIMARY);
             painter.popClip();
 
             Typeset.tabularRight(painter, Tokens.Type.LABEL, role.px() + "/" + role.leading(),
-                x + w, cursor + baseline(rowH, Tokens.Type.LABEL), Tokens.Color.INK_TERTIARY);
+                x + w, textY, Tokens.Color.INK_TERTIARY);
 
             cursor += rowH;
             painter.hRule(x, cursor, w, Tokens.Color.LINE_HAIRLINE);
@@ -120,8 +124,27 @@ public final class SpecimenScreen extends Screen {
         return cursor;
     }
 
-    private static int baseline(int rowH, Tokens.Type.Role role) {
-        return (rowH - role.px()) / 2;
+    /**
+     * The longest sample the role can set inside the column. A foundry shows a display face on
+     * fewer characters for the same reason: the row exists to show the shape of the glyphs, and
+     * a face cut off mid-stroke shows nothing. The clip stays as the guarantee.
+     */
+    private static String sample(Tokens.Type.Role role, int w) {
+        for (String candidate : SAMPLES) {
+            if (Typeset.width(role, candidate) <= w) {
+                return candidate;
+            }
+        }
+        return SAMPLES[SAMPLES.length - 1];
+    }
+
+    /** The name column is as wide as the longest role name, so no sample can be pushed into it. */
+    private static int nameColumn() {
+        int widest = 0;
+        for (Map.Entry<String, Tokens.Type.Role> entry : Tokens.Type.ROLL) {
+            widest = Math.max(widest, Typeset.width(Tokens.Type.LABEL, entry.getKey()));
+        }
+        return widest + Tokens.Space.LOOSE;
     }
 
     /** Six chips, one pipeline: the fill, the three radii, the inset stroke, the ring and dot. */
@@ -163,15 +186,22 @@ public final class SpecimenScreen extends Screen {
         }
 
         int bandH = 14;
+        int nameCol = 0;
+        for (String family : families.keySet()) {
+            nameCol = Math.max(nameCol, Typeset.width(Tokens.Type.LABEL, family));
+        }
+        nameCol += Tokens.Space.COZY;
+
         for (Map.Entry<String, List<Integer>> family : families.entrySet()) {
-            Typeset.draw(painter, Tokens.Type.LABEL, family.getKey(), x, cursor, Tokens.Color.INK_TERTIARY);
-            cursor += Tokens.Type.LABEL.leading();
+            Typeset.draw(painter, Tokens.Type.LABEL, family.getKey(), x,
+                Typeset.centred(Tokens.Type.LABEL, cursor, bandH), Tokens.Color.INK_TERTIARY);
 
             List<Integer> swatches = family.getValue();
             int gap = Tokens.Space.TIGHT;
-            int cellW = (w - gap * (swatches.size() - 1)) / swatches.size();
+            int bandsW = w - nameCol;
+            int cellW = (bandsW - gap * (swatches.size() - 1)) / swatches.size();
             for (int i = 0; i < swatches.size(); i++) {
-                int sx = x + i * (cellW + gap);
+                int sx = x + nameCol + i * (cellW + gap);
                 painter.fill(sx, cursor, cellW, bandH, Tokens.Radius.SM, swatches.get(i));
                 // The darkest surfaces would otherwise be invisible against the scrim.
                 painter.border(sx, cursor, cellW, bandH, Tokens.Radius.SM,
