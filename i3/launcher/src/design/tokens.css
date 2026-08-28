@@ -1,0 +1,81 @@
+/* Generated from i3/design/tokens.json by i3/design/generate.mjs. Do not edit by hand. */
+:root {
+  color-scheme: dark;
+
+  --color-surface-void: oklch(0.145 0.008 89); /* #0b0a07 · scrim behind a full-screen surface */
+  --color-surface-sunken: oklch(0.185 0.009 89); /* #14130e · inset wells, scroll troughs, empty states */
+  --color-surface-base: oklch(0.215 0.01 89); /* #1b1914 · panel ground */
+  --color-surface-raised: oklch(0.262 0.012 89); /* #27241e · hovered row, selected list item ground */
+  --color-surface-overlay: oklch(0.305 0.013 89); /* #322f28 · popover, tooltip, dropdown */
+  --color-line-hairline: oklch(0.31 0.009 89); /* #32302b · row separators, panel edges */
+  --color-line-strong: oklch(0.42 0.011 89); /* #4f4d46 · section rule under a title */
+  --color-ink-primary: oklch(0.945 0.01 89); /* #efede5 · titles, values, active labels */
+  --color-ink-secondary: oklch(0.76 0.009 89); /* #b3b1ab · body copy, inactive labels */
+  --color-ink-tertiary: oklch(0.575 0.008 89); /* #7b7974 · meta text, units, hints */
+  --color-ink-disabled: oklch(0.42 0.006 89); /* #4e4d49 · disabled label */
+  --color-ink-on-accent: oklch(0.18 0.014 89); /* #14110a · text on an accent fill */
+  --color-accent: oklch(0.87 0.124 89); /* #f5d06e · selection bar, one primary action per surface, live values */
+  --color-accent-pressed: oklch(0.735 0.112 86); /* #c9a44f · accent fill while held */
+  --color-accent-wash: oklch(0.3 0.042 89); /* #362d13 · selected-row tint behind ink */
+  --color-status-live: oklch(0.78 0.105 168); /* #6dcdab · server reachable, module enabled */
+  --color-status-idle: oklch(0.545 0.012 89); /* #737068 · server unreachable, module off */
+  --color-status-warn: oklch(0.805 0.128 66); /* #f7ae5f · degraded, pending, unverified */
+  --color-status-danger: oklch(0.615 0.155 25); /* #d25853 · destructive only — never a primary action fill */
+
+  --space-hair: 2px;
+  --space-tight: 4px;
+  --space-snug: 8px;
+  --space-base: 12px;
+  --space-cozy: 16px;
+  --space-loose: 24px;
+  --space-gutter: 32px;
+  --space-section: 48px;
+  --space-bay: 64px;
+  --space-field: 96px;
+
+  --radius-none: 0px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-round: 999px;
+
+  --dur-instant: 0ms;
+  --dur-fast: 90ms;
+  --dur-base: 140ms;
+  --dur-slow: 220ms;
+  --dur-reduced: 120ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.83, 0, 0.17, 1);
+
+  --layer-ground: 0;
+  --layer-content: 100;
+  --layer-rail: 200;
+  --layer-overlay: 300;
+  --layer-popover: 400;
+  --layer-toast: 500;
+
+  --type-display-size: 44px;
+  --type-display-leading: 56px;
+  --type-title-size: 26px;
+  --type-title-leading: 36px;
+  --type-body-size: 18px;
+  --type-body-leading: 26px;
+  --type-body-strong-size: 18px;
+  --type-body-strong-leading: 26px;
+  --type-label-size: 16px;
+  --type-label-leading: 22px;
+
+  --font-display: 'Fullmoon Serif', 'Noto Serif KR', serif;
+  --font-body: 'Pretendard', system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-fast: 120ms;
+    --dur-base: 120ms;
+    --dur-slow: 120ms;
+    --dur-reduced: 120ms;
+  }
+}

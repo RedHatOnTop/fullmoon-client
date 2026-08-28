@@ -1,0 +1,6 @@
+accessWidener	v2	named
+
+# The GUI submission point. GuiGraphicsExtractor exposes fill/blit/text but no way to
+# submit a GuiElementRenderState of our own, and every rounded shape in this client is
+# one. Widening the field is checked at remap time; a mixin @Inject is not.
+accessible	field	net/minecraft/client/gui/GuiGraphicsExtractor	guiRenderState	Lnet/minecraft/client/renderer/state/gui/GuiRenderState;

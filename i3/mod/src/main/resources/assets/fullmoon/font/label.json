@@ -1,0 +1,14 @@
+{
+    "providers": [
+        {
+            "type": "reference",
+            "id": "minecraft:include/default"
+        },
+        {
+            "type": "ttf",
+            "file": "fullmoon:sans-regular.ttf",
+            "size": 8,
+            "oversample": 2
+        }
+    ]
+}

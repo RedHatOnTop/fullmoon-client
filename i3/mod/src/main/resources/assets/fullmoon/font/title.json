@@ -1,0 +1,14 @@
+{
+    "providers": [
+        {
+            "type": "reference",
+            "id": "minecraft:include/default"
+        },
+        {
+            "type": "ttf",
+            "file": "fullmoon:sans-semibold.ttf",
+            "size": 13,
+            "oversample": 2
+        }
+    ]
+}
