@@ -1,6 +1,7 @@
-accessWidener	v2	named
+accessWidener	v2	official
 
 # The GUI submission point. GuiGraphicsExtractor exposes fill/blit/text but no way to
 # submit a GuiElementRenderState of our own, and every rounded shape in this client is
-# one. Widening the field is checked at remap time; a mixin @Inject is not.
+# one. The namespace is `official` because 26.1.2 ships unobfuscated and Loom runs in
+# no-remap mode, so official names are the only names there are.
 accessible	field	net/minecraft/client/gui/GuiGraphicsExtractor	guiRenderState	Lnet/minecraft/client/renderer/state/gui/GuiRenderState;

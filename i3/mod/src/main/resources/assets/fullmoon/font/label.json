@@ -6,7 +6,7 @@
         },
         {
             "type": "ttf",
-            "file": "fullmoon:sans-regular.ttf",
+            "file": "fullmoon:sans-semibold.ttf",
             "size": 8,
             "oversample": 2
         }

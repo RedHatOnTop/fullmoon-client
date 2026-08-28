@@ -1,5 +1,8 @@
 plugins {
-    id("fabric-loom") version "1.17.17"
+    // The no-remap variant. 26.1.2 ships unobfuscated: the version manifest has no
+    // client_mappings, there is no yarn for it, and intermediary is the 0.0.0 stub — so the
+    // short `fabric-loom` id fails at configuration time demanding a mappings artifact.
+    id("net.fabricmc.fabric-loom") version "1.17.17"
     `java-library`
 }
 
@@ -30,9 +33,10 @@ loom {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings(loom.officialMojangMappings())
-    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
+    // No mappings and no modImplementation: nothing is remapped, so the mod compiles
+    // straight against the shipped jars on plain configurations.
+    implementation("net.fabricmc:fabric-loader:$loaderVersion")
+    implementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")

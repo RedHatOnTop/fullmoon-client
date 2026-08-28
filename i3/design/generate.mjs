@@ -36,7 +36,7 @@ j(' */');
 j('public final class Tokens {');
 j('    private Tokens() {}');
 j('');
-j('    /** Packed 0xAARRGGBB, opaque. Use Paint#withAlpha to fade one. */');
+j('    /** Packed 0xAARRGGBB, opaque. Only a scrim reopens the alpha, via Rgb#alpha. */');
 j('    public static final class Color {');
 for (const { name, entry, hex: h } of resolved) {
   j(`        /** ${entry.use} · oklch(${entry.oklch.join(' ')}) */`);
@@ -78,6 +78,32 @@ for (const [k, v] of Object.entries(tokens.layer).filter(([k]) => !k.startsWith(
   j(`        public static final int ${CONST(k)} = ${v};`);
 j('');
 j('        private Layer() {}');
+j('    }');
+j('');
+j('    /**');
+j('     * One baked ttf provider per role. The game rasterises per provider, so a role is');
+j('     * a font id and not a scale factor — asking for title at 1.4x would resample the');
+j('     * body atlas and blur it.');
+j('     */');
+j('    public static final class Type {');
+j('        /** {@code font} is the provider id under assets/fullmoon/font; px and leading are GUI px. */');
+j('        public record Role(String font, int px, int leading) {}');
+j('');
+const typeRoles = Object.entries(tokens.type).filter(([k]) => !k.startsWith('$'));
+for (const [k, v] of typeRoles) {
+  j(`        /** ${v.face} ${v.px}/${v.leading} */`);
+  j(`        public static final Role ${CONST(k)} = new Role("${v.font}", ${v.px}, ${v.leading});`);
+}
+j('');
+j('        /** Declaration order, for the design specimen screen. */');
+j(`        public static final java.util.List<java.util.Map.Entry<String, Role>> ROLL =`);
+j('            java.util.List.of(');
+typeRoles.forEach(([k], i) => {
+  j(`                java.util.Map.entry("${k}", ${CONST(k)})${i === typeRoles.length - 1 ? '' : ','}`);
+});
+j('            );');
+j('');
+j('        private Type() {}');
 j('    }');
 j('');
 j('    /** Token name to packed colour, in declaration order, for the design specimen screen. */');

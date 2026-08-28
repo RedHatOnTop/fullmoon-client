@@ -105,6 +105,39 @@ public final class Tokens {
         private Layer() {}
     }
 
+    /**
+     * One baked ttf provider per role. The game rasterises per provider, so a role is
+     * a font id and not a scale factor — asking for title at 1.4x would resample the
+     * body atlas and blur it.
+     */
+    public static final class Type {
+        /** {@code font} is the provider id under assets/fullmoon/font; px and leading are GUI px. */
+        public record Role(String font, int px, int leading) {}
+
+        /** Fullmoon Serif 22/28 */
+        public static final Role DISPLAY = new Role("fullmoon:display", 22, 28);
+        /** Pretendard SemiBold 13/18 */
+        public static final Role TITLE = new Role("fullmoon:title", 13, 18);
+        /** Pretendard 9/13 */
+        public static final Role BODY = new Role("fullmoon:body", 9, 13);
+        /** Pretendard SemiBold 9/13 */
+        public static final Role BODY_STRONG = new Role("fullmoon:body_strong", 9, 13);
+        /** Pretendard SemiBold 8/11 */
+        public static final Role LABEL = new Role("fullmoon:label", 8, 11);
+
+        /** Declaration order, for the design specimen screen. */
+        public static final java.util.List<java.util.Map.Entry<String, Role>> ROLL =
+            java.util.List.of(
+                java.util.Map.entry("display", DISPLAY),
+                java.util.Map.entry("title", TITLE),
+                java.util.Map.entry("body", BODY),
+                java.util.Map.entry("bodyStrong", BODY_STRONG),
+                java.util.Map.entry("label", LABEL)
+            );
+
+        private Type() {}
+    }
+
     /** Token name to packed colour, in declaration order, for the design specimen screen. */
     public static final java.util.List<java.util.Map.Entry<String, Integer>> COLOR_ROLL =
         java.util.List.of(
