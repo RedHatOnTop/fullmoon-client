@@ -1,6 +1,10 @@
 package dev.fullmoon.client;
 
+import java.util.List;
+import java.util.function.Supplier;
+
 import dev.fullmoon.client.text.Typeset;
+import dev.fullmoon.client.ui.KitScreen;
 import dev.fullmoon.client.ui.SpecimenScreen;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -12,6 +16,7 @@ import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
@@ -30,26 +35,44 @@ public final class FullmoonClient implements ClientModInitializer {
     private static final KeyMapping.Category CATEGORY =
         KeyMapping.Category.register(Identifier.fromNamespaceAndPath(NAMESPACE, "client"));
 
-    private static final KeyMapping OPEN_SPECIMEN =
-        new KeyMapping("key.fullmoon.specimen", InputConstants.Type.KEYSYM, InputConstants.KEY_F6, CATEGORY);
+    private static final KeyMapping OPEN_SPECIMEN = key("specimen", InputConstants.KEY_F6);
+    private static final KeyMapping OPEN_KIT = key("kit", InputConstants.KEY_F7);
+
+    /**
+     * A key, what it opens, and how to tell the surface is already up. The class is carried
+     * separately from the supplier because re-opening a screen on top of itself throws its state
+     * away, and on this route the binding fires while that screen has the keyboard.
+     */
+    private record Binding(KeyMapping mapping, Class<? extends Screen> screen, Supplier<Screen> open) {}
+
+    private static final List<Binding> BINDINGS = List.of(
+        new Binding(OPEN_SPECIMEN, SpecimenScreen.class, SpecimenScreen::new),
+        new Binding(OPEN_KIT, KitScreen.class, KitScreen::new));
 
     @Override
     public void onInitializeClient() {
-        KeyMappingHelper.registerKeyMapping(OPEN_SPECIMEN);
+        for (Binding binding : BINDINGS) {
+            KeyMappingHelper.registerKeyMapping(binding.mapping());
+        }
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (OPEN_SPECIMEN.consumeClick()) {
-                client.setScreen(new SpecimenScreen());
+            for (Binding binding : BINDINGS) {
+                while (binding.mapping().consumeClick()) {
+                    client.setScreen(binding.open().get());
+                }
             }
         });
 
         // The game only drains KeyMapping clicks while no screen is open, so a binding that
         // opens a surface would be dead on the title screen and in every menu — exactly where
-        // a client's own screens are reached from. This is the same binding, read directly.
+        // a client's own screens are reached from. These are the same bindings, read directly.
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) ->
             ScreenKeyboardEvents.afterKeyPress(screen).register((current, key) -> {
-                if (!(current instanceof SpecimenScreen) && bound(OPEN_SPECIMEN, key)) {
-                    client.setScreen(new SpecimenScreen());
+                for (Binding binding : BINDINGS) {
+                    if (!binding.screen().isInstance(current) && bound(binding.mapping(), key)) {
+                        client.setScreen(binding.open().get());
+                        return;
+                    }
                 }
             }));
 
@@ -63,6 +86,10 @@ public final class FullmoonClient implements ClientModInitializer {
         loader.addListenerOrdering(ResourceReloaderKeys.Client.FONTS, typeset);
     }
 
+    private static KeyMapping key(String name, int code) {
+        return new KeyMapping("key.fullmoon." + name, InputConstants.Type.KEYSYM, code, CATEGORY);
+    }
+
     private static boolean bound(KeyMapping mapping, KeyEvent event) {
         InputConstants.Key key = KeyMappingHelper.getBoundKeyOf(mapping);
         return key.getType() == InputConstants.Type.KEYSYM && key.getValue() == event.key();
@@ -70,6 +97,15 @@ public final class FullmoonClient implements ClientModInitializer {
 
     /** The key the specimen is bound to, so a surface can name its own binding. */
     public static String specimenKey() {
-        return KeyMappingHelper.getBoundKeyOf(OPEN_SPECIMEN).getDisplayName().getString();
+        return bindingName(OPEN_SPECIMEN);
+    }
+
+    /** The key the widget kit is bound to. */
+    public static String kitKey() {
+        return bindingName(OPEN_KIT);
+    }
+
+    private static String bindingName(KeyMapping mapping) {
+        return KeyMappingHelper.getBoundKeyOf(mapping).getDisplayName().getString();
     }
 }
