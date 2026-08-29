@@ -59,7 +59,13 @@ public final class Toggle extends Widget {
             Tokens.Stroke.HAIR, skin.line());
 
         float centre = slot.y() + TRACK_H / 2.0f;
-        float knobX = on ? slot.right() - TRACK_H / 2.0f : slot.x() + TRACK_H / 2.0f;
+        // A switch with a request out is between positions: the player has thrown it and nothing
+        // has said which end it lands on yet. Parking the knob mid-track is the only thing this
+        // control can say that a disabled one cannot, and a switch that reported LOADING by
+        // dimming would be a disabled switch with extra steps.
+        float knobX = state == State.LOADING
+            ? slot.x() + slot.w() / 2.0f
+            : on ? slot.right() - TRACK_H / 2.0f : slot.x() + TRACK_H / 2.0f;
         painter.dot(knobX, centre, TRACK_H / 2.0f - Tokens.Space.TIGHT, skin.ink());
 
         if (!label().isEmpty()) {

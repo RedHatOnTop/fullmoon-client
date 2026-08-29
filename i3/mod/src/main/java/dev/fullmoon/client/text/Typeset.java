@@ -85,6 +85,24 @@ public final class Typeset {
         return top + h / 2 + role.px() / 4 - ASCENT;
     }
 
+    /**
+     * The height of a role's capitals: the cap line down to the baseline. Same model as
+     * {@link #centred} — a face carries about a quarter of its size below the baseline and the
+     * rest of it above.
+     */
+    public static int capHeight(Tokens.Type.Role role) {
+        return role.px() - role.px() / 4;
+    }
+
+    /**
+     * The y a role's capitals begin at when it is drawn at origin {@code y}. A rule that stands
+     * beside a wordmark has to start here and not at the origin: the line box is 9 px whatever
+     * the face is, so a large role draws most of its body above the origin it was handed.
+     */
+    public static int capTop(Tokens.Type.Role role, int y) {
+        return y + ASCENT - capHeight(role);
+    }
+
     /** The advance of the widest digit in the role — one column of a tabular figure. */
     public static int digitCell(Tokens.Type.Role role) {
         return DIGIT_CELLS.computeIfAbsent(role.font(), id -> {
