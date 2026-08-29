@@ -4,6 +4,7 @@ plugins {
     // short `fabric-loom` id fails at configuration time demanding a mappings artifact.
     id("net.fabricmc.fabric-loom") version "1.17.17"
     `java-library`
+    jacoco
 }
 
 fun prop(name: String) = project.property(name) as String
@@ -35,6 +36,9 @@ loom {
     // and the capture rig is what knows which: tools/capture.py passes both.
     runs.named("client") {
         programArgs("--width", prop("client_width"), "--height", prop("client_height"))
+        providers.gradleProperty("quick_play_server").orNull?.let { server ->
+            programArgs("--quickPlayMultiplayer", server)
+        }
     }
 }
 
@@ -61,7 +65,41 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("-Xlint:all,-serial,-processing", "-Werror"))
 }
 
-tasks.test { useJUnitPlatform() }
+jacoco { toolVersion = "0.8.15" }
+
+fun settingsSearchClasses() = files(sourceSets.main.get().output.asFileTree.matching {
+    include("dev/fullmoon/client/settings/SettingSearch*")
+})
+
+tasks.test {
+    useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    classDirectories.setFrom(settingsSearchClasses())
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
+    classDirectories.setFrom(settingsSearchClasses())
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+    }
+}
+
+tasks.check { dependsOn(tasks.jacocoTestCoverageVerification) }
 
 tasks.processResources {
     val props = mapOf(

@@ -1,5 +1,8 @@
 package dev.fullmoon.client.ui;
 
+import java.util.Objects;
+import java.util.function.Supplier;
+
 import dev.fullmoon.client.design.Tokens;
 import dev.fullmoon.client.layout.Box;
 import dev.fullmoon.client.render.Painter;
@@ -34,14 +37,23 @@ public final class ListRow extends Widget {
      */
     record Look(int ground, int tick, int tickWidth, int ink) {}
 
-    private final String meta;
+    private final Supplier<String> meta;
     private final Runnable onPick;
     private boolean selected;
 
     public ListRow(String label, String meta, Runnable onPick) {
+        this(label, () -> meta, onPick);
+        Objects.requireNonNull(meta, "meta");
+    }
+
+    public ListRow(String label, Supplier<String> meta, Runnable onPick) {
         super(Voice.QUIET, label);
-        this.meta = meta;
+        this.meta = Objects.requireNonNull(meta, "meta");
         this.onPick = onPick;
+    }
+
+    String meta() {
+        return Objects.requireNonNull(meta.get(), "meta value");
     }
 
     public boolean selected() {
@@ -71,17 +83,15 @@ public final class ListRow extends Widget {
         if (state == State.LOADING) {
             Dots.draw(painter, right - Dots.width() / 2.0f, b.midY(), chrome.ink());
             right -= Dots.width() + Tokens.Space.LOOSE;
-        } else if (!meta.isEmpty()) {
-            right -= Typeset.tabularRight(painter, Tokens.Type.LABEL, meta, right,
+        } else if (!meta().isEmpty()) {
+            right -= Typeset.tabularRight(painter, Tokens.Type.LABEL, meta(), right,
                 Typeset.centred(Tokens.Type.LABEL, b.y(), b.h()), Tokens.Color.INK_TERTIARY)
                 + Tokens.Space.LOOSE;
         }
 
-        // The name is clipped rather than shortened: an ellipsis is a measurement, and a row that
-        // measures its own name cannot be laid out without a font. The panel decides the width.
-        painter.pushClip(left, b.y(), Math.max(0, right - left), b.h());
-        Typeset.draw(painter, Tokens.Type.BODY, label(), left, textY, look.ink());
-        painter.popClip();
+        String visible = Typeset.fittingPrefix(Tokens.Type.BODY, label(),
+            Math.max(0, right - left));
+        Typeset.draw(painter, Tokens.Type.BODY, visible, left, textY, look.ink());
     }
 
     /** What this row draws as. Package-private because the panel's sweep is the proof of it. */

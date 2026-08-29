@@ -98,25 +98,24 @@ public final class TextField extends Widget {
         // What view() keeps in sight is the caret, and a field nobody is typing in has none: it shows
         // the head of its text. Left to itself it would scroll that head off the moment LOADING
         // narrowed the area, and a field the player is only reading has no reason to move at all.
-        scrolled = typing ? view(area) : 0;
+        scrolled = typing ? snappedView(area) : 0;
 
-        painter.pushClip(area.x(), b.y(), area.w(), b.h());
-        if (text.isEmpty() && !typing) {
-            Typeset.draw(painter, Tokens.Type.BODY, placeholder, area.x(), y,
-                Tokens.Color.INK_TERTIARY);
-        } else {
-            if (typing && caret != anchor) {
-                int from = area.x() + at(Math.min(caret, anchor)) - scrolled;
-                int to = area.x() + at(Math.max(caret, anchor)) - scrolled;
-                band(painter, from, to - from, y, Tokens.Color.ACCENT_WASH);
-            }
-            Typeset.draw(painter, Tokens.Type.BODY, text, area.x() - scrolled, y, chrome.ink());
+        if (typing && caret != anchor) {
+            int from = area.x() + at(Math.min(caret, anchor)) - scrolled;
+            int to = area.x() + at(Math.max(caret, anchor)) - scrolled;
+            band(painter, area, from, to - from, y, Tokens.Color.ACCENT_WASH);
         }
         if (typing) {
-            band(painter, area.x() + at(caret) - scrolled, Tokens.Stroke.HAIR, y,
-                Tokens.Color.ACCENT);
+            Typeset.draw(painter, Tokens.Type.BODY, "|",
+                area.x() + at(caret) - scrolled, y, Tokens.Color.ACCENT);
         }
-        painter.popClip();
+        if (text.isEmpty() && !typing) {
+            Typeset.draw(painter, Tokens.Type.BODY,
+                Typeset.fittingPrefix(Tokens.Type.BODY, placeholder, area.w()), area.x(), y,
+                Tokens.Color.INK_TERTIARY);
+        } else {
+            Typeset.draw(painter, Tokens.Type.BODY, visibleText(area.w()), area.x(), y, chrome.ink());
+        }
 
         if (state == State.LOADING) {
             Dots.draw(painter, b.right() - Tokens.Space.COZY - Dots.width() / 2.0f, b.midY(),
@@ -129,9 +128,12 @@ public final class TextField extends Widget {
      * The caret and the selection are the same shape: the band the capitals occupy, plus a hairline
      * above and below so that neither of them ends flush with a letter.
      */
-    private static void band(Painter painter, int x, int w, int y, int color) {
-        painter.fill(x, Typeset.capTop(Tokens.Type.BODY, y) - Tokens.Space.HAIR, w,
-            Typeset.capHeight(Tokens.Type.BODY) + Tokens.Space.TIGHT, color);
+    private static void band(Painter painter, Box clip, int x, int w, int y, int color) {
+        int left = Math.max(clip.x(), x);
+        int right = Math.min(clip.right(), x + w);
+        painter.fill(left, Typeset.capTop(Tokens.Type.BODY, y) - Tokens.Space.HAIR,
+            Math.max(0, right - left), Typeset.capHeight(Tokens.Type.BODY) + Tokens.Space.TIGHT,
+            color);
     }
 
     @Override
@@ -360,6 +362,33 @@ public final class TextField extends Widget {
         int room = Math.max(0, at(text.length()) - area.w() + Tokens.Stroke.FOCUS);
         int kept = Math.max(Math.min(scrolled, caretX), caretX - area.w() + Tokens.Stroke.FOCUS);
         return Math.clamp(kept, 0, room);
+    }
+
+    /** Aligns the pixel view to a code point boundary so text never needs a render-time scissor. */
+    private int snappedView(Box area) {
+        int wanted = view(area);
+        int index = 0;
+        while (index < text.length() && at(index) < wanted) {
+            index += Character.charCount(text.codePointAt(index));
+        }
+        return at(index);
+    }
+
+    /** The complete glyphs that fit from the snapped view through the field's right edge. */
+    private String visibleText(int width) {
+        int from = 0;
+        while (from < text.length() && at(from) < scrolled) {
+            from += Character.charCount(text.codePointAt(from));
+        }
+        int to = from;
+        while (to < text.length()) {
+            int next = to + Character.charCount(text.codePointAt(to));
+            if (at(next) - scrolled > width) {
+                break;
+            }
+            to = next;
+        }
+        return text.substring(from, to);
     }
 
     /** Where the text goes: the field, less a gutter at each end. */

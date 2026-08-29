@@ -4,7 +4,7 @@
 The captures under docs/evidence are the only claim this project makes that its screens look the
 way the layout says they do, so taking one has to be repeatable by someone who was not here. By
 hand that is an Xvfb, a Gradle run, a wait for the atlases, XTEST taps in the right order, and an
-import off the root window — six things to get wrong. This is those six things.
+in-game framebuffer screenshot — six things to get wrong. This is those six things.
 
 Readiness is read out of the run log rather than off the window, because the box this runs on has
 no xwininfo and no xdotool: the atlas line is the last thing the client prints before it is
@@ -41,6 +41,7 @@ MOD = HERE.parent / "mod"
 
 READY = re.compile(r"Created: \S+ .*minecraft:textures/atlas")
 SETTLE = 8.0
+FRAME_SETTLE = 1.0
 TIMEOUT = 240.0
 
 
@@ -68,11 +69,15 @@ def main():
                     help="device pixels (default: %(default)s)")
     ap.add_argument("--scale", type=int, default=2,
                     help="gui scale, so gui pixels are geometry over this (default: %(default)s)")
+    ap.add_argument("--language", default="ko_kr",
+                    help="language pinned in options.txt (default: %(default)s)")
+    ap.add_argument("--server",
+                    help="quick-play multiplayer address, for captures over a live world")
     ap.add_argument("--gap", type=float, default=0.6,
                     help="seconds between a tap and the next thing (default: %(default)s)")
     args = ap.parse_args()
 
-    for tool in ("Xvfb", "import"):
+    for tool in ("Xvfb",):
         if not shutil.which(tool):
             sys.exit(f"{tool} is not on PATH")
 
@@ -82,7 +87,13 @@ def main():
     number = args.display.lstrip(":")
     xauth = f"/tmp/i3-xauth{number}"
     pathlib.Path(xauth).write_text("")
-    pin(MOD / "run" / "options.txt", {"guiScale": args.scale, "fullscreen": "false"})
+    pin(MOD / "run" / "options.txt", {
+        "guiScale": args.scale,
+        "fullscreen": "false",
+        "lang": args.language,
+        "chatVisibility": "2",
+        "tutorialStep": "none",
+    })
     print(f"{width}x{height} at scale {args.scale} "
           f"= {width // args.scale}x{height // args.scale} gui px", flush=True)
 
@@ -98,9 +109,12 @@ def main():
     try:
         time.sleep(1.5)
         with log.open("wb") as sink:
+            command = ["./gradlew", "-p", ".", "runClient", "--console=plain",
+                       f"-Pclient_width={width}", f"-Pclient_height={height}"]
+            if args.server:
+                command.append(f"-Pquick_play_server={args.server}")
             client = subprocess.Popen(
-                ["./gradlew", "-p", ".", "runClient", "--console=plain",
-                 f"-Pclient_width={width}", f"-Pclient_height={height}"],
+                command,
                 cwd=MOD, env=env, stdout=sink, stderr=subprocess.STDOUT,
                 start_new_session=True)
             wait_for_atlas(log, client)
@@ -115,11 +129,16 @@ def main():
         d.sync()
         for name, keys in args.shots:
             for key in keys:
-                tap(d, key)
+                if key.startswith("type="):
+                    type_text(d, key.removeprefix("type="))
+                elif key.startswith("wait="):
+                    time.sleep(float(key.removeprefix("wait=")))
+                else:
+                    tap(d, key)
                 time.sleep(args.gap)
+            time.sleep(FRAME_SETTLE)
             shot = args.outdir / f"{name}.png"
-            subprocess.run(["import", "-display", args.display, "-window", "root", str(shot)],
-                           env={**env, "XAUTHORITY": xauth}, check=True)
+            capture_framebuffer(d, shot)
             print(f"{shot}  ({' '.join(keys)})", flush=True)
         d.close()
     finally:
@@ -173,6 +192,30 @@ def tap(d, name):
     time.sleep(0.05)
     xtest.fake_input(d, X.KeyRelease, code)
     d.sync()
+
+
+def capture_framebuffer(d, destination):
+    """Use Minecraft's F2 path so a capture cannot land between two Xvfb buffer swaps."""
+    directory = MOD / "run" / "screenshots"
+    directory.mkdir(parents=True, exist_ok=True)
+    before = set(directory.glob("*.png"))
+    tap(d, "F2")
+    deadline = time.monotonic() + 10.0
+    while time.monotonic() < deadline:
+        created = list(set(directory.glob("*.png")) - before)
+        if created:
+            source = max(created, key=lambda path: path.stat().st_mtime_ns)
+            if source.stat().st_size > 0:
+                shutil.copy2(source, destination)
+                return
+        time.sleep(0.05)
+    sys.exit(f"Minecraft did not write an F2 screenshot for {destination}")
+
+
+def type_text(d, value):
+    """Type printable ASCII through XTEST; localized text belongs in language resources."""
+    for char in value:
+        tap(d, "space" if char == " " else char)
 
 
 if __name__ == "__main__":

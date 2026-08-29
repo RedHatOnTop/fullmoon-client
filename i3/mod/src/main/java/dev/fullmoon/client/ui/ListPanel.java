@@ -45,10 +45,18 @@ public final class ListPanel extends Widget {
     private boolean dragging;
 
     public ListPanel(String label, List<ListRow> rows, String empty, IntConsumer onPick) {
+        this(label, rows, empty, -1, onPick);
+    }
+
+    public ListPanel(String label, List<ListRow> rows, String empty, int selected,
+            IntConsumer onPick) {
         super(Voice.QUIET, label);
         this.rows = List.copyOf(rows);
         this.empty = empty;
         this.onPick = onPick;
+        this.selected = this.rows.isEmpty() ? -1 : Math.clamp(selected, -1, this.rows.size() - 1);
+        this.marked = Math.max(0, this.selected);
+        this.first = this.marked;
     }
 
     /** The height a well needs to show {@code rows} of them whole, borders included. */
@@ -111,7 +119,6 @@ public final class ListPanel extends Widget {
         if (!hovered()) {
             rows.forEach(row -> row.hovered(false));
         }
-        painter.pushClip(view.x(), view.y(), view.w(), view.h());
         for (int i = first; i < last; i++) {
             ListRow row = rows.get(i);
             row.place(rowBox(i));
@@ -124,7 +131,6 @@ public final class ListPanel extends Widget {
             painter.hRule(view.x() + Tokens.Space.COZY, rowBox(i).y(),
                 view.w() - Tokens.Space.COZY * 2, Tokens.Color.LINE_HAIRLINE);
         }
-        painter.popClip();
 
         if (scrollable()) {
             Box rail = rail();

@@ -12,9 +12,8 @@ import dev.fullmoon.client.text.Typeset;
  * <p>The track speaks {@link Voice#LOUD} when it is on and {@link Voice#QUIET} when it is off,
  * which is what makes the two readable apart without a caption. The label is inked from
  * {@code QUIET} either way: it sits on the panel, not on the track, and on-accent ink on the
- * panel ground is invisible. The focus ring follows the track's voice for the same reason in
- * reverse — an accent ring three pixels from an accent track reads as one fat bar with a slot
- * cut in it.
+ * panel ground is invisible. The focus ring stays accent in both positions so keyboard focus
+ * does not change identity when the switch is thrown.
  */
 public final class Toggle extends Widget {
     public static final int HEIGHT = Tokens.Space.SECTION;
@@ -73,7 +72,8 @@ public final class Toggle extends Widget {
                 Typeset.centred(Tokens.Type.BODY, b.y(), b.h()), Voice.QUIET.chrome(state).ink());
         }
         // With no label the bounds are the track, so the ring has to be a pill too.
-        ring(painter, state, label().isEmpty() ? Tokens.Radius.ROUND : Tokens.Radius.MD, track.ring());
+        ring(painter, state, label().isEmpty() ? Tokens.Radius.ROUND : Tokens.Radius.MD,
+            Voice.QUIET.ring());
     }
 
     @Override

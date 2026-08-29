@@ -41,11 +41,15 @@ class ListPanelTest {
     private final AtomicInteger acted = new AtomicInteger();
 
     private ListPanel well(int count) {
+        return well(count, -1);
+    }
+
+    private ListPanel well(int count, int selected) {
         List<ListRow> rows = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             rows.add(new ListRow("row " + i, "", acted::incrementAndGet));
         }
-        ListPanel panel = new ListPanel("목록", rows, "비어 있다", picked::add);
+        ListPanel panel = new ListPanel("목록", rows, "비어 있다", selected, picked::add);
         panel.place(new Box(X, Y, W, ListPanel.heightFor(SEEN)));
         return panel;
     }
@@ -60,6 +64,22 @@ class ListPanelTest {
         assertEquals(SEEN, well(ROWS).visible());
         assertTrue(well(ROWS).scrollable());
         assertFalse(well(SEEN).scrollable(), "a list that fits has nothing to scroll");
+    }
+
+    @Test
+    void anInitialSelectionIsMarkedAndVisible() {
+        ListPanel panel = well(ROWS, 8);
+
+        assertEquals(8, panel.selected());
+        assertEquals(8, panel.marked());
+        assertEquals(8, panel.first(), "a restored selection is the first visible row");
+    }
+
+    @Test
+    void anInitialSelectionIsClampedToTheCatalog() {
+        assertEquals(ROWS - 1, well(ROWS, 100).selected());
+        assertEquals(-1, well(ROWS, -1).selected());
+        assertEquals(-1, well(0, 3).selected());
     }
 
     /** The mark leads and the view follows, which is what keeps the marked row on screen. */

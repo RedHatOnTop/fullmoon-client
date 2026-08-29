@@ -8,7 +8,7 @@ package dev.fullmoon.client.design;
 public final class Tokens {
     private Tokens() {}
 
-    /** Packed 0xAARRGGBB, opaque. Use Paint#withAlpha to fade one. */
+    /** Packed 0xAARRGGBB, opaque. Only a scrim reopens the alpha, via Rgb#alpha. */
     public static final class Color {
         /** scrim behind a full-screen surface · oklch(0.145 0.008 89) */
         public static final int SURFACE_VOID = 0xFF0B0A07;

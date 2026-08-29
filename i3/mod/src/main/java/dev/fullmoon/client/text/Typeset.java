@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 
 /**
  * The client's text layer: role in, glyphs out.
@@ -56,10 +57,26 @@ public final class Typeset {
         return font().width(say(role, text));
     }
 
+    /** The longest complete-code-point prefix that fits inside {@code width}. */
+    public static String fittingPrefix(Tokens.Type.Role role, String text, int width) {
+        int end = 0;
+        while (end < text.length()) {
+            int next = end + Character.charCount(text.codePointAt(end));
+            if (width(role, text.substring(0, next)) > width) {
+                break;
+            }
+            end = next;
+        }
+        return text.substring(0, end);
+    }
+
     /** Draws left-aligned from the text's top-left corner. */
     public static int draw(Painter painter, Tokens.Type.Role role, String text, int x, int y, int color) {
-        painter.gfx().text(font(), say(role, text), x, y, color, false);
-        return width(role, text);
+        int measured = width(role, text);
+        painter.gfx().nextStratum();
+        drawRaw(painter, role, text, x, y, color);
+        painter.gfx().nextStratum();
+        return measured;
     }
 
     /** Draws right-aligned so that the text ends at {@code right}. */
@@ -74,6 +91,19 @@ public final class Typeset {
         int w = width(role, text);
         draw(painter, role, text, cx - w / 2, y, color);
         return w;
+    }
+
+    /** Draws at most {@code maxLines} on the role's leading and returns the height it used. */
+    public static int drawWrapped(Painter painter, Tokens.Type.Role role, String text, int x, int y,
+            int width, int maxLines, int color) {
+        java.util.List<FormattedCharSequence> lines = font().split(say(role, text), width);
+        int shown = Math.min(maxLines, lines.size());
+        painter.gfx().nextStratum();
+        for (int i = 0; i < shown; i++) {
+            painter.gfx().text(font(), lines.get(i), x, y + i * role.leading(), color, false);
+        }
+        painter.gfx().nextStratum();
+        return shown * role.leading();
     }
 
     /**
@@ -134,15 +164,18 @@ public final class Typeset {
     public static int tabular(Painter painter, Tokens.Type.Role role, String text, int x, int y, int color) {
         int cell = digitCell(role);
         int cursor = x;
+        painter.gfx().nextStratum();
         for (int i = 0; i < text.length(); i++) {
             String glyph = String.valueOf(text.charAt(i));
             if (isDigit(text.charAt(i))) {
-                draw(painter, role, glyph, cursor + (cell - width(role, glyph)) / 2, y, color);
+                drawRaw(painter, role, glyph, cursor + (cell - width(role, glyph)) / 2, y, color);
                 cursor += cell;
             } else {
-                cursor += draw(painter, role, glyph, cursor, y, color);
+                drawRaw(painter, role, glyph, cursor, y, color);
+                cursor += width(role, glyph);
             }
         }
+        painter.gfx().nextStratum();
         return cursor - x;
     }
 
@@ -155,6 +188,12 @@ public final class Typeset {
 
     private static boolean isDigit(char c) {
         return c >= '0' && c <= '9';
+    }
+
+    /** Text gets its own strata so pipeline batching cannot move a later solid in front of it. */
+    private static void drawRaw(Painter painter, Tokens.Type.Role role, String text,
+            int x, int y, int color) {
+        painter.gfx().text(font(), say(role, text), x, y, color, false);
     }
 
     /** Drops the memoised metrics. Called on a resource reload, when the atlases change. */

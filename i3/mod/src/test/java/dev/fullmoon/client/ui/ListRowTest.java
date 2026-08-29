@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import dev.fullmoon.client.design.Tokens;
 import org.junit.jupiter.api.Test;
@@ -72,6 +73,16 @@ class ListRowTest {
         AtomicInteger picks = new AtomicInteger();
         new ListRow("accent", "", picks::incrementAndGet).act();
         assertEquals(1, picks.get());
+    }
+
+    @Test
+    void aLiveMetaReadingFollowsItsSourceWithoutReplacingTheRow() {
+        AtomicReference<String> value = new AtomicReference<>("Off");
+        ListRow row = new ListRow("Subtitles", value::get, () -> {});
+
+        assertEquals("Off", row.meta());
+        value.set("On");
+        assertEquals("On", row.meta());
     }
 
     /** Every pair of states this row cannot tell apart, named, so a failure says which. */

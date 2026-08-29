@@ -1,0 +1,218 @@
+package dev.fullmoon.client.account;
+
+import java.util.List;
+
+import dev.fullmoon.client.design.Tokens;
+import dev.fullmoon.client.keybinds.KeybindsScreen;
+import dev.fullmoon.client.layout.Box;
+import dev.fullmoon.client.mods.ModsScreen;
+import dev.fullmoon.client.render.Painter;
+import dev.fullmoon.client.render.Rgb;
+import dev.fullmoon.client.settings.SettingsScreen;
+import dev.fullmoon.client.text.Typeset;
+import dev.fullmoon.client.ui.Button;
+import dev.fullmoon.client.ui.Clipboard;
+import dev.fullmoon.client.ui.DevChrome;
+import dev.fullmoon.client.ui.SurfaceScreen;
+import dev.fullmoon.client.ui.TabRail;
+import dev.fullmoon.client.ui.Voice;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.User;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+
+/** In-game player identity and network connection surface. */
+public final class AccountScreen extends SurfaceScreen {
+    private static final int MAX_CONTENT = 540;
+    private static final int COMPACT_HEIGHT = 320;
+
+    private final Screen parent;
+    private final TabRail hub;
+    private final Button copyUuid;
+    private final Button copyServer;
+
+    private Box content = Box.EMPTY;
+    private Box body = Box.EMPTY;
+    private int footerY;
+    private String statusMessage = "";
+
+    public AccountScreen(Screen parent) {
+        super(Component.translatable("fullmoon.account.title"));
+        this.parent = parent;
+
+        hub = surface.add(new TabRail("허브", hubTabs(), 3, this::hubPicked));
+        copyUuid = surface.add(new Button(Voice.QUIET, tr("action.copy_uuid"), this::copyUuidAction));
+        copyServer = surface.add(new Button(Voice.QUIET, tr("action.copy_server"), this::copyServerAction));
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+
+    @Override
+    public void onClose() {
+        Minecraft.getInstance().setScreen(parent);
+    }
+
+    @Override
+    protected void init() {
+        boolean compact = height < COMPACT_HEIGHT;
+        int edge = compact ? Tokens.Space.LOOSE : Tokens.Space.SECTION;
+        int frame = Math.min(MAX_CONTENT, width - edge * 2);
+        content = new Box((width - frame) / 2, edge, frame, height - edge * 2);
+        footerY = content.bottom() - Tokens.Type.LABEL.leading() - Tokens.Space.COZY;
+
+        int railY = content.y() + (compact ? Tokens.Type.TITLE.leading() : Tokens.Type.DISPLAY.leading()) + Tokens.Space.COZY;
+        hub.place(new Box(content.x(), railY, content.w(), TabRail.HEIGHT));
+
+        int bodyY = railY + TabRail.HEIGHT + Tokens.Space.LOOSE;
+        body = Box.between(content.x(), bodyY, content.right(), footerY - Tokens.Space.GUTTER);
+
+        int buttonY = body.bottom() - Button.HEIGHT;
+        int copyUuidW = copyUuid.measure();
+        int copyServerW = copyServer.measure();
+        copyUuid.place(new Box(body.x(), buttonY, copyUuidW, Button.HEIGHT));
+        copyServer.place(new Box(body.x() + copyUuidW + Tokens.Space.COZY, buttonY, copyServerW, Button.HEIGHT));
+    }
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY,
+            float partialTick) {
+        Painter painter = new Painter(gfx);
+        painter.blurredStratum();
+        painter.fill(0, 0, painter.width(), painter.height(),
+            Rgb.alpha(Tokens.Color.SURFACE_VOID, 0.84f));
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor gfx, int mouseX, int mouseY,
+            float partialTick) {
+        surface.hover(mouseX, mouseY);
+        Painter painter = new Painter(gfx);
+        header(painter);
+        details(painter);
+        widgets(painter);
+        footer(painter);
+    }
+
+    private void header(Painter painter) {
+        boolean compact = height < COMPACT_HEIGHT;
+        Tokens.Type.Role brand = compact ? Tokens.Type.TITLE : Tokens.Type.DISPLAY;
+        int y = content.y();
+        painter.fill(content.x(), Typeset.capTop(brand, y), Tokens.Stroke.FOCUS,
+            Typeset.capHeight(brand), Tokens.Color.ACCENT);
+        int textX = content.x() + Tokens.Stroke.FOCUS + Tokens.Space.COZY;
+        Typeset.draw(painter, brand, "Fullmoon", textX, y, Tokens.Color.INK_PRIMARY);
+        connection(painter, y + Tokens.Space.TIGHT);
+    }
+
+    private void connection(Painter painter, int y) {
+        Minecraft client = Minecraft.getInstance();
+        ServerData server = client.getCurrentServer();
+        boolean live = client.level != null && server != null;
+        String status = live
+            ? (content.w() < 480 ? tr("server.live") : tr("server.connected", server.ip))
+            : tr("server.disconnected");
+        int width = Typeset.width(Tokens.Type.LABEL, status);
+        int textX = content.right() - width;
+        painter.dot(textX - Tokens.Space.COZY, y + Typeset.capHeight(Tokens.Type.LABEL) / 2.0f,
+            Tokens.Space.TIGHT, live ? Tokens.Color.STATUS_LIVE : Tokens.Color.STATUS_IDLE);
+        Typeset.draw(painter, Tokens.Type.LABEL, status, textX, y, Tokens.Color.INK_TERTIARY);
+    }
+
+    private void details(Painter painter) {
+        User user = Minecraft.getInstance().getUser();
+        String username = user.getName();
+        String uuid = user.getProfileId().toString();
+        String userType = user.getProfileId().version() == 4 ? "Mojang / Microsoft" : "Offline";
+
+        Minecraft client = Minecraft.getInstance();
+        ServerData server = client.getCurrentServer();
+        boolean live = client.level != null && server != null;
+        String serverStatus = live ? server.ip : tr("server.offline");
+
+        int y = body.y();
+        y = DevChrome.sectionHead(painter, tr("section.profile"), body.x(), y);
+        Typeset.draw(painter, Tokens.Type.TITLE, username, body.x(), y, Tokens.Color.INK_PRIMARY);
+
+        y += Tokens.Type.TITLE.leading() + Tokens.Space.SNUG;
+        Typeset.draw(painter, Tokens.Type.LABEL, tr("type", userType), body.x(), y, Tokens.Color.INK_TERTIARY);
+
+        y += Tokens.Type.LABEL.leading() + Tokens.Space.SNUG;
+        Typeset.draw(painter, Tokens.Type.BODY, "UUID: " + uuid, body.x(), y, Tokens.Color.INK_SECONDARY);
+
+        y += Tokens.Type.BODY.leading() + Tokens.Space.SECTION;
+        y = DevChrome.sectionHead(painter, tr("section.connection"), body.x(), y);
+
+        int dotY = (int) (y + Typeset.capHeight(Tokens.Type.LABEL) / 2.0f);
+        painter.dot(body.x() + Tokens.Space.SNUG, dotY, Tokens.Space.SNUG,
+            live ? Tokens.Color.STATUS_LIVE : Tokens.Color.STATUS_IDLE);
+
+        Typeset.draw(painter, Tokens.Type.BODY_STRONG, serverStatus,
+            body.x() + Tokens.Space.SECTION, y,
+            live ? Tokens.Color.INK_PRIMARY : Tokens.Color.INK_TERTIARY);
+    }
+
+    private void widgets(Painter painter) {
+        surface.draw(painter);
+    }
+
+    private void footer(Painter painter) {
+        painter.hRule(content.x(), footerY, content.w(), Tokens.Color.LINE_HAIRLINE);
+        int y = footerY + Tokens.Space.COZY;
+        Typeset.draw(painter, Tokens.Type.LABEL, tr("footer.keys"), content.x(), y,
+            Tokens.Color.INK_TERTIARY);
+        String rightText = statusMessage.isEmpty() ? tr("footer.info") : statusMessage;
+        Typeset.drawRight(painter, Tokens.Type.LABEL, rightText, content.right(), y,
+            Tokens.Color.ACCENT);
+    }
+
+    private void hubPicked(int tab) {
+        if (tab == 3) return;
+        Screen next = switch (tab) {
+            case 0 -> new SettingsScreen(parent);
+            case 1 -> new KeybindsScreen(parent);
+            case 2 -> new ModsScreen(parent);
+            default -> this;
+        };
+        showNext(next);
+    }
+
+    private void copyUuidAction() {
+        User user = Minecraft.getInstance().getUser();
+        Clipboard.game().put(user.getProfileId().toString());
+        statusMessage = tr("status.uuid_copied");
+    }
+
+    private void copyServerAction() {
+        ServerData server = Minecraft.getInstance().getCurrentServer();
+        if (server != null) {
+            Clipboard.game().put(server.ip);
+            statusMessage = tr("status.server_copied");
+        } else {
+            statusMessage = tr("status.no_server");
+        }
+    }
+
+    private static List<String> hubTabs() {
+        return List.of(
+            I18n.get("fullmoon.hub.tab.settings"),
+            I18n.get("fullmoon.hub.tab.keybinds"),
+            I18n.get("fullmoon.hub.tab.mods"),
+            I18n.get("fullmoon.hub.tab.account"));
+    }
+
+    private static void showNext(Screen screen) {
+        Minecraft client = Minecraft.getInstance();
+        client.schedule(() -> client.setScreen(screen));
+    }
+
+    private static String tr(String key, Object... args) {
+        return I18n.get("fullmoon.account." + key, args);
+    }
+}

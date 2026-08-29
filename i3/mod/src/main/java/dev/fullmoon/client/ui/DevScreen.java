@@ -12,12 +12,6 @@ import dev.fullmoon.client.text.Typeset;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-
-import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * What every development surface in this client has in common: the scrim over the world, the
@@ -32,7 +26,7 @@ import com.mojang.blaze3d.platform.InputConstants;
  * <p>A subclass supplies its own layout and its own drawing. The chrome is closed to it — every
  * hook the game calls is final here — so a page cannot quietly grow a second masthead.
  */
-public abstract class DevScreen extends Screen {
+public abstract class DevScreen extends SurfaceScreen {
     /** The development pages, in rail order. */
     public enum Page {
         SPECIMEN("표본", "디자인 표본"),
@@ -58,8 +52,6 @@ public abstract class DevScreen extends Screen {
     }
 
     protected static final int MAX_CONTENT = 520;
-
-    protected final Surface surface = new Surface();
 
     private final Page page;
     private final TabRail rail;
@@ -153,14 +145,7 @@ public abstract class DevScreen extends Screen {
             "클라이언트 i3 · " + page.title());
         paint(painter, body);
 
-        // Two passes, because a control that opens hangs over whatever is laid out below it. Draw
-        // order is the layout's to decide and the surface has no say in it.
-        for (Widget widget : surface.widgets()) {
-            widget.draw(painter, surface.state(widget));
-        }
-        for (Widget widget : surface.widgets()) {
-            widget.drawOverlay(painter, surface.state(widget));
-        }
+        surface.draw(painter);
 
         DevChrome.footer(painter, content.x(), DevChrome.footerY(height), content.w(), keys(),
             status());
@@ -203,47 +188,4 @@ public abstract class DevScreen extends Screen {
         return "Esc 닫기 · Tab 이동 · " + FullmoonClient.pageKey(page) + " 다시 열기";
     }
 
-    @Override
-    public final void mouseMoved(double mouseX, double mouseY) {
-        surface.pointer(mouseX, mouseY);
-    }
-
-    @Override
-    public final boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
-            return super.mouseClicked(event, doubleClick);
-        }
-        return surface.press(event.x(), event.y()) || super.mouseClicked(event, doubleClick);
-    }
-
-    @Override
-    public final boolean mouseReleased(MouseButtonEvent event) {
-        return surface.release(event.x(), event.y()) || super.mouseReleased(event);
-    }
-
-    @Override
-    public final boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (surface.captured() == null) {
-            return super.mouseDragged(event, dragX, dragY);
-        }
-        surface.pointer(event.x(), event.y());
-        return true;
-    }
-
-    @Override
-    public final boolean mouseScrolled(double mouseX, double mouseY, double scrollX,
-            double scrollY) {
-        return surface.scroll(mouseX, mouseY, scrollY)
-            || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
-    }
-
-    @Override
-    public final boolean keyPressed(KeyEvent event) {
-        return surface.key(Chord.from(event)) || super.keyPressed(event);
-    }
-
-    @Override
-    public final boolean charTyped(CharacterEvent event) {
-        return surface.type(event.codepoint()) || super.charTyped(event);
-    }
 }

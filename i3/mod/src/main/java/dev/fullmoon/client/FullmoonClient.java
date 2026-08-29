@@ -2,6 +2,7 @@ package dev.fullmoon.client;
 
 import java.util.List;
 
+import dev.fullmoon.client.settings.SettingsScreen;
 import dev.fullmoon.client.text.Typeset;
 import dev.fullmoon.client.ui.DevScreen;
 
@@ -43,13 +44,19 @@ public final class FullmoonClient implements ClientModInitializer {
         new Binding(key("kit", InputConstants.KEY_F7), DevScreen.Page.KIT),
         new Binding(key("list", InputConstants.KEY_F8), DevScreen.Page.LIST));
 
+    private static final KeyMapping SETTINGS = key("settings", InputConstants.KEY_F9);
+
     @Override
     public void onInitializeClient() {
         for (Binding binding : BINDINGS) {
             KeyMappingHelper.registerKeyMapping(binding.mapping());
         }
+        KeyMappingHelper.registerKeyMapping(SETTINGS);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (SETTINGS.consumeClick()) {
+                client.setScreen(new SettingsScreen(client.screen));
+            }
             for (Binding binding : BINDINGS) {
                 while (binding.mapping().consumeClick()) {
                     client.setScreen(DevScreen.open(binding.page()));
@@ -62,6 +69,14 @@ public final class FullmoonClient implements ClientModInitializer {
         // a client's own screens are reached from. These are the same bindings, read directly.
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) ->
             ScreenKeyboardEvents.afterKeyPress(screen).register((current, key) -> {
+                if (bound(SETTINGS, key)) {
+                    if (current instanceof SettingsScreen settings) {
+                        settings.onClose();
+                    } else {
+                        client.setScreen(new SettingsScreen(current));
+                    }
+                    return;
+                }
                 for (Binding binding : BINDINGS) {
                     // Re-opening a page on top of itself throws its state away, and on this route
                     // the binding fires while that very page holds the keyboard.

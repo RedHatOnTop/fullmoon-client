@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import dev.fullmoon.client.render.Painter;
+
 import com.mojang.blaze3d.platform.InputConstants;
 
 /**
@@ -41,6 +43,16 @@ public final class Surface {
 
     public Focus focus() {
         return focus;
+    }
+
+    /** Draws the normal pass in registration order, then every open overlay above it. */
+    public void draw(Painter painter) {
+        for (Widget widget : widgets) {
+            widget.draw(painter, state(widget));
+        }
+        for (Widget widget : widgets) {
+            widget.drawOverlay(painter, state(widget));
+        }
     }
 
     /** The widget holding the keyboard, or null. */
