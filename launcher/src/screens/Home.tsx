@@ -80,8 +80,9 @@ export function HomeScreen() {
             </div>
             {primaryServer && (
               <div className="game-target-badge">
-                <span className="net-ping">
-                  ● {primaryStatus?.online ? `${primaryStatus.players}명 온라인` : (primaryStatus ? "오프라인" : "연결 확인 중")}
+                <span className={`net-status-pill ${primaryStatus?.online ? "online" : "offline"}`}>
+                  <span className="status-dot" />
+                  <span>{primaryStatus?.online ? `${primaryStatus.players}명 온라인` : (primaryStatus ? "오프라인" : "확인 중")}</span>
                 </span>
                 {primaryStatus?.online && (
                   <>
@@ -312,7 +313,7 @@ export function HomeScreen() {
                 <div className="stat-box main-balance">
                   <span className="stat-label">보유 잔액 ({wallet?.currency ?? "코인"})</span>
                   <div className="stat-value-hero num">
-                    🌙 {wallet ? wallet.balance.toLocaleString("ko-KR") : "0"}
+                    {wallet ? wallet.balance.toLocaleString("ko-KR") : "0"} <small className="unit-label">{wallet?.currency ?? "MOON"}</small>
                   </div>
                   <small className="stat-sub num">
                     마지막 갱신: {wallet ? fmtWhen(wallet.updatedAt) : "오프라인"}
@@ -347,7 +348,7 @@ export function HomeScreen() {
                     <div key={tx.at + tx.reason + idx} className="tx-item-row">
                       <div className="tx-icon-cell">
                         <span className={`tx-icon-badge ${tx.delta >= 0 ? "in" : "out"}`}>
-                          {tx.delta >= 0 ? "↓" : "↑"}
+                          {tx.delta >= 0 ? "+" : "−"}
                         </span>
                       </div>
                       <div className="tx-detail-cell">
@@ -439,7 +440,7 @@ export function HomeScreen() {
             </div>
 
             <div className="wallet-hero-amount">
-              <span className="coin-symbol">🌙</span>
+              <span className="coin-tag">MOON</span>
               <span className="amount-val num">{wallet ? wallet.balance.toLocaleString("ko-KR") : "0"}</span>
               <span className="coin-unit">{wallet?.currency ?? "코인"}</span>
             </div>

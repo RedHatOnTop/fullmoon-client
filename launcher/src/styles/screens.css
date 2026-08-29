@@ -886,8 +886,26 @@
   margin: 8px 0 16px;
 }
 
-.coin-symbol {
-  font-size: 20px;
+.coin-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(245, 208, 110, 0.35);
+  background: rgba(245, 208, 110, 0.12);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.unit-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 4px;
 }
 
 .amount-val {
@@ -898,7 +916,36 @@
 
 .coin-unit {
   font-size: 13px;
-  color: var(--accent);
+  color: var(--text-2);
+}
+
+.net-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.net-status-pill.online {
+  background: rgba(104, 211, 145, 0.12);
+  color: #68D391;
+  border: 1px solid rgba(104, 211, 145, 0.3);
+}
+
+.net-status-pill.offline {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.net-status-pill .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .wallet-quick-actions {
