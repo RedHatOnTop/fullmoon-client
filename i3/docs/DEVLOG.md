@@ -435,3 +435,21 @@ theRegionsEdgesAreTheOnesThatCount()
 | `ui.TooltipTest` | 7 | 0 |
 | `ui.VoiceTest` | 9 | 0 |
 
+## 2026-08-29 · P3 HUD 및 4px 그리드 스냅 HUD 에디터
+
+인게임 오버레이로 실시간 정보를 전달하는 HUD 시스템과 드래그 앤 드롭으로 자유롭게 배치 가능한 HUD 에디터를 구현했다.
+
+- `hud/Anchor` — 9개 화면 기준점(`TOP_LEFT` ~ `BOTTOM_RIGHT`) 기반 해상도 독립 배치 시스템. 해상도나 GUI 배율이 바뀌어도 기준점과의 거리(offset)를 정확히 보존.
+- `hud/HudElement` & `BaseHudElement` — 통일된 다크 글래스 음각 칩 스타일, 베이크드 폰트 타이포그래피, 라이브 상태 점을 갖는 HUD 모듈 인터페이스.
+- `hud/CoordinatesHud`, `FpsHud`, `PingHud`, `ClockHud`, `KeystrokesHud` — 실시간 인게임 좌표/방향, FPS, 레이턴시, 시계, WASD/마우스 키스트로크 모듈.
+- `hud/HudConfig` & `HudElementRegistry` — `config/fullmoon/hud.json` 포맷의 GSON 직렬화/역직렬화 및 런타임 상태 관리.
+- `hud/HudEditorScreen` — 마우스 드래그로 위치 이동, 4px 그리드 자동 스냅, 선택된 모듈 외곽에 골드 `ACCENT` L자형 코너 틱(L-shaped corner ticks) 표시, 툴바 토글 및 즉시 저장/초기화.
+- `hud/HudOverlay` — Fabric API `HudElementRegistry`를 통한 무간섭 인게임 렌더링 파이프라인.
+
+### 증거
+
+- `gradlew -p i3/mod test` → **158개** 테스트 전원 통과 (새로운 `AnchorTest`, `HudConfigTest` 포함).
+- `node i3/design/verify-tokens.mjs` → 79개 파일 무결성(토큰 리터럴 0건 위반) 통과.
+- `docs/evidence/p3-hud-editor-960x540.png` — F10으로 열린 HUD 에디터의 4px 스냅 가이드, L자형 코너 틱, 활성화된 모듈들의 시각 검증 완료.
+
+

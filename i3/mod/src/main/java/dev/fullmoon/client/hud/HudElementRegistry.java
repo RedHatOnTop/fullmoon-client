@@ -1,0 +1,96 @@
+package dev.fullmoon.client.hud;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import net.fabricmc.loader.api.FabricLoader;
+
+/** Global registry and lifecycle manager for all in-game HUD modules. */
+public final class HudElementRegistry {
+    private static final HudElementRegistry INSTANCE = new HudElementRegistry();
+
+    private final Map<String, HudElement> registry = new LinkedHashMap<>();
+    private Path configPath;
+
+    private HudElementRegistry() {
+        register(new CoordinatesHud());
+        register(new FpsHud());
+        register(new PingHud());
+        register(new ClockHud());
+        register(new KeystrokesHud());
+
+        try {
+            configPath = FabricLoader.getInstance().getConfigDir().resolve("fullmoon").resolve("hud.json");
+            load();
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static HudElementRegistry getInstance() {
+        return INSTANCE;
+    }
+
+    public void register(HudElement element) {
+        Objects.requireNonNull(element, "element");
+        registry.put(element.id(), element);
+    }
+
+    public List<HudElement> elements() {
+        return Collections.unmodifiableList(new ArrayList<>(registry.values()));
+    }
+
+    public HudElement get(String id) {
+        return registry.get(id);
+    }
+
+    public void load() {
+        if (configPath == null) return;
+        HudConfig config = HudConfig.load(configPath);
+        applyConfig(config);
+    }
+
+    public void save() {
+        if (configPath == null) return;
+        HudConfig config = exportConfig();
+        config.save(configPath);
+    }
+
+    public void applyConfig(HudConfig config) {
+        if (config == null || config.elements == null) return;
+        for (Map.Entry<String, HudConfig.ElementState> entry : config.elements.entrySet()) {
+            HudElement elem = registry.get(entry.getKey());
+            if (elem != null && entry.getValue() != null) {
+                HudConfig.ElementState state = entry.getValue();
+                elem.setEnabled(state.enabled);
+                try {
+                    elem.setAnchor(Anchor.valueOf(state.anchor));
+                } catch (Exception e) {
+                    elem.setAnchor(Anchor.TOP_LEFT);
+                }
+                elem.setOffsetX(state.offsetX);
+                elem.setOffsetY(state.offsetY);
+                elem.setScale(state.scale > 0 ? state.scale : 1.0f);
+            }
+        }
+    }
+
+    public HudConfig exportConfig() {
+        HudConfig config = new HudConfig();
+        for (HudElement elem : registry.values()) {
+            HudConfig.ElementState state = new HudConfig.ElementState(
+                elem.enabled(),
+                elem.anchor().name(),
+                elem.offsetX(),
+                elem.offsetY(),
+                elem.scale()
+            );
+            config.elements.put(elem.id(), state);
+        }
+        return config;
+    }
+}

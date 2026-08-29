@@ -45,6 +45,7 @@ public final class FullmoonClient implements ClientModInitializer {
         new Binding(key("list", InputConstants.KEY_F8), DevScreen.Page.LIST));
 
     private static final KeyMapping SETTINGS = key("settings", InputConstants.KEY_F9);
+    private static final KeyMapping HUD_EDITOR = key("hud", InputConstants.KEY_F10);
 
     @Override
     public void onInitializeClient() {
@@ -52,10 +53,15 @@ public final class FullmoonClient implements ClientModInitializer {
             KeyMappingHelper.registerKeyMapping(binding.mapping());
         }
         KeyMappingHelper.registerKeyMapping(SETTINGS);
+        KeyMappingHelper.registerKeyMapping(HUD_EDITOR);
+        dev.fullmoon.client.hud.HudOverlay.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (SETTINGS.consumeClick()) {
                 client.setScreen(new SettingsScreen(client.screen));
+            }
+            while (HUD_EDITOR.consumeClick()) {
+                client.setScreen(new dev.fullmoon.client.hud.HudEditorScreen(client.screen));
             }
             for (Binding binding : BINDINGS) {
                 while (binding.mapping().consumeClick()) {
@@ -70,10 +76,18 @@ public final class FullmoonClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) ->
             ScreenKeyboardEvents.afterKeyPress(screen).register((current, key) -> {
                 if (bound(SETTINGS, key)) {
-                    if (current instanceof dev.fullmoon.client.ui.SurfaceScreen surfaceScreen) {
+                    if (current instanceof dev.fullmoon.client.ui.SurfaceScreen surfaceScreen && !(current instanceof dev.fullmoon.client.hud.HudEditorScreen)) {
                         surfaceScreen.onClose();
                     } else {
                         client.setScreen(new SettingsScreen(current));
+                    }
+                    return;
+                }
+                if (bound(HUD_EDITOR, key)) {
+                    if (current instanceof dev.fullmoon.client.hud.HudEditorScreen hudEditor) {
+                        hudEditor.onClose();
+                    } else {
+                        client.setScreen(new dev.fullmoon.client.hud.HudEditorScreen(current));
                     }
                     return;
                 }

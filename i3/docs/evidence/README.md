@@ -147,3 +147,14 @@ Two defects these captures caught:
 - The connection status string used separate unlocalized keys across screens (`fullmoon.keybinds.server.disconnected`, etc.), leaving raw resource keys in the masthead. Unified into `HubChrome.connection` using the canonical localized string.
 - Keybinding category headers rendered raw Identifier paths (e.g. `minecraft:gameplay`). Added `HubChrome.categoryLabel` to resolve against vanilla language keys (`key.category.minecraft.gameplay` → `게임플레이`).
 
+## P3 — HUD and its editor
+
+| file | what it settles |
+| --- | --- |
+| `p3-hud-editor-960x540.png` | In-game HUD editor opened via F10: 4px grid snapping, gold L-shaped corner ticks on the active selection (Coordinates), FPS, Ping (live dot), Clock, Keystrokes chips, top toolbar with enable toggle and action buttons. |
+
+One defect this capture caught:
+
+- `ClockHud`, `CoordinatesHud`, and `FpsHud` measured only their value strings without accounting for the leading key tag ("TIME", "XYZ", "FPS"), causing the right edge of wider numerals to clip against the chip border. Updated `measureWidth` to measure the compound label + value footprint.
+
+

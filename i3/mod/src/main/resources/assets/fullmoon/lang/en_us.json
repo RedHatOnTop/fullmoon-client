@@ -94,5 +94,11 @@
     "fullmoon.account.status.server_copied": "Server address copied to clipboard.",
     "fullmoon.account.status.no_server": "No active server to copy.",
     "fullmoon.account.footer.keys": "Esc close · Tab move · Enter choose",
-    "fullmoon.account.footer.info": "Fullmoon network authenticated"
+    "fullmoon.account.footer.info": "Fullmoon network authenticated",
+    "fullmoon.hud.editor.title": "Fullmoon HUD Editor",
+    "fullmoon.hud.editor.action.close": "Done (Esc)",
+    "fullmoon.hud.editor.action.reset": "Reset Positions",
+    "fullmoon.hud.editor.action.enabled": "Enabled",
+    "fullmoon.hud.editor.grid.snap": "4px Grid Snap",
+    "key.fullmoon.hud": "Open HUD Editor"
 }

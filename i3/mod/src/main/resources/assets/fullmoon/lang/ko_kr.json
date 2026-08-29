@@ -94,5 +94,11 @@
     "fullmoon.account.status.server_copied": "서버 주소가 클립보드에 복사되었습니다.",
     "fullmoon.account.status.no_server": "복사할 서버 주소가 없습니다.",
     "fullmoon.account.footer.keys": "Esc 닫기 · Tab 이동 · Enter 선택",
-    "fullmoon.account.footer.info": "Fullmoon 네트워크 인증"
+    "fullmoon.account.footer.info": "Fullmoon 네트워크 인증",
+    "fullmoon.hud.editor.title": "Fullmoon HUD 에디터",
+    "fullmoon.hud.editor.action.close": "완료 (Esc)",
+    "fullmoon.hud.editor.action.reset": "위치 초기화",
+    "fullmoon.hud.editor.action.enabled": "사용",
+    "fullmoon.hud.editor.grid.snap": "4px 그리드 스냅",
+    "key.fullmoon.hud": "HUD 에디터 열기"
 }
