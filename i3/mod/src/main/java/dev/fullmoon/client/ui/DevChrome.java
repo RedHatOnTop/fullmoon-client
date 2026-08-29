@@ -8,17 +8,13 @@ import dev.fullmoon.client.text.Typeset;
  * The frame this client's development surfaces share: a masthead with an accent bar, a section
  * head, and a footer rule that names the keys out of the screen.
  *
- * <p>It exists so the specimen and the kit read as two pages of one document rather than two
- * screens that happen to draw from the same tokens. The heights are published separately from
- * the drawing because a screen has to lay its widgets out in {@code init}, before there is a
- * painter to ask.
-
+ * <p>It exists so the pages read as one document rather than three screens that happen to draw
+ * from the same tokens. The heights are published separately from the drawing because a screen
+ * has to lay its widgets out in {@code init}, before there is a painter to ask.
+ *
  * <p>The accent rules are measured off {@link Typeset#capTop} rather than off the y they were
  * handed. A bar sized against the nominal line box lands under the wordmark instead of beside
  * it, because the baseline is 7 px below the origin for a 22 px face and an 8 px one alike.
- *
- * <p>{@link SpecimenScreen} still carries its own copy of this. Moving it over means re-capturing
- * it, and that belongs with P1-D, where the two screens get a shared tab rail anyway.
  */
 public final class DevChrome {
     private DevChrome() {}

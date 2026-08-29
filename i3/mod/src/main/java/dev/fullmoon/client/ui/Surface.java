@@ -25,6 +25,9 @@ public final class Surface {
     /** The widget the pointer went down on, until it comes back up. */
     private Widget captured;
 
+    /** The widget the pointer is over, as of the last {@link #hover}. */
+    private Widget hovered;
+
     /** Registration order is Tab order, and later arrivals sit on top when the pointer lands. */
     public <W extends Widget> W add(W widget) {
         widgets.add(widget);
@@ -48,6 +51,25 @@ public final class Surface {
     /** The widget holding the pointer, or null. */
     public Widget captured() {
         return captured;
+    }
+
+    /** The widget under the pointer, or null. Read off the last {@link #hover}, not recomputed. */
+    public Widget hovered() {
+        return hovered;
+    }
+
+    /**
+     * The control whose {@link Widget#hint} is worth putting on screen, or null. The pointer wins
+     * over the ring because it is the more recent of the two: a player who has reached for the
+     * mouse is asking about whatever is under it. With the pointer over nothing, the keyboard's own
+     * control answers — a hint only a mouse can reach is a hint half the players never see.
+     */
+    public Widget tipped() {
+        if (hovered != null && !hovered.hint().isEmpty()) {
+            return hovered;
+        }
+        Widget holder = held();
+        return holder != null && focus.rings(holder) && !holder.hint().isEmpty() ? holder : null;
     }
 
     /**
@@ -97,6 +119,7 @@ public final class Surface {
         Widget over = captured != null
             ? (captured.reach().holds(mx, my) ? captured : null)
             : at(mx, my);
+        hovered = over;
         for (Widget widget : widgets) {
             widget.hovered(widget == over);
         }

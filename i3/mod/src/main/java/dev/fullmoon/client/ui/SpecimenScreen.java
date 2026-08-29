@@ -5,14 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import dev.fullmoon.client.FullmoonClient;
 import dev.fullmoon.client.design.Tokens;
+import dev.fullmoon.client.layout.Box;
 import dev.fullmoon.client.render.Painter;
-import dev.fullmoon.client.render.Rgb;
 import dev.fullmoon.client.text.Typeset;
-
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.Screen;
 
 /**
  * The design specimen: every token this client owns, drawn by the client's own renderer.
@@ -22,78 +18,57 @@ import net.minecraft.client.gui.screens.Screen;
  * their leadings stack without collision, the shape rail proves one SDF pipeline covers every
  * solid the UI needs, the colour bands prove the generated constants are the ones on screen,
  * and the figure pair proves tabular digits hold still while proportional ones do not.
+ *
+ * <p>The only page with nothing to click. That is not an omission — a token is not a control,
+ * and giving the swatches a hover state to make the page feel alive would be inventing an
+ * affordance that leads nowhere. What moves here is the frame counter, and it moves because the
+ * world behind the blur is still running.
  */
-public final class SpecimenScreen extends Screen {
-    private static final int MAX_CONTENT = 420;
+public final class SpecimenScreen extends DevScreen {
     private static final int LEFT_PERCENT = 62;
     private static final String[] SAMPLES = {"달빛 Fullmoon 0123", "달빛 Fullmoon", "달빛"};
 
     private int frames;
 
     public SpecimenScreen() {
-        super(Typeset.say(Tokens.Type.TITLE, "디자인 표본"));
+        super(Page.SPECIMEN);
     }
 
-    /** The world keeps running behind the blur, so a live frame counter has something to count. */
+    /** Two columns of specimen, which is narrower than a page of controls wants to be. */
     @Override
-    public boolean isPauseScreen() {
-        return false;
+    protected int maxContent() {
+        return 420;
     }
 
+    /** Nothing to place: the rail the chrome owns is the whole of this page's surface. */
     @Override
-    public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
-        Painter painter = new Painter(gfx);
-        painter.blurredStratum();
-        painter.fill(0, 0, painter.width(), painter.height(), Rgb.alpha(Tokens.Color.SURFACE_VOID, 0.82f));
+    protected void lay(Box body) {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
+    protected void paint(Painter painter, Box body) {
         frames++;
-        Painter painter = new Painter(gfx);
+        int leftW = body.w() * LEFT_PERCENT / 100;
+        int rightX = body.x() + leftW + Tokens.Space.GUTTER;
+        int rightW = body.w() - leftW - Tokens.Space.GUTTER;
 
-        int contentW = Math.min(MAX_CONTENT, width - Tokens.Space.SECTION * 2);
-        int x = (width - contentW) / 2;
-        int top = header(painter, x, Tokens.Space.SECTION, contentW);
+        int leftBottom = shapeRail(painter, body.x(),
+            typeRoll(painter, body.x(), body.y(), leftW) + Tokens.Space.SECTION, leftW);
+        int rightBottom = figures(painter, rightX,
+            colorBands(painter, rightX, body.y(), rightW) + Tokens.Space.SECTION, rightW);
 
-        int leftW = contentW * LEFT_PERCENT / 100;
-        int rightX = x + leftW + Tokens.Space.GUTTER;
-        int rightW = contentW - leftW - Tokens.Space.GUTTER;
-
-        int leftBottom = shapeRail(painter, x, typeRoll(painter, x, top, leftW) + Tokens.Space.SECTION, leftW);
-        int rightBottom = figures(painter, rightX, colorBands(painter, rightX, top, rightW) + Tokens.Space.SECTION, rightW);
-
-        painter.vRule(x + leftW + Tokens.Space.GUTTER / 2, top,
-            Math.max(leftBottom, rightBottom) - top, Tokens.Color.LINE_HAIRLINE);
-        footer(painter, x, contentW, height - Tokens.Space.SECTION - Tokens.Type.LABEL.leading());
+        painter.vRule(body.x() + leftW + Tokens.Space.GUTTER / 2, body.y(),
+            Math.max(leftBottom, rightBottom) - body.y(), Tokens.Color.LINE_HAIRLINE);
     }
 
-    private int header(Painter painter, int x, int y, int w) {
-        painter.fill(x, y + Tokens.Space.SNUG, Tokens.Stroke.FOCUS,
-            Tokens.Type.DISPLAY.px() - Tokens.Space.BASE, Tokens.Color.ACCENT);
-        int textX = x + Tokens.Stroke.FOCUS + Tokens.Space.COZY;
-
-        Typeset.draw(painter, Tokens.Type.DISPLAY, "Fullmoon", textX, y, Tokens.Color.INK_PRIMARY);
-        Typeset.draw(painter, Tokens.Type.LABEL, "클라이언트 i3 · 디자인 표본",
-            textX, y + Tokens.Type.DISPLAY.leading(), Tokens.Color.INK_TERTIARY);
-        Typeset.tabularRight(painter, Tokens.Type.LABEL, painter.width() + " × " + painter.height() + " gui px",
-            x + w, y + Tokens.Space.TIGHT, Tokens.Color.INK_TERTIARY);
-
-        int bottom = y + Tokens.Type.DISPLAY.leading() + Tokens.Type.LABEL.leading();
-        painter.hRule(x, bottom, w, Tokens.Color.LINE_STRONG);
-        return bottom + Tokens.Space.GUTTER;
+    /** What the page is for, counted: a footer that says the roll sizes is a footer that checks them. */
+    @Override
+    protected String status() {
+        return "색 " + Tokens.COLOR_ROLL.size() + " · 타입 " + Tokens.Type.ROLL.size();
     }
 
-    /** A section head is a label with an accent tick, never a tag left and a value right. */
-    private int sectionHead(Painter painter, String name, int x, int y) {
-        painter.fill(x, y + Tokens.Space.TIGHT, Tokens.Stroke.HAIR,
-            Tokens.Type.LABEL.px() - Tokens.Space.TIGHT, Tokens.Color.ACCENT);
-        Typeset.draw(painter, Tokens.Type.LABEL, name, x + Tokens.Space.BASE, y, Tokens.Color.INK_SECONDARY);
-        return y + Tokens.Type.LABEL.leading() + Tokens.Space.COZY;
-    }
-
-    private int typeRoll(Painter painter, int x, int y, int w) {
-        int cursor = sectionHead(painter, "타입 스케일", x, y);
+    private static int typeRoll(Painter painter, int x, int y, int w) {
+        int cursor = DevChrome.sectionHead(painter, "타입 스케일", x, y);
         int nameCol = nameColumn();
         int metricW = Typeset.tabularWidth(Tokens.Type.LABEL, "22/28") + Tokens.Space.LOOSE;
         int sampleW = w - nameCol - metricW;
@@ -148,8 +123,8 @@ public final class SpecimenScreen extends Screen {
     }
 
     /** Six chips, one pipeline: the fill, the three radii, the inset stroke, the ring and dot. */
-    private int shapeRail(Painter painter, int x, int y, int w) {
-        int cursor = sectionHead(painter, "형상 · 하나의 SDF 파이프라인", x, y);
+    private static int shapeRail(Painter painter, int x, int y, int w) {
+        int cursor = DevChrome.sectionHead(painter, "형상 · 하나의 SDF 파이프라인", x, y);
         String[] captions = {"none", "sm", "md", "lg", "1px", "ring"};
         int gap = Tokens.Space.COZY;
         int cellW = (w - gap * (captions.length - 1)) / captions.length;
@@ -176,8 +151,8 @@ public final class SpecimenScreen extends Screen {
         return cursor + cellH + Tokens.Space.SNUG + Tokens.Type.LABEL.leading();
     }
 
-    private int colorBands(Painter painter, int x, int y, int w) {
-        int cursor = sectionHead(painter, "색 · OKLCH 토큰", x, y);
+    private static int colorBands(Painter painter, int x, int y, int w) {
+        int cursor = DevChrome.sectionHead(painter, "색 · OKLCH 토큰", x, y);
         Map<String, List<Integer>> families = new LinkedHashMap<>();
         for (Map.Entry<String, Integer> entry : Tokens.COLOR_ROLL) {
             int dot = entry.getKey().indexOf('.');
@@ -214,7 +189,7 @@ public final class SpecimenScreen extends Screen {
 
     /** The same live value set twice. The right column is the one that jitters. */
     private int figures(Painter painter, int x, int y, int w) {
-        int cursor = sectionHead(painter, "숫자 · 고정폭", x, y);
+        int cursor = DevChrome.sectionHead(painter, "숫자 · 고정폭", x, y);
         String live = String.format("%06d", frames);
         int half = w / 2;
 
@@ -225,16 +200,5 @@ public final class SpecimenScreen extends Screen {
         Typeset.tabular(painter, Tokens.Type.BODY_STRONG, live, x, cursor, Tokens.Color.ACCENT);
         Typeset.draw(painter, Tokens.Type.BODY_STRONG, live, x + half, cursor, Tokens.Color.INK_SECONDARY);
         return cursor + Tokens.Type.BODY_STRONG.leading();
-    }
-
-    private void footer(Painter painter, int x, int w, int y) {
-        painter.hRule(x, y, w, Tokens.Color.LINE_HAIRLINE);
-        int textY = y + Tokens.Space.COZY;
-        Typeset.draw(painter, Tokens.Type.LABEL,
-            "Esc 닫기 · " + FullmoonClient.specimenKey() + " 다시 열기",
-            x, textY, Tokens.Color.INK_TERTIARY);
-        Typeset.tabularRight(painter, Tokens.Type.LABEL,
-            "색 " + Tokens.COLOR_ROLL.size() + " · 타입 " + Tokens.Type.ROLL.size(),
-            x + w, textY, Tokens.Color.INK_TERTIARY);
     }
 }

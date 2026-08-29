@@ -13,11 +13,13 @@ never reopened between shots and the pointer is parked in a corner where no cont
 files predate the tool and were taken by hand with the same Xvfb, the same `import` off the root
 window, and XTEST for the keys.
 
-Geometry is per capture and the filename carries it: `-640x360` is a 1280×720 window and
-`-960x540` a 1920×1080 one, both at GUI scale 2, so every layout number in the mod is half the
-pixel position in either. It became an argument in P1-C, when the kit outgrew 360 GUI px. It sizes
-the Xvfb and the client window off the one number, because a client smaller than its display is a
-photograph with a mat around it.
+Geometry is per capture and the filename carries it: `-640x360` is a 1280×720 window, `-960x540`
+a 1920×1080 one and `-960x600` a 1920×1200 one, all at GUI scale 2, so every layout number in the
+mod is half the pixel position in any of them. It became an argument in P1-C, when the kit outgrew
+360 GUI px, and grew again in P1-D: the list page puts a sweep, a readout and a five-row well in
+one column, and the well's floor lands at 546 where `footerY(540)` is 505. It sizes the Xvfb and
+the client window off the one number, because a client smaller than its display is a photograph
+with a mat around it.
 
 ## P0 — render layer and design specimen
 
@@ -53,8 +55,9 @@ Three defects this slice caught:
   ticks were a pixel low for the same reason: both were sized against the role's nominal box
   while the baseline is 7 px below the draw origin whatever the face is. `Typeset.capTop` and
   `capHeight` now name the band a role's capitals actually occupy, and the rules are measured off
-  them. The committed P0 specimen shows the same bug — `SpecimenScreen` still carries its own
-  copy of the masthead, and it inherits the fix in P1-D.
+  them. The committed P0 specimen shows the same bug, because that screen carried its own copy of
+  the masthead; `p1d-specimen-960x600.png` is the same screen on the shared chrome with the bar
+  where it belongs.
 - A control with a request in flight still fired on Enter and still took typing, because
   `Surface` gated the pointer on `live()` and the keyboard on nothing. Tab deliberately stays
   outside the gate: a request that leaves the player unable to leave the control they fired it
@@ -94,3 +97,38 @@ Three defects this slice caught:
   `--geometry` sized the Xvfb, but the client window came from a hard-coded
   `programArgs("--width", "1280", ...)` in `build.gradle.kts`. The size is now `client_width` and
   `client_height` in `gradle.properties`, and the rig passes both.
+
+## P1-D — list, tab rail, tooltip and the dev surface chrome
+
+| file | what it settles |
+| --- | --- |
+| `p1d-list-960x600.png` | Eight states against chosen and unchosen, sixteen row cells, and no two of them alike. Selection outlives all eight, so a row cannot use a state to say it: the wide accent tick does, and the sweep is where that claim is either kept or broken. |
+| `p1d-rail-mark-4x.png` | The rail's mark, in the only two frames that can show it. Top, the mark is on the tab already open and draws nothing — rehearsing an underline that is already there would be a lie. Bottom, one Left later: a strong line under 위젯 at the accent underline's own y, a hairline shy of its weight, 위젯's label brightened, 목록 still underlined and still the page on screen. |
+| `p1d-well-960x600.png` | The keyboard in the well, the mark on its first row, and nothing chosen: the readout reads 고른 항목 없음 and 값 복사 stays off. Walking a list is not choosing from it. The hint has flipped above the well, because below it is the footer. |
+| `p1d-list-chosen-and-marked-960x600.png` | The chosen row and the marked row in one frame, four rows apart, after the view scrolled to keep the mark in sight. Wash ground and a two-pixel tick against raised ground and a hairline one — the pair the sweep enumerates, here on one live list. |
+| `p1d-copy-960x600.png` | A hint at the far side of the column, ending where the masthead's rule ends. The ring is on 값 복사, live now that something is chosen, and the row chosen four keys ago is still wearing its tick with the keyboard gone from the well. |
+| `p1d-specimen-960x600.png` | The specimen drawing the shared masthead: accent bar at GUI x 220..222, y 14..31, the same two pixels on the same cap band as every other page. The P0 capture of this screen still shows the bar under the wordmark; this is the P1-B fix reaching it. |
+
+Four defects these captures caught:
+
+- The hint on 값 복사 ran from GUI x 689 to 862 with the page's column ending at 740, so a third of
+  it hung over the blurred void outside the surface. `Tooltip.place` was clamping to the window,
+  which is the one rectangle that is never the ground being drawn on. It now takes the region the
+  surface owns.
+- The well's hint sat at GUI y 548..570 with `footerY(600)` at 565, crossing the footer hairline and
+  crowding the line that tells the player how to leave. Same root cause, same fix: with the column
+  as the region there is no room below the well, so the hint flips above it and covers the section
+  head of the list it belongs to — which is the group it is describing, and transient.
+- The masthead moved when the tab changed. `SpecimenScreen.maxContent()` returns 420, and the
+  chrome was measured with it, so the wordmark, the rail and the footer rule all sat at GUI x 270
+  on the specimen and 220 on the other two pages: tabbing 표본 ↔ 위젯 slid the whole frame 50 px
+  sideways and read as the screen having reloaded. `maxContent()` now governs the page's own body
+  only. The body keeps its measure and gives up its right edge instead of the left one every other
+  thing on the surface is aligned to.
+- Then the fix for the first two put every hint 4 px off that same left edge. Most controls on a
+  page sit on the column's left edge, and clamping to `within.x() + GAP` pushed their hints inward
+  to buy room against nothing — the rail's hint came away from the line the section head ticks and
+  the masthead bar are on, and covered the tick beside it in the bargain. Caught by diffing the
+  run against the previous one: the only pixels that moved were hints, all of them by four. The
+  sides of a region are edges to align to, not walls to stand off; the gap now belongs to the
+  control and to the two rules that close the column above and below.

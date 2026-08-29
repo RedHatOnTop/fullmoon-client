@@ -22,6 +22,7 @@ public abstract class Widget implements Focus.Target {
     private final Voice voice;
     private final String label;
     private Box bounds = Box.EMPTY;
+    private String hint = "";
     private State.Signals own = State.Signals.REST;
     private boolean ringing;
     private boolean holding;
@@ -46,6 +47,20 @@ public abstract class Widget implements Focus.Target {
 
     public final Box bounds() {
         return bounds;
+    }
+
+    /**
+     * What {@link Tooltip} says when the pointer rests on this control or the keyboard arrives at
+     * it. Empty by default, and deliberately so: a tooltip that repeats the label is a second copy
+     * of something the player has already read, in a box they now have to look past.
+     */
+    public final Widget hint(String text) {
+        hint = text;
+        return this;
+    }
+
+    public final String hint() {
+        return hint;
     }
 
     /** Layout hands a widget its box. A widget never picks its own. */
@@ -77,7 +92,17 @@ public abstract class Widget implements Focus.Target {
 
     /** The state this widget is in, given who is holding the keyboard. */
     public final State state(Focus focus) {
-        return State.of(own.focused(focus.holds(this), focus.visible()));
+        return state(focus.holds(this), focus.visible());
+    }
+
+    /**
+     * The state of a widget owned by another widget, which has no {@link Focus} to ask. A panel is
+     * one keyboard stop for a whole list, and the row that stop is on is the row that has to look
+     * like it: a surface reaches its controls through the focus above, and a control reaches its
+     * own parts through here.
+     */
+    final State state(boolean focused, boolean keyboard) {
+        return State.of(own.focused(focused, keyboard));
     }
 
     @Override
@@ -187,6 +212,11 @@ public abstract class Widget implements Focus.Target {
     /** Surface-owned: hover and press are facts about the pointer, not about the widget. */
     final void hovered(boolean value) {
         own = own.hovered(value);
+    }
+
+    /** Whether the pointer is on this control. A composite has to pass its own answer to its parts. */
+    final boolean hovered() {
+        return own.hovered();
     }
 
     final void ringing(boolean value) {
