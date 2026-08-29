@@ -422,12 +422,12 @@ public final class HudEditorScreen extends Screen {
         int capH = Typeset.capHeight(Tokens.Type.BODY_STRONG);
         painter.fill(24, barY + (INSPECTOR_H - capH) / 2, Tokens.Stroke.FOCUS, capH, Tokens.Color.ACCENT);
         int titleX = 24 + Tokens.Stroke.FOCUS + Tokens.Space.COZY;
-        Typeset.draw(painter, Tokens.Type.BODY_STRONG, "Fullmoon HUD Studio", titleX,
-            barY + (INSPECTOR_H - Tokens.Type.BODY_STRONG.leading()) / 2, Tokens.Color.INK_PRIMARY);
+        int titleY = Typeset.centred(Tokens.Type.BODY_STRONG, barY, INSPECTOR_H);
+        Typeset.draw(painter, Tokens.Type.BODY_STRONG, "Fullmoon HUD Studio", titleX, titleY, Tokens.Color.INK_PRIMARY);
 
         int snapX = titleX + Typeset.width(Tokens.Type.BODY_STRONG, "Fullmoon HUD Studio") + Tokens.Space.SNUG;
-        Typeset.draw(painter, Tokens.Type.LABEL, "· 4px 스냅", snapX,
-            barY + (INSPECTOR_H - Tokens.Type.LABEL.leading()) / 2, Tokens.Color.INK_TERTIARY);
+        int snapY = Typeset.centred(Tokens.Type.LABEL, barY, INSPECTOR_H);
+        Typeset.draw(painter, Tokens.Type.LABEL, "· 4px 스냅", snapX, snapY, Tokens.Color.INK_TERTIARY);
 
         // 2. Center Inspector Pill
         HudElement elem = selectedElement();
@@ -440,8 +440,8 @@ public final class HudEditorScreen extends Screen {
 
             // Selected module name on left
             int modNameX = inspX + Tokens.Space.LOOSE;
-            Typeset.draw(painter, Tokens.Type.BODY_STRONG, elem.label(), modNameX,
-                barY + (INSPECTOR_H - Tokens.Type.BODY_STRONG.leading()) / 2, Tokens.Color.INK_PRIMARY);
+            int modNameY = Typeset.centred(Tokens.Type.BODY_STRONG, barY, INSPECTOR_H);
+            Typeset.draw(painter, Tokens.Type.BODY_STRONG, elem.label(), modNameX, modNameY, Tokens.Color.INK_PRIMARY);
 
             // 3x3 Anchor Picker in center of inspector
             int anchorBoxX = inspX + 135;
@@ -463,8 +463,8 @@ public final class HudEditorScreen extends Screen {
             }
 
             int anchorLabelX = anchorBoxX + ANCHOR_CELL_SIZE * 3 + ANCHOR_CELL_GAP * 2 + Tokens.Space.SNUG;
-            Typeset.draw(painter, Tokens.Type.LABEL, elem.anchor().label(),
-                anchorLabelX, barY + (INSPECTOR_H - Tokens.Type.LABEL.leading()) / 2, Tokens.Color.INK_SECONDARY);
+            int anchorLabelY = Typeset.centred(Tokens.Type.LABEL, barY, INSPECTOR_H);
+            Typeset.draw(painter, Tokens.Type.LABEL, elem.anchor().label(), anchorLabelX, anchorLabelY, Tokens.Color.INK_SECONDARY);
         }
     }
 
@@ -503,7 +503,7 @@ public final class HudEditorScreen extends Screen {
 
             // Label text starting after dot with generous right margin
             int textX = dotX + 8;
-            int textY = pillBox.y() + (DOCK_PILL_H - Tokens.Type.LABEL.leading()) / 2;
+            int textY = Typeset.centred(Tokens.Type.LABEL, pillBox.y(), pillBox.h());
             int ink = elem.enabled() ? Tokens.Color.INK_PRIMARY : Tokens.Color.INK_TERTIARY;
 
             Typeset.draw(painter, Tokens.Type.LABEL, elem.label(), textX, textY, ink);
