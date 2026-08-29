@@ -361,12 +361,6 @@ public final class HudEditorScreen extends Screen {
 
             Box b = elem.computeBounds(width, height, client);
             elem.draw(painter, b, client, true);
-
-            boolean selected = elem.id().equals(selectedId);
-            if (!selected) {
-                painter.border(b.x(), b.y(), b.w(), b.h(), Tokens.Radius.SM, Tokens.Stroke.HAIR,
-                    Tokens.Color.LINE_HAIRLINE);
-            }
         }
     }
 
