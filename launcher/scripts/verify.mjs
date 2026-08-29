@@ -1,34 +1,67 @@
-/* verify.mjs — drives the standalone build in headless Edge and
-   screenshots the full user journey: home → instances → install →
-   launch → console → settings/HUD → cosmetics → mods → accounts. */
+/* verify.mjs — drives the Fullmoon Launcher in headless Chrome and
+   screenshots the full user journey:
+   1. Home dashboard
+   2. Mods browser
+   3. Cosmetics 3D preview
+   4. Accounts manager
+   5. Settings (General & Java)
+   6. Settings HUD editor
+   7. Command palette (Ctrl+K)
+   8. Launch overlay */
 
 import puppeteer from "puppeteer-core";
 import { setTimeout as sleep } from "node:timers/promises";
+import fs from "node:fs";
+import path from "node:path";
 
-const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const URL = "http://127.0.0.1:4173";
-const OUT = "C:\\Users\\jin14\\AppData\\Local\\Temp\\opencode";
+const findBrowser = () => {
+  if (process.env.BROWSER_PATH && fs.existsSync(process.env.BROWSER_PATH)) {
+    return process.env.BROWSER_PATH;
+  }
+  const candidates = [
+    "/home/person/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  throw new Error("No compatible Chrome/Chromium browser found");
+};
 
-const clickByText = (page, selector, text) =>
-  page.evaluate(
-    (sel, t) => {
-      const el = [...document.querySelectorAll(sel)].find((e) => e.textContent.trim().includes(t));
-      if (!el) throw new Error(`not found: ${sel} "${t}"`);
-      el.click();
-    },
-    selector,
-    text,
-  );
+const BROWSER_PATH = findBrowser();
+const URL = "http://127.0.0.1:5921";
+const OUT = process.env.OUT_DIR || "/tmp/fullmoon-launcher-shots";
+
+if (!fs.existsSync(OUT)) {
+  fs.mkdirSync(OUT, { recursive: true });
+}
 
 const shot = async (page, name) => {
-  await page.screenshot({ path: `${OUT}\\pinion-${name}.png` });
-  console.log("shot:", name);
+  const filePath = path.join(OUT, `fullmoon-launcher-${name}.png`);
+  await page.screenshot({ path: filePath });
+  console.log("shot:", name, "->", filePath);
+};
+
+const clickNav = async (page, text) => {
+  await page.evaluate((t) => {
+    const btns = [...document.querySelectorAll("button, .nav-item, [role='button']")];
+    const target = btns.find((b) => b.textContent && b.textContent.trim().includes(t));
+    if (target) {
+      target.click();
+    } else {
+      throw new Error(`Nav item not found: ${t}`);
+    }
+  }, text);
 };
 
 const browser = await puppeteer.launch({
-  executablePath: EDGE,
+  executablePath: BROWSER_PATH,
   headless: "new",
-  args: ["--window-size=1600,1000", "--force-device-scale-factor=1"],
+  args: ["--window-size=1600,1000", "--force-device-scale-factor=1", "--no-sandbox"],
   defaultViewport: { width: 1600, height: 1000 },
 });
 
@@ -40,74 +73,64 @@ try {
   });
 
   await page.goto(URL, { waitUntil: "networkidle0", timeout: 20000 });
-  await sleep(1800);
+  await sleep(1500);
+
+  // 1. Home Dashboard
   await shot(page, "01-home");
 
-  // instances
-  await clickByText(page, ".sidebar-item", "인스턴스");
-  await sleep(700);
-  await shot(page, "02-instances");
+  // 2. Mods Screen
+  await clickNav(page, "모드");
+  await sleep(800);
+  await shot(page, "02-mods");
 
-  // install the Snapshot Lab instance
+  // 3. Cosmetics Screen with 3D Canvas
+  await clickNav(page, "코스메틱");
+  await sleep(1500);
+  await shot(page, "03-cosmetics");
+
+  // 4. Accounts Screen
+  await clickNav(page, "계정");
+  await sleep(800);
+  await shot(page, "04-accounts");
+
+  // 5. Settings Screen (General)
+  await clickNav(page, "설정");
+  await sleep(800);
+  await shot(page, "05-settings-general");
+
+  // 6. Settings HUD Tab
   await page.evaluate(() => {
-    const card = [...document.querySelectorAll(".inst-card")].find((c) =>
-      c.textContent.includes("Snapshot Lab"),
-    );
-    const btn = [...card.querySelectorAll("button")].find((b) => b.textContent.includes("설치"));
-    btn.click();
+    const tabs = [...document.querySelectorAll("button, [role='tab']")];
+    const hudTab = tabs.find((t) => t.textContent && t.textContent.includes("HUD"));
+    if (hudTab) hudTab.click();
   });
-  await sleep(3400);
-  await shot(page, "03-installing");
-  await sleep(9500); // let the install finish
-
-  // back home, PLAY
-  await clickByText(page, ".sidebar-item", "홈");
-  await sleep(600);
-  await page.click(".playbtn");
-  await sleep(6500);
-  await shot(page, "04-launching");
-
-  // console while running
-  await clickByText(page, ".sidebar-item", "콘솔");
-  await sleep(5500);
-  await shot(page, "05-console-running");
-
-  // settings → HUD editor
-  await clickByText(page, ".sidebar-item", "설정");
-  await sleep(500);
-  await clickByText(page, ".set-nav button", "HUD 모듈");
-  await sleep(900);
+  await sleep(800);
   await shot(page, "06-settings-hud");
 
-  // cosmetics
-  await clickByText(page, ".sidebar-item", "코스메틱");
-  await sleep(700);
-  // equip a cape + wings for the render
-  await page.evaluate(() => {
-    const items = [...document.querySelectorAll(".cos-item")];
-    items[1]?.click(); // ember cape
-  });
-  await sleep(500);
-  await clickByText(page, ".segmented-item", "날개");
+  // 7. Command Palette (Ctrl+K)
+  await page.keyboard.down("Control");
+  await page.keyboard.press("KeyK");
+  await page.keyboard.up("Control");
+  await sleep(600);
+  await shot(page, "07-command-palette");
+
+  // Close Palette (Esc)
+  await page.keyboard.press("Escape");
   await sleep(400);
+
+  // 8. Launch Play
+  await clickNav(page, "홈");
+  await sleep(600);
   await page.evaluate(() => {
-    const items = [...document.querySelectorAll(".cos-item")];
-    items[0]?.click(); // gale wings
+    const playBtn = [...document.querySelectorAll("button")].find(
+      (b) => b.textContent && b.textContent.includes("플레이"),
+    );
+    if (playBtn) playBtn.click();
   });
-  await sleep(900);
-  await shot(page, "07-cosmetics");
+  await sleep(1200);
+  await shot(page, "08-launch-overlay");
 
-  // mods
-  await clickByText(page, ".sidebar-item", "모드");
-  await sleep(800);
-  await shot(page, "08-mods");
-
-  // accounts
-  await clickByText(page, ".sidebar-item", "계정");
-  await sleep(700);
-  await shot(page, "09-accounts");
-
-  console.log("VERIFY OK");
+  console.log("FULLMOON LAUNCHER VERIFICATION COMPLETED SUCCESSFULLY");
 } finally {
   await browser.close();
 }

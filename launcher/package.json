@@ -5,9 +5,9 @@
   "type": "module",
   "description": "Pinion — custom Minecraft Java client launcher (UI build over the core contract)",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 4173 --strictPort",
+    "dev": "vite --host 127.0.0.1 --port 5921 --strictPort",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "preview": "vite preview --host 127.0.0.1 --port 5921",
     "verify": "node scripts/verify.mjs",
     "assets": "node scripts/generate-assets.mjs",
     "rebrand": "node scripts/rebrand.mjs",

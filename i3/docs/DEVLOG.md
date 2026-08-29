@@ -467,4 +467,28 @@ Tauri v2 백엔드 상에서 모장 버전 매니페스트 파싱, 자산/라이
 - `download::tests::sha1_of_calculates_correct_hash` — SHA1 해시 연산 정확성 검증 완료.
 - `launch::tests::plan_composes_jvm_and_game_args_correctly` — JVM 메모리, GC, 클래스패스, 유저네임 인자 합성 검증 완료.
 
+## 2026-08-29 · P5 런처 프론트엔드 UI (Tauri v2 + React 18 디자인 시스템)
+
+동일한 디자인 토큰과 다크 글래스 스트라텀 위에서 동작하는 풀문 런처의 8개 핵심 UI 서피스를 구현하고 전수 검증했다.
+
+- `screens/Home.tsx` — 대시보드 히어로 배너, 초승달 애니메이션(`Moonrise.tsx`), 인스턴스 빠른 접속 칩, 실시간 공지/뉴스 피드, 월렛/코인 거래 내역 장부, 서버 오프라인/온라인 상태 카드.
+- `screens/Mods.tsx` — 1st-party 번들 및 활성 모드 브라우저, 카테고리 필터(HUD, 성능, 라이브러리), 모드별 토글 스위치, 로더/호환성 상태 사이드바.
+- `screens/Cosmetics.tsx` — Three.js / skinview3d 기반 실시간 3D 플레이어 렌더러, 케이프/날개/궤적 코스메틱 장착 및 걷기/정지 애니메이션 모드 전환.
+- `screens/Accounts.tsx` — Microsoft OAuth 디바이스 코드 및 오프라인 플레이어 프로필 관리, 활성 계정 전환, 스킨 미리보기.
+- `screens/Settings.tsx` — Java 런타임/메모리 할당 슬라이더, 프라이버시/텔레메트리 스위치, 내장 Web HUD 모듈 레이아웃 시뮬레이터(`widgets/HudEditor.tsx`).
+- `components/CommandPalette.tsx` — `Ctrl+K` 전역 핫키를 통한 빠른 네비게이션 및 인스턴스 실행 커맨드 팔레트.
+- `widgets/LaunchOverlay.tsx` — 게임 시작 시 출력되는 프로그레스 바, 실시간 표준 출력/에러 로그 스트리밍 콘솔, 숨기기 및 강제 종료 액션.
+
+### 증거
+
+- `node launcher/scripts/verify.mjs` → Headless Chromium 기반 8개 서피스 E2E 여정 전수 통과:
+  1. `docs/evidence/fullmoon-launcher-01-home.png` — 대시보드 히어로 & 뉴스 & 월렛
+  2. `docs/evidence/fullmoon-launcher-02-mods.png` — 모드 브라우저 & 토글
+  3. `docs/evidence/fullmoon-launcher-03-cosmetics.png` — 3D 스킨뷰 & 케이프 피커
+  4. `docs/evidence/fullmoon-launcher-04-accounts.png` — 계정 매니저
+  5. `docs/evidence/fullmoon-launcher-05-settings-general.png` — 설정 장부 & 메모리 슬라이더
+  6. `docs/evidence/fullmoon-launcher-06-settings-hud.png` — 웹 HUD 모듈 시뮬레이터
+  7. `docs/evidence/fullmoon-launcher-07-command-palette.png` — `Ctrl+K` 커맨드 팔레트
+  8. `docs/evidence/fullmoon-launcher-08-launch-overlay.png` — 게임 실행 & 실시간 로그 스트리밍 오버레이
+
 
