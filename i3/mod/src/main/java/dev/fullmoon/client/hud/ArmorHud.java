@@ -86,7 +86,7 @@ public final class ArmorHud extends BaseHudElement {
 
             int textW = Typeset.width(Tokens.Type.LABEL, text);
             int textX = slotBox.x() + (slotBox.w() - textW) / 2;
-            int textY = slotBox.y() + (slotBox.h() - Tokens.Type.LABEL.leading()) / 2 - 1;
+            int textY = Typeset.centred(Tokens.Type.LABEL, slotBox.y(), slotBox.h() - 3);
             int ink = pct > 0 ? Tokens.Color.INK_PRIMARY : Tokens.Color.INK_TERTIARY;
 
             Typeset.draw(painter, Tokens.Type.LABEL, text, textX, textY, ink);
