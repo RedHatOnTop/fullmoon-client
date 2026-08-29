@@ -88,50 +88,21 @@
   gap: 16px;
 }
 
-.game-hero-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.game-season-pill {
+.hero-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 28px;
-  padding: 0 12px 0 8px;
-  background: rgba(245, 208, 110, 0.10);
-  border: 1px solid rgba(245, 208, 110, 0.28);
-  border-radius: var(--radius-pill);
-}
-
-.season-tag {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.12em;
   color: var(--accent);
+  margin-bottom: -4px;
 }
 
-.season-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.game-target-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-3);
-}
-
-.game-target-badge .net-ping {
-  color: #68D391;
-  font-weight: 600;
+.hero-eyebrow .divider {
+  color: rgba(245, 208, 110, 0.4);
+  font-weight: 400;
 }
 
 .game-hero-headline {
