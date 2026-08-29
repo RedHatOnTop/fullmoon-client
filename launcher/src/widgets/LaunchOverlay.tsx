@@ -51,7 +51,6 @@ export function LaunchOverlay({ onHide }: { onHide: () => void }) {
         {!running && <ProgressBar pct={0} indeterminate />}
         {running && (
           <div className="lov-runline">
-            <span className="live-dot" />
             {t("launchov.handoff")}
           </div>
         )}

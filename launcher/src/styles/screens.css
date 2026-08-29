@@ -106,21 +106,6 @@
   border-radius: var(--radius-pill);
 }
 
-.live-pulse-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #68D391;
-  box-shadow: 0 0 8px #68D391;
-  animation: pulse-live 2s infinite;
-}
-
-@keyframes pulse-live {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #68D391; }
-  100% { transform: scale(0.9); opacity: 0.7; }
-}
-
 .season-tag {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -939,13 +924,6 @@
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.net-status-pill .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
 }
 
 .wallet-quick-actions {

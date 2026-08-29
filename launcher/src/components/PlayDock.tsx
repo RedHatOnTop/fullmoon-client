@@ -109,7 +109,6 @@ export function PlayDock() {
   } else if (running) {
     playContent = (
       <>
-        <span className="live-dot" />
         <span>{t("dock.running")}</span>
         <Icon name="terminal" size={16} />
       </>

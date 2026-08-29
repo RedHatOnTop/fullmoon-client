@@ -74,14 +74,12 @@ export function HomeScreen() {
         <div className="game-hero-body">
           <div className="game-hero-header">
             <div className="game-season-pill">
-              <span className="live-pulse-dot" />
               <span className="season-tag">FULLMOON 26.1.2</span>
               <span className="season-title">{selectedInstance ? selectedInstance.name : "만월의 정원"}</span>
             </div>
             {primaryServer && (
               <div className="game-target-badge">
                 <span className={`net-status-pill ${primaryStatus?.online ? "online" : "offline"}`}>
-                  <span className="status-dot" />
                   <span>{primaryStatus?.online ? `${primaryStatus.players}명 온라인` : (primaryStatus ? "오프라인" : "확인 중")}</span>
                 </span>
                 {primaryStatus?.online && (
