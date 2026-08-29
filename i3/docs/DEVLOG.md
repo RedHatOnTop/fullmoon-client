@@ -449,7 +449,22 @@ theRegionsEdgesAreTheOnesThatCount()
 ### 증거
 
 - `gradlew -p i3/mod test` → **158개** 테스트 전원 통과 (새로운 `AnchorTest`, `HudConfigTest` 포함).
-- `node i3/design/verify-tokens.mjs` → 79개 파일 무결성(토큰 리터럴 0건 위반) 통과.
-- `docs/evidence/p3-hud-editor-960x540.png` — F10으로 열린 HUD 에디터의 4px 스냅 가이드, L자형 코너 틱, 활성화된 모듈들의 시각 검증 완료.
+- `node i3/design/verify-tokens.mjs` → 82개 파일 무결성(토큰 리터럴 0건 위반) 통과.
+- `docs/evidence/p3-hud-editor-960x540.png` — 헤더 3단 분리, 4px 스냅 가이드, 골드 L자형 코너 틱, 광학 수직 중앙 정렬(`Typeset.centred`), 플로팅 키캡 키스트로크 모듈의 시각 검증 완료.
+
+## 2026-08-29 · P4 런처 코어 (Rust / Tauri v2 기반 인스톨러 및 런처 파이프라인)
+
+Tauri v2 백엔드 상에서 모장 버전 매니페스트 파싱, 자산/라이브러리 SHA1 무결성 검증, 패브릭 로더 설치, 오프라인 및 Microsoft 인증 프로필, JVM 인자 및 클래스패스 합성, 프로세스 스폰 및 실시간 로그 스트리밍 엔진을 구축했다.
+
+- `download.rs` — 파일별 SHA1 해시 스트리밍 무결성 검증, 깨진 파일 자동 제거 및 재다운로드 방지(`already_good`), `.part` 임시 파일 atomic rename 파이프라인.
+- `install.rs` — 공유 캐시 디렉터리(`shared/`) 및 인스턴스 격리 레이아웃, 패브릭 오버레이 프로필 병합, 자산/라이브러리 병렬 다운로드.
+- `launch.rs` — OS 및 아키텍처별 규칙 평가, 버전 JSON의 인자 목록(`arguments.jvm`, `arguments.game`) 동적 치환, 메모리 및 GC 인자 합성, 메인 클래스 실행 계획(`Plan`) 생성.
+
+### 증거
+
+- `cargo test --manifest-path launcher/src-tauri/Cargo.toml` → **20개** Rust 단위 테스트 전원 통과 (`download::tests`, `launch::tests`, `auth::tests`, `version::tests`, `ping::tests`).
+- `download::tests::already_good_rejects_corrupt_sha1` — 변조/손상된 자산의 SHA1 불일치 감지 및 거부 검증 완료.
+- `download::tests::sha1_of_calculates_correct_hash` — SHA1 해시 연산 정확성 검증 완료.
+- `launch::tests::plan_composes_jvm_and_game_args_correctly` — JVM 메모리, GC, 클래스패스, 유저네임 인자 합성 검증 완료.
 
 
