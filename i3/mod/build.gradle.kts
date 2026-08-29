@@ -30,8 +30,12 @@ repositories {
 loom {
     accessWidenerPath = file("src/main/resources/fullmoon.accesswidener")
 
-    // A fixed window so a capture of a layout is comparable to the last capture of it.
-    runs.named("client") { programArgs("--width", "1280", "--height", "720") }
+    // A fixed window so a capture of a layout is comparable to the last capture of it. The size is
+    // a property because a screen that outgrows one window has to be photographed in a bigger one,
+    // and the capture rig is what knows which: tools/capture.py passes both.
+    runs.named("client") {
+        programArgs("--width", prop("client_width"), "--height", prop("client_height"))
+    }
 }
 
 dependencies {

@@ -8,16 +8,11 @@ import dev.fullmoon.client.text.Typeset;
 /**
  * A labelled action.
  *
- * <p>Loading puts three dots where the label was instead of dimming it. Dimmed ink is what
- * disabled already looks like, and a still frame has to be able to tell a request in flight from
- * a control that is off. The dots do not move: motion arrives in P2, together with the
- * reduced-motion setting that has to be able to collapse it.
+ * <p>Loading trades the label for {@link Dots} rather than dimming it, because dimmed ink is what
+ * disabled already looks like and a still frame has to be able to tell the two apart.
  */
 public final class Button extends Widget {
     public static final int HEIGHT = Tokens.Space.SECTION;
-
-    private static final int DOT_RADIUS = Tokens.Space.TIGHT;
-    private static final int DOT_PITCH = Tokens.Space.BASE;
 
     private final Runnable action;
 
@@ -41,9 +36,7 @@ public final class Button extends Widget {
         ring(painter, state, Tokens.Radius.MD);
 
         if (state == State.LOADING) {
-            for (int i = -1; i <= 1; i++) {
-                painter.dot(b.midX() + i * DOT_PITCH, b.midY(), DOT_RADIUS, chrome.ink());
-            }
+            Dots.draw(painter, b.midX(), b.midY(), chrome.ink());
             return;
         }
         Typeset.drawCentered(painter, Tokens.Type.BODY_STRONG, label(), b.midX(),

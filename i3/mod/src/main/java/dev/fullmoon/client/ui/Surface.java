@@ -14,7 +14,9 @@ import com.mojang.blaze3d.platform.InputConstants;
  * paint over the row that opened it, and only the layout knows about both. Leaving drawing out
  * is also what makes these rules testable rather than eyeballed: the only game code on this
  * path is {@link InputConstants}' key numbers, and those are constant variables that javac folds
- * into the bytecode, so no game class is loaded when the rules run headless.
+ * into the bytecode, so no game class is loaded when the rules run headless. A {@link Chord}
+ * arrives already translated, by the screen — {@link Chord#from} is the one step of the key path
+ * that needs a running game, and it happens before the surface sees anything.
  */
 public final class Surface {
     private final List<Widget> widgets = new ArrayList<>();
@@ -52,18 +54,31 @@ public final class Surface {
      * The state a widget is in on this surface, and the frame's answer to whether it wears the
      * ring. The ring is settled here rather than folded into the state because only one of the two
      * is a single value: a focused control that is also hovered has to report the hover and keep
-     * the ring, and a state enum cannot say both.
+     * the ring, and a state enum cannot say both. Where the keyboard is arrives the same way and
+     * separately, because a ring answers to how focus got here and a caret only to whether it did.
      */
     public State state(Widget widget) {
+        widget.holding(focus.holds(widget));
         widget.ringing(focus.rings(widget));
         return widget.state(focus);
     }
 
-    /** The topmost widget under the pointer, or null. Later-added widgets win. */
+    /**
+     * The topmost widget under the pointer, or null. A control that is over the surface is hit
+     * before anything it covers; among equals, later-added widgets win. Tab order is registration
+     * order and stays out of this: a select that opens has to be clickable over the row below it
+     * without also having to be the last control a player reaches.
+     */
     public Widget at(double mx, double my) {
+        Widget over = under(mx, my, true);
+        return over != null ? over : under(mx, my, false);
+    }
+
+    /** The last-added widget under the pointer, among those that are or are not on top. */
+    private Widget under(double mx, double my, boolean overlaying) {
         for (int i = widgets.size() - 1; i >= 0; i--) {
             Widget widget = widgets.get(i);
-            if (widget.bounds().holds(mx, my)) {
+            if (widget.overlaying() == overlaying && widget.reach().holds(mx, my)) {
                 return widget;
             }
         }
@@ -80,10 +95,13 @@ public final class Surface {
      */
     public void hover(double mx, double my) {
         Widget over = captured != null
-            ? (captured.bounds().holds(mx, my) ? captured : null)
+            ? (captured.reach().holds(mx, my) ? captured : null)
             : at(mx, my);
         for (Widget widget : widgets) {
             widget.hovered(widget == over);
+        }
+        if (over != null) {
+            over.hovering(mx, my);
         }
         if (captured != null) {
             captured.pressed(over == captured);
@@ -101,8 +119,10 @@ public final class Surface {
     /** Mouse down. True when the surface took the click. */
     public boolean press(double mx, double my) {
         Widget hit = at(mx, my);
+        Widget was = held();
         if (hit == null) {
             focus.clear();
+            handedOff(was);
             return false;
         }
         // A dead control is not a hole in the surface. Letting the click through to whatever sits
@@ -111,6 +131,7 @@ public final class Surface {
             return true;
         }
         focus.point(hit);
+        handedOff(was);
         if (hit.press(mx, my)) {
             captured = hit;
             hit.pressed(true);
@@ -126,7 +147,7 @@ public final class Surface {
         }
         captured = null;
         holder.pressed(false);
-        holder.release(mx, my, holder.bounds().holds(mx, my));
+        holder.release(mx, my, holder.reach().holds(mx, my));
         // The pointer has not moved but what is under it may have: a control that acted on the
         // release can have just gone disabled, and hover has to be read again from scratch.
         hover(mx, my);
@@ -143,16 +164,20 @@ public final class Surface {
      * a request that leaves the player unable to leave the control they fired it from has taken
      * the surface away, not just the control.
      */
-    public boolean key(int code, boolean shift) {
+    public boolean key(Chord chord) {
         Widget holder = held();
         boolean answers = holder != null && holder.state(focus).live();
-        if (answers && holder.key(code, shift)) {
+        if (answers && holder.key(chord)) {
             return true;
         }
-        if (code == InputConstants.KEY_TAB) {
-            return focus.advance(shift ? -1 : 1);
+        if (chord.is(InputConstants.KEY_TAB)) {
+            boolean moved = focus.advance(chord.shift() ? -1 : 1);
+            if (moved) {
+                handedOff(holder);
+            }
+            return moved;
         }
-        if (answers && activates(code)) {
+        if (answers && chord.activates()) {
             holder.act();
             return true;
         }
@@ -171,9 +196,15 @@ public final class Surface {
         return over != null && over.state(focus).live() && over.scroll(amount);
     }
 
-    private static boolean activates(int code) {
-        return code == InputConstants.KEY_RETURN
-            || code == InputConstants.KEY_NUMPADENTER
-            || code == InputConstants.KEY_SPACE;
+    /**
+     * Tells a control that the keyboard has left it, at the three places it can actually leave:
+     * a press that lands on another control, a press on the ground, and Tab. There is nowhere
+     * else to learn this — a surface does not tick, and comparing holders every frame would
+     * announce a hand-off that never happened the moment a holder went disabled.
+     */
+    private void handedOff(Widget was) {
+        if (was != null && was != held()) {
+            was.blurred();
+        }
     }
 }

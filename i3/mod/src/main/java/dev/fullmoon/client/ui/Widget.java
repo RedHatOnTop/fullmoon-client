@@ -24,6 +24,7 @@ public abstract class Widget implements Focus.Target {
     private Box bounds = Box.EMPTY;
     private State.Signals own = State.Signals.REST;
     private boolean ringing;
+    private boolean holding;
 
     protected Widget(Voice voice, String label) {
         this.voice = voice;
@@ -50,6 +51,15 @@ public abstract class Widget implements Focus.Target {
     /** Layout hands a widget its box. A widget never picks its own. */
     public final void place(Box box) {
         bounds = box;
+    }
+
+    /**
+     * The box the pointer is tested against, which is the bounds for every control that does not
+     * open. A list that hangs below the control which opened it has to be clickable where it
+     * draws; the ring stays on {@link #bounds()}, because the ring belongs to the closed control.
+     */
+    protected Box reach() {
+        return bounds;
     }
 
     public final void enabled(boolean value) {
@@ -79,6 +89,23 @@ public abstract class Widget implements Focus.Target {
 
     public abstract void draw(Painter painter, State state);
 
+    /**
+     * A second drawing pass, run over every widget's first. Only a control that opens needs it: a
+     * list that hangs below its own row has to paint over the row beneath, and draw order is the
+     * layout's to decide, so the surface cannot settle this by reordering anything.
+     */
+    protected void drawOverlay(Painter painter, State state) {}
+
+    /**
+     * Whether this control is over the rest of the surface right now. Drawn last and hit first are
+     * one fact and not two: a list that paints over the row beneath it has to be clickable there,
+     * or the pointer lands on whatever it is covering. A control that answers true here is a
+     * control that draws in {@link #drawOverlay}.
+     */
+    protected boolean overlaying() {
+        return false;
+    }
+
     /** The ring, outside the control's bounds so it never covers the control's own edge. */
     protected final void ring(Painter painter, State state, float radius) {
         ring(painter, state, radius, voice.ring());
@@ -103,6 +130,12 @@ public abstract class Widget implements Focus.Target {
         return true;
     }
 
+    /**
+     * Where the pointer is, sent every frame to the one widget under it. A control made of parts —
+     * a list of rows, a rail of tabs — cannot read its own hover off a single boolean.
+     */
+    protected void hovering(double mx, double my) {}
+
     /** The pointer moved while this widget held the capture. */
     protected void drag(double mx, double my) {}
 
@@ -113,8 +146,8 @@ public abstract class Widget implements Focus.Target {
         }
     }
 
-    /** A key press while this widget holds the keyboard, as a GLFW code. True if consumed. */
-    protected boolean key(int code, boolean shift) {
+    /** A key press while this widget holds the keyboard. True if consumed. */
+    protected boolean key(Chord chord) {
         return false;
     }
 
@@ -131,9 +164,24 @@ public abstract class Widget implements Focus.Target {
     /** What Enter, Space and a click that comes up inside the bounds all do. */
     protected void act() {}
 
+    /** The keyboard has gone elsewhere. A control that holds an edit commits it here. */
+    protected void blurred() {}
+
     /** Whether this control is wearing the ring. Surface-owned, like hover and press. */
     final boolean ringing() {
         return ringing;
+    }
+
+    /**
+     * Whether the keyboard sits on this control, whatever louder state is being reported over it.
+     *
+     * <p>Two facts about focus arrive from the surface rather than one, for the reason {@link State}
+     * gives for the ring: a focused control that is also hovered reports the hover, and an enum
+     * cannot say two things. The ring answers to how focus arrived, and a caret answers to whether
+     * it is here at all — a field clicked into has one and no ring.
+     */
+    final boolean holding() {
+        return holding;
     }
 
     /** Surface-owned: hover and press are facts about the pointer, not about the widget. */
@@ -143,6 +191,10 @@ public abstract class Widget implements Focus.Target {
 
     final void ringing(boolean value) {
         ringing = value;
+    }
+
+    final void holding(boolean value) {
+        holding = value;
     }
 
     final void pressed(boolean value) {

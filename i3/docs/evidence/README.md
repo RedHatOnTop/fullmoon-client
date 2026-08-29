@@ -4,7 +4,7 @@ Captures are taken off the workspace, on a headless X server, from the dev clien
 this tree. Nothing here is a mockup.
 
 ```sh
-tools/capture.py /tmp/shots kit:F7 focus-1:Tab focus-2:Tab focus-3:Tab focus-4:Tab
+tools/capture.py /tmp/shots --geometry 1920x1080 --scale 2 kit:F7 focus-1:Tab focus-2:Tab
 ```
 
 Each `NAME:KEYS` taps its keys and photographs the result, cumulatively on one client: a
@@ -13,8 +13,11 @@ never reopened between shots and the pointer is parked in a corner where no cont
 files predate the tool and were taken by hand with the same Xvfb, the same `import` off the root
 window, and XTEST for the keys.
 
-The window is 1280×720 at GUI scale 2, so every layout number in the mod is half the pixel
-position in these files.
+Geometry is per capture and the filename carries it: `-640x360` is a 1280×720 window and
+`-960x540` a 1920×1080 one, both at GUI scale 2, so every layout number in the mod is half the
+pixel position in either. It became an argument in P1-C, when the kit outgrew 360 GUI px. It sizes
+the Xvfb and the client window off the one number, because a client smaller than its display is a
+photograph with a mat around it.
 
 ## P0 — render layer and design specimen
 
@@ -60,3 +63,34 @@ Three defects this slice caught:
   ring was drawn only for `FOCUS_VISIBLE` and a state can only name the loudest thing true about
   a control. The ring is now an orthogonal surface-owned bit, so a hovered or in-flight control
   keeps it.
+
+## P1-C — slider, select and text field
+
+| file | what it settles |
+| --- | --- |
+| `p1c-kit-960x540.png` | Seven widget rows against eight states, fifty-six cells, and a live band of five controls under them — one frame, one `draw(Painter, State)`. The slider, the select and the text field are drawn by the same call the button and the switch are. |
+| `p1c-select-open-960x540.png` | The open list paints over the slider line and the button line below it and is clickable there. Drawing in front and being hit first are one fact, and neither of them is Tab order: the select is the second control the keyboard reaches, the slider under its list the third. |
+| `p1c-band-in-flight-960x540.png` | 적용 pressed by keyboard, and every control in the band is in flight at once. The field keeps what the player typed and takes dots beside it, the select trades its value for dots, the slider holds its knob and drops its readout, and 적용 keeps its focus ring while it stops answering — 취소 stays live, because a request the player cannot get out of has taken the surface away. |
+| `p1c-field-caret-2x.png` | The caret is the band a capital occupies plus a hairline above and below, so it ends flush with nothing. It is up because the keyboard is in this field, not because the state reads `focus`. |
+| `p1c-field-error-2x.png` | One typed space fails the field's rule and the state under it becomes `error` with the caret still live: a field that does not validate is still a field being typed in. |
+| `p1c-field-row-1.5x.png` | Eight states of the text field, side by side. `loading` keeps the text and adds the dots, and the caret is in the two focus columns and nowhere else. |
+
+Three defects this slice caught:
+
+- A text field nobody was typing in scrolled its own text out of view. `view()` keeps the caret
+  in sight, `loading` narrows the area to make room for the dots, and a blurred field still has a
+  caret index sitting at the end of its text — so the `loading` cell read `빛 •••` with the
+  `달` shifted off the left edge. What a field nobody is typing in has to show is the head of its
+  text: the scroll is now `typing ? view(area) : 0`. Those 177 pixels are the only difference
+  between the pre-fix and post-fix runs of all five captures, which is also the rig repeating
+  itself to the pixel.
+- Paint order and hit order were two different orders. `Surface.at` walked the registration list
+  once, back to front, so the slider registered after the select won every click inside the open
+  list while the list painted over it. Widgets that are over the surface now get a pass of their
+  own on the way in, and Tab order is left out of it. Flipping `Select.overlaying()` back to
+  `false` fails `anOpenListIsHitBeforeWhateverItCovers`, so that test is not green by accident.
+- The kit did not fit its own capture, and the first 1920×1080 attempt came back letterboxed:
+  a 1280×720 client on a black mat, still 640×360 GUI px, footer text over the last matrix row.
+  `--geometry` sized the Xvfb, but the client window came from a hard-coded
+  `programArgs("--width", "1280", ...)` in `build.gradle.kts`. The size is now `client_width` and
+  `client_height` in `gradle.properties`, and the rig passes both.

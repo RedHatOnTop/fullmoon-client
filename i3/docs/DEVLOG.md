@@ -129,3 +129,102 @@ SurfaceTest > aControlInFlightKeepsTheRingAndAnswersNothing() FAILED
   있다. `DevChrome`으로 옮기는 건 두 화면이 탭 레일을 공유하는 P1-D에서 같이 한다.
 - 슬라이더·셀렉트·텍스트필드가 없으니 드래그와 캐럿 경로는 `Surface`에서 아직 죽은 코드에
   가깝다. `scroll`도 받는 위젯이 없다.
+
+## 2026-08-29 · P1-C 슬라이더, 셀렉트, 텍스트 필드
+
+포인터를 **붙잡는** 컨트롤 셋이 한꺼번에 들어왔다. 드래그, 캐럿, 그리고 자기 아래 두 줄을 덮는
+팝오버 — P1-B까지의 서피스는 클릭 한 번으로 끝나는 컨트롤만 알고 있었다. 매트릭스가 4행에서
+7행(56칸)으로, 라이브 밴드가 한 줄에서 세 줄로 늘었고, 그래서 키트가 640×360 gui px에 더는
+들어가지 않는다.
+
+- `ui/Slider` — 값은 float가 아니라 **step 격자 위의 int**다. float는 보여주기 전에 포맷을
+  거쳐야 하고 그때마다 다르게 반올림돼서 볼륨이 0.7300000001로 읽히는 사고가 난다. 격자를 아는
+  컨트롤은 화살표로 한 칸 밀 수 있고 소수점 결정 없이 인쇄된다. `loading`은 노브를 그 자리에
+  두고 **숫자만** 뺀다 — 위치는 로컬이고 여전히 참인데 숫자는 아무도 확인해주지 않은 부분이다.
+  `Toggle`은 같은 이유로 정반대를 한다(거기서는 위치가 바로 의심스러운 쪽이다).
+- `Slider.valueAt`/`knobAt`은 트래블을 바운즈에서 읽지 않고 `left..right` 두 정수로 받는다.
+  트래블의 양 끝은 **잰 텍스트**지만 위치→step 매핑은 아니고, 못 박아둘 값어치가 있는 건 그
+  매핑이며, 그 테스트는 폰트를 얻으려고 게임을 띄울 수 없다.
+- `ui/Select` — `open`은 상태가 아니다. 여덟 상태는 컨트롤이 **어떻게 다뤄지는 중인지**를
+  말하고, 열린 셀렉트는 hover든 focus든 in-flight든 될 수 있다. open이 바꾸는 건 클릭이 닿는
+  범위(`reach`)와 무엇 위에 그리는지(두 번째 패스)뿐이다. 화살표는 손으로 놓은 픽셀 3행이다 —
+  셰이프 파이프라인에 삼각형이 없고, 폰트에서 빌려온 글리프는 이 클라이언트가 안 닮으려고
+  존재하는 바로 그 바닐라 크롬이다.
+- `ui/TextField` — 캐럿 모델은 **아무것도 재지 않는다**. 인덱스는 전부 문자열 오프셋이라 폰트
+  없이, 따라서 게임 없이 돌아간다. 진짜 재야 하는 둘(클릭이 떨어지는 인덱스, 뷰가 밀린 거리)만
+  그리는 도중에 정해진다. 인덱스는 char가 아니라 **code point**로 움직인다 — 이름 칸은
+  플레이어가 기본 다국어 평면 밖 문자를 넣는 바로 그 자리고, 서로게이트 쌍 사이에 선 캐럿은
+  다음 백스페이스에 반 글자를 데려간다.
+- `ui/Surface.at` — 히트 테스트가 두 패스가 됐다. 등록 순서 = Tab 순서는 그대로 두고, 서피스
+  위에 뜬 위젯을 먼저 훑는다. 열려서 위에 그린다는 사실과 먼저 클릭된다는 사실이 같은 사실이어야
+  하는데 한 패스로는 "나중에 등록된 것이 이긴다" 하나뿐이었다.
+- `ui/KitScreen` — 7행 × 8상태와 밴드 세 줄이 같은 `draw(Painter, State)`를 지난다. 밴드가
+  라우팅을 보여주는 자리다: 적용이 밴드 전체를 띄우고 취소가 되돌리고 스위치가 적용을 켜고
+  끈다 — `loading`과 `disabled`가 표로만이 아니라 마우스로도 도달 가능해진다.
+- `tools/capture.py` + `build.gradle.kts` — 지오메트리와 gui scale이 인자가 됐고, 한 숫자가
+  Xvfb와 **클라이언트 창**을 같이 잡는다. `guiScale`은 매 런 앞에서 `options.txt`에 핀으로
+  박는다(게임이 나갈 때 이 파일을 다시 쓰고, `run/`은 레포에 없다).
+
+### 증거
+
+`gradlew -p i3/mod clean build test --console=plain` → `BUILD SUCCESSFUL in 2s`. 테스트 108개,
+실패 0:
+
+| 클래스 | tests | failures |
+| --- | --- | --- |
+| `layout.BoxTest` | 10 | 0 |
+| `layout.StackTest` | 7 | 0 |
+| `text.TypesetTest` | 6 | 0 |
+| `ui.StateTest` | 5 | 0 |
+| `ui.VoiceTest` | 9 | 0 |
+| `ui.FocusTest` | 17 | 0 |
+| `ui.SurfaceTest` | 18 | 0 |
+| `ui.SliderTest` | 8 | 0 |
+| `ui.SelectTest` | 11 | 0 |
+| `ui.TextFieldTest` | 17 | 0 |
+
+뮤테이션 한 번. `Select.overlaying()`을 `return false`로 되돌리고 `--tests '*SelectTest'`:
+
+```
+> Task :test FAILED
+
+SelectTest > anOpenListIsHitBeforeWhateverItCovers() FAILED
+    org.opentest4j.AssertionFailedError at SelectTest.java:148
+
+11 tests completed, 1 failed
+```
+
+원본 복원 후 재실행 `BUILD SUCCESSFUL in 1s`.
+
+레이아웃 산술은 캡처에서 직접 쟀다. `content.x()` 열(device x=442)을 훑으면 규칙선이 gui
+y=122(캡션 밴드 아래)와 124+32k에 앉아 있다 — 156, 188, 220, 252, 284, 316, 348. 7행이 32px
+피치로 348에서 끝나고, liveTop 364, 밴드 세 줄 383·415·447, 마지막 컨트롤 밑변 471,
+`footerY(540)` = 505. 열린 리스트는 409..465를 차지하니 슬라이더 줄(415)과 버튼 줄(447)
+**둘 다** 밑에 깔린다 — `p1c-select-open-960x540.png`이 그 장면이다.
+
+캡처 여섯 장은 [evidence/README.md](evidence/README.md)의 P1-C 표.
+
+### 캡처가 잡은 것
+
+- 텍스트 필드의 `loading` 칸이 `달빛`이 아니라 `빛 •••`이었다. `view()`는 캐럿을 화면 안에
+  잡아두고, `loading`은 점 셋 자리를 만들려고 영역을 좁히고, 포커스 없는 필드도 캐럿 인덱스는
+  글 끝에 남아 있다 — 그래서 좁아진 순간 `달`이 왼쪽으로 밀려 나갔다. 아무도 타이핑하지 않는
+  필드가 보여줘야 하는 건 글의 **머리**다: 스크롤이 `typing ? view(area) : 0`이 됐다. 같은 캡처
+  다섯 장을 수정 전/후로 두 번 찍어 픽셀로 비교하면 다른 픽셀이 **177개**, 전부 x 1284..1301,
+  y 654..669 — 그 한 칸이다. 나머지가 완전히 일치한다는 건 리그가 픽셀 단위로 재현된다는
+  뜻이기도 하다.
+- 첫 1920×1080 캡처가 레터박스로 나왔다. 검은 매트 위에 1280×720 클라이언트, 여전히 640×360
+  gui px, 푸터 글자가 마지막 매트릭스 행 위에 겹쳐 있었다. `--geometry`는 Xvfb만 잡고 창
+  크기는 `build.gradle.kts`에 박힌 `programArgs("--width", "1280", ...)`에서 오고 있었다.
+  측정값: `root 1920x1080; lit box x 320..1599 (1280) y 180..899 (720)`. 이제 크기는
+  `gradle.properties`의 `client_width`/`client_height`고 리그가 둘 다 넘긴다.
+
+### 아직 아닌 것
+
+- `scrolled`는 폰트가 필요해서 JUnit이 못 만진다(`Typeset.width` → `Minecraft.getInstance()`).
+  위 수정의 증거는 테스트가 아니라 캡처 두 장의 픽셀 차이다. 캐럿 모델 자체는 폰트를 안 쓰므로
+  `TextFieldTest` 17개가 전수로 덮는다.
+- `Surface.scroll`을 받는 위젯이 아직 없다. 슬라이더에 휠을 붙이는 건 스크롤되는 패널 안에서
+  값이 튀는 사고와 붙어 있어서, 패널이 생기는 P1-D의 `ListRow`와 같이 결정한다.
+- `SpecimenScreen`은 여전히 자기 마스트헤드 사본을 들고 있어서 커밋된 P0 캡처에 P1-B가 고친
+  캡 밴드 버그가 남아 있다. `DevChrome`으로 옮기는 건 두 화면이 탭 레일을 공유하는 P1-D에서.

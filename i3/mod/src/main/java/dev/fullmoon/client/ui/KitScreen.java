@@ -2,6 +2,8 @@ package dev.fullmoon.client.ui;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import dev.fullmoon.client.FullmoonClient;
 import dev.fullmoon.client.design.Tokens;
@@ -42,6 +44,9 @@ public final class KitScreen extends Screen {
 
     private static final Runnable INERT = () -> {};
     private static final Toggle.Switched UNTHROWN = on -> {};
+    private static final IntConsumer UNMOVED = v -> {};
+    private static final IntConsumer UNPICKED = i -> {};
+    private static final Consumer<String> UNSAID = s -> {};
 
     /** One line of the matrix: what it is called, what draws it, and how big that draws. */
     private record Row(String name, Widget widget, int w, int h) {}
@@ -51,11 +56,24 @@ public final class KitScreen extends Screen {
     private final Button cancel = new Button(Voice.QUIET, "취소", this::landed);
     private final Toggle arm = new Toggle("적용 허용", true, this::armed);
 
+    /** A name has to be one word, which is what makes ERROR reachable by typing a space into it. */
+    private final TextField name =
+        new TextField("이름", "달빛", "달빛", 16, word -> !word.contains(" "), UNSAID);
+    private final Select bubble =
+        new Select("말풍선", List.of("표시", "이름만", "숨김"), 0, UNPICKED);
+    private final Slider distance = new Slider("렌더 거리", "칸", 2, 32, 2, 12, UNMOVED);
+
     private final List<Row> rows = List.of(
         new Row("버튼 · quiet", new Button(Voice.QUIET, "저장", INERT), FILL, Button.HEIGHT),
         new Row("버튼 · loud", new Button(Voice.LOUD, "저장", INERT), FILL, Button.HEIGHT),
         new Row("스위치 · 꺼짐", new Toggle("", false, UNTHROWN), Toggle.TRACK_W, Toggle.TRACK_H),
-        new Row("스위치 · 켜짐", new Toggle("", true, UNTHROWN), Toggle.TRACK_W, Toggle.TRACK_H));
+        new Row("스위치 · 켜짐", new Toggle("", true, UNTHROWN), Toggle.TRACK_W, Toggle.TRACK_H),
+        new Row("슬라이더", new Slider(0, 100, 5, 40, UNMOVED), FILL, Slider.KNOB),
+        new Row("셀렉트", new Select("", List.of("표시", "이름만", "숨김"), 0, UNPICKED),
+            FILL, Select.HEIGHT),
+        new Row("텍스트 필드", new TextField("", "이름", "달빛", 16, word -> true, UNSAID),
+            FILL, TextField.HEIGHT));
+
 
     private Box content = Box.EMPTY;
     private int spine;
@@ -64,7 +82,10 @@ public final class KitScreen extends Screen {
 
     public KitScreen() {
         super(Typeset.say(Tokens.Type.TITLE, "위젯 키트"));
-        // Registration order is Tab order, and this one runs left to right across the band.
+        // Registration order is Tab order, and this one runs the band top to bottom, left to right.
+        surface.add(name);
+        surface.add(bubble);
+        surface.add(distance);
         surface.add(arm);
         surface.add(cancel);
         surface.add(apply);
@@ -87,6 +108,14 @@ public final class KitScreen extends Screen {
         liveTop = bandTop() + rows.size() * ROW_H + Tokens.Space.GUTTER;
 
         int line = liveTop + DevChrome.sectionHeadHeight();
+        Box pair = new Box(content.x(), line, content.w(), TextField.HEIGHT);
+        name.place(pair.col(0, 2, Tokens.Space.LOOSE));
+        bubble.place(pair.col(1, 2, Tokens.Space.LOOSE));
+
+        line += ROW_H;
+        distance.place(new Box(content.x(), line, content.w(), Slider.HEIGHT));
+
+        line += ROW_H;
         int applyW = apply.measure();
         int cancelW = cancel.measure();
         apply.place(new Box(content.right() - applyW, line, applyW, Button.HEIGHT));
@@ -148,6 +177,9 @@ public final class KitScreen extends Screen {
             for (State state : State.values()) {
                 Box cell = grid.col(state.ordinal(), columns, CELL_GAP);
                 int cw = row.w() == FILL ? cell.w() - Tokens.Space.COZY : row.w();
+                // A caret answers to where the keyboard is and not to the state being drawn, so the
+                // two focus columns have to be told that on their own. See Widget#holding.
+                row.widget().holding(state == State.FOCUS || state == State.FOCUS_VISIBLE);
                 // A specimen is placed and drawn in the same breath, eight times a row. It is not
                 // on the surface, so nothing hit-tests the box it was left in.
                 row.widget().place(new Box(cell.midX() - cw / 2,
@@ -158,11 +190,19 @@ public final class KitScreen extends Screen {
         }
     }
 
+    /**
+     * Two passes, because the select's list hangs over the two lines below it. Draw order is the
+     * layout's to decide and the surface has no say in it, so a control that opens paints its own
+     * second pass after every first one has gone down.
+     */
     private void band(Painter painter) {
         DevChrome.sectionHead(painter, "라이브 · 적용은 요청을 띄우고 취소는 되돌린다",
             content.x(), liveTop);
         for (Widget widget : surface.widgets()) {
             widget.draw(painter, surface.state(widget));
+        }
+        for (Widget widget : surface.widgets()) {
+            widget.drawOverlay(painter, surface.state(widget));
         }
     }
 
@@ -200,11 +240,18 @@ public final class KitScreen extends Screen {
         return most;
     }
 
+    /** 적용 sends the whole band out, so LOADING is live for every kind of control and not only drawn. */
     private void inFlight() {
+        name.busy(true);
+        bubble.busy(true);
+        distance.busy(true);
         apply.busy(true);
     }
 
     private void landed() {
+        name.busy(false);
+        bubble.busy(false);
+        distance.busy(false);
         apply.busy(false);
     }
 
@@ -247,7 +294,7 @@ public final class KitScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        return surface.key(event.key(), event.hasShiftDown()) || super.keyPressed(event);
+        return surface.key(Chord.from(event)) || super.keyPressed(event);
     }
 
     @Override

@@ -54,8 +54,8 @@ class SurfaceTest {
         }
 
         @Override
-        protected boolean key(int code, boolean shift) {
-            return keepsSpace && code == InputConstants.KEY_SPACE;
+        protected boolean key(Chord chord) {
+            return keepsSpace && chord.is(InputConstants.KEY_SPACE);
         }
 
         @Override
@@ -177,6 +177,8 @@ class SurfaceTest {
 
         assertFalse(surface.press(200, 200), "nothing took it, so the screen still gets the click");
         assertNull(surface.held());
+        surface.state(probe);
+        assertFalse(probe.holding(), "and the control it left knows it is gone");
     }
 
     @Test
@@ -188,6 +190,7 @@ class SurfaceTest {
         assertSame(probe, surface.held());
         surface.state(probe);
         assertFalse(probe.ringing(), "a click moves the keyboard and leaves the ring down");
+        assertTrue(probe.holding(), "the keyboard is here even so, which is what a caret answers to");
         assertTrue(surface.type('a'));
         assertEquals(1, probe.typed);
     }
@@ -198,15 +201,15 @@ class SurfaceTest {
         Probe first = surface.add(new Probe("first", 0, 0));
         Probe second = surface.add(new Probe("second", 0, 30));
 
-        assertTrue(surface.key(InputConstants.KEY_TAB, false));
+        assertTrue(surface.key(Chord.of(InputConstants.KEY_TAB)));
         assertSame(first, surface.held());
         assertEquals(State.FOCUS_VISIBLE, surface.state(first), "Tab lights the ring");
 
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
         assertSame(second, surface.held());
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
         assertSame(first, surface.held(), "forward off the end wraps to the top");
-        surface.key(InputConstants.KEY_TAB, true);
+        surface.key(Chord.shifted(InputConstants.KEY_TAB));
         assertSame(second, surface.held(), "and Shift-Tab off the top wraps back to the end");
     }
 
@@ -218,9 +221,9 @@ class SurfaceTest {
         Probe last = surface.add(new Probe("last", 0, 60));
         off.enabled(false);
 
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
         assertSame(first, surface.held());
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
         assertSame(last, surface.held());
     }
 
@@ -228,7 +231,7 @@ class SurfaceTest {
     void theRingSurvivesThePointerArriving() {
         Surface surface = new Surface();
         Probe probe = surface.add(new Probe("apply", 0, 0));
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
 
         surface.hover(10, 10);
         assertEquals(State.HOVER, surface.state(probe), "the hover is the loudest thing about it");
@@ -239,11 +242,11 @@ class SurfaceTest {
     void enterAndSpaceActivateTheKeyboardHolder() {
         Surface surface = new Surface();
         Probe probe = surface.add(new Probe("apply", 0, 0));
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
 
-        assertTrue(surface.key(InputConstants.KEY_RETURN, false));
-        assertTrue(surface.key(InputConstants.KEY_NUMPADENTER, false));
-        assertTrue(surface.key(InputConstants.KEY_SPACE, false));
+        assertTrue(surface.key(Chord.of(InputConstants.KEY_RETURN)));
+        assertTrue(surface.key(Chord.of(InputConstants.KEY_NUMPADENTER)));
+        assertTrue(surface.key(Chord.of(InputConstants.KEY_SPACE)));
         assertEquals(3, probe.acted);
     }
 
@@ -251,9 +254,9 @@ class SurfaceTest {
     void theKeyboardHolderGetsFirstRefusal() {
         Surface surface = new Surface();
         Probe field = surface.add(new Probe("field", 0, 0, true));
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
 
-        assertTrue(surface.key(InputConstants.KEY_SPACE, false));
+        assertTrue(surface.key(Chord.of(InputConstants.KEY_SPACE)));
         assertEquals(0, field.acted, "a control that keeps Space is not also fired by it");
     }
 
@@ -261,24 +264,24 @@ class SurfaceTest {
     void anUnclaimedKeyIsLeftForTheScreen() {
         Surface surface = new Surface();
         surface.add(new Probe("apply", 0, 0));
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
 
-        assertFalse(surface.key(InputConstants.KEY_ESCAPE, false), "Esc is the screen's to answer");
+        assertFalse(surface.key(Chord.of(InputConstants.KEY_ESCAPE)), "Esc is the screen's to answer");
     }
 
     @Test
     void aControlInFlightKeepsTheRingAndAnswersNothing() {
         Surface surface = new Surface();
         Probe probe = surface.add(new Probe("apply", 0, 0, true));
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
         probe.busy(true);
 
         assertEquals(State.LOADING, surface.state(probe));
         assertTrue(probe.ringing(), "the ring stays or the player loses their place on the surface");
         assertSame(probe, surface.held());
 
-        assertFalse(surface.key(InputConstants.KEY_RETURN, false));
-        assertFalse(surface.key(InputConstants.KEY_SPACE, false), "not even the key it claims");
+        assertFalse(surface.key(Chord.of(InputConstants.KEY_RETURN)));
+        assertFalse(surface.key(Chord.of(InputConstants.KEY_SPACE)), "not even the key it claims");
         assertEquals(0, probe.acted);
         assertFalse(surface.type('a'));
         assertEquals(0, probe.typed);
@@ -293,10 +296,10 @@ class SurfaceTest {
         Surface surface = new Surface();
         Probe busy = surface.add(new Probe("apply", 0, 0));
         Probe next = surface.add(new Probe("cancel", 0, 30));
-        surface.key(InputConstants.KEY_TAB, false);
+        surface.key(Chord.of(InputConstants.KEY_TAB));
         busy.busy(true);
 
-        assertTrue(surface.key(InputConstants.KEY_TAB, false));
+        assertTrue(surface.key(Chord.of(InputConstants.KEY_TAB)));
         assertSame(next, surface.held(), "a request in flight cannot trap the keyboard");
     }
 
