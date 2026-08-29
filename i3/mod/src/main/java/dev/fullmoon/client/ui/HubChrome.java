@@ -15,7 +15,12 @@ import net.minecraft.resources.Identifier;
 public final class HubChrome {
     private HubChrome() {}
 
-    public static void masthead(Painter painter, Box content, boolean compact) {
+    public static int mastheadHeight(boolean compact) {
+        return (compact ? Tokens.Type.TITLE.leading() : Tokens.Type.DISPLAY.leading())
+            + Tokens.Space.COZY;
+    }
+
+    public static int masthead(Painter painter, Box content, boolean compact) {
         Tokens.Type.Role brand = compact ? Tokens.Type.TITLE : Tokens.Type.DISPLAY;
         int y = content.y();
         painter.fill(content.x(), Typeset.capTop(brand, y), Tokens.Stroke.FOCUS,
@@ -23,6 +28,10 @@ public final class HubChrome {
         int textX = content.x() + Tokens.Stroke.FOCUS + Tokens.Space.COZY;
         Typeset.draw(painter, brand, "Fullmoon", textX, y, Tokens.Color.INK_PRIMARY);
         connection(painter, content, y + Tokens.Space.TIGHT);
+
+        int ruleY = y + (compact ? Tokens.Type.TITLE.leading() : Tokens.Type.DISPLAY.leading()) + Tokens.Space.COZY;
+        painter.hRule(content.x(), ruleY, content.w(), Tokens.Color.LINE_STRONG);
+        return ruleY;
     }
 
     public static void connection(Painter painter, Box content, int y) {
@@ -37,7 +46,7 @@ public final class HubChrome {
         int width = Typeset.width(Tokens.Type.LABEL, status);
         int textX = content.right() - width;
         painter.dot(textX - Tokens.Space.COZY, y + Typeset.capHeight(Tokens.Type.LABEL) / 2.0f,
-            Tokens.Space.TIGHT, live ? Tokens.Color.STATUS_LIVE : Tokens.Color.STATUS_IDLE);
+            Tokens.Space.SNUG, live ? Tokens.Color.STATUS_LIVE : Tokens.Color.STATUS_IDLE);
         Typeset.draw(painter, Tokens.Type.LABEL, status, textX, y, Tokens.Color.INK_TERTIARY);
     }
 
@@ -47,7 +56,6 @@ public final class HubChrome {
         if (I18n.exists(langKey)) {
             return I18n.get(langKey);
         }
-        // Fallback for custom categories without language key
         String path = id.getPath();
         return path.substring(0, 1).toUpperCase() + path.substring(1);
     }

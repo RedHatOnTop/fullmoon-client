@@ -29,7 +29,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 
@@ -43,6 +42,7 @@ public final class KeybindsScreen extends SurfaceScreen {
     private static final int DETAIL_MIN_HEIGHT = 144;
     private static final int COMPACT_HEIGHT = 320;
     private static final int QUERY_LIMIT = 64;
+    private static final int CARD_HEIGHT = 32;
     private static final Runnable INERT = () -> {};
 
     private record Item(KeybindEntry entry, KeyMapping mapping, List<KeybindEntry> conflicts) {}
@@ -137,10 +137,10 @@ public final class KeybindsScreen extends SurfaceScreen {
         content = new Box((width - frame) / 2, edge, frame, height - edge * 2);
         footerY = content.bottom() - Tokens.Type.LABEL.leading() - Tokens.Space.COZY;
 
-        int railY = content.y() + (compact ? Tokens.Type.TITLE.leading() : Tokens.Type.DISPLAY.leading()) + Tokens.Space.COZY;
+        int railY = content.y() + HubChrome.mastheadHeight(compact);
         hub.place(new Box(content.x(), railY, content.w(), TabRail.HEIGHT));
 
-        int searchY = railY + TabRail.HEIGHT + Tokens.Space.LOOSE;
+        int searchY = railY + TabRail.HEIGHT + Tokens.Space.COZY;
         int clearWidth = clear.measure();
         search.place(new Box(content.x(), searchY,
             content.w() - clearWidth - Tokens.Space.COZY, TextField.HEIGHT));
@@ -159,7 +159,10 @@ public final class KeybindsScreen extends SurfaceScreen {
         detail = columns.rest();
 
         if (rebind != null && reset != null) {
-            int buttonY = detail.bottom() - Button.HEIGHT;
+            int cardY = body.y() + DevChrome.sectionHeadHeight()
+                + Tokens.Type.TITLE.leading() + Tokens.Space.COZY;
+            int buttonY = cardY + CARD_HEIGHT + Tokens.Space.COZY
+                + Tokens.Type.LABEL.leading() + Tokens.Space.LOOSE;
             int rebindW = rebind.measure();
             int resetW = reset.measure();
             rebind.place(new Box(detail.x(), buttonY, rebindW, Button.HEIGHT));
@@ -208,15 +211,27 @@ public final class KeybindsScreen extends SurfaceScreen {
         Typeset.draw(painter, Tokens.Type.TITLE, entry.label(), detail.x(), y,
             Tokens.Color.INK_PRIMARY);
 
-        int keyY = y + Tokens.Type.TITLE.leading() + Tokens.Space.BASE;
-        String boundText = listening ? tr("state.listening") : entry.boundKey();
-        int boundColor = listening
-            ? Tokens.Color.ACCENT
-            : (item.conflicts().isEmpty() ? Tokens.Color.INK_SECONDARY : Tokens.Color.STATUS_DANGER);
-        Typeset.draw(painter, Tokens.Type.BODY_STRONG, tr("current.key", boundText), detail.x(), keyY, boundColor);
+        int cardY = y + Tokens.Type.TITLE.leading() + Tokens.Space.COZY;
+        boolean hasConflict = !item.conflicts().isEmpty();
+        int cardBorder = listening ? Tokens.Color.ACCENT
+            : (hasConflict ? Tokens.Color.STATUS_DANGER : Tokens.Color.LINE_HAIRLINE);
 
-        int conflictY = keyY + Tokens.Type.BODY_STRONG.leading() + Tokens.Space.COZY;
-        if (!item.conflicts().isEmpty()) {
+        painter.fill(detail.x(), cardY, detail.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Color.SURFACE_SUNKEN);
+        painter.border(detail.x(), cardY, detail.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Stroke.HAIR,
+            cardBorder);
+
+        int textY = cardY + (CARD_HEIGHT - Tokens.Type.BODY_STRONG.leading()) / 2;
+        Typeset.draw(painter, Tokens.Type.BODY_STRONG, tr("entry.id", entry.id()),
+            detail.x() + Tokens.Space.COZY, textY, Tokens.Color.INK_SECONDARY);
+
+        String boundText = listening ? tr("state.listening") : entry.boundKey();
+        int boundColor = listening ? Tokens.Color.ACCENT
+            : (hasConflict ? Tokens.Color.STATUS_DANGER : Tokens.Color.INK_PRIMARY);
+        Typeset.drawRight(painter, Tokens.Type.BODY_STRONG, boundText,
+            detail.right() - Tokens.Space.COZY, textY, boundColor);
+
+        int conflictY = cardY + CARD_HEIGHT + Tokens.Space.COZY;
+        if (hasConflict) {
             StringBuilder warning = new StringBuilder(tr("conflict.warning") + ": ");
             for (int i = 0; i < item.conflicts().size(); i++) {
                 if (i > 0) warning.append(", ");
@@ -291,7 +306,7 @@ public final class KeybindsScreen extends SurfaceScreen {
 
         for (KeyMapping km : mappings) {
             String id = km.getName();
-            String cat = dev.fullmoon.client.ui.HubChrome.categoryLabel(km);
+            String cat = HubChrome.categoryLabel(km);
             String label = I18n.get(id);
             InputConstants.Key boundKey = KeyMappingHelper.getBoundKeyOf(km);
             String boundStr = boundKey.getDisplayName().getString();

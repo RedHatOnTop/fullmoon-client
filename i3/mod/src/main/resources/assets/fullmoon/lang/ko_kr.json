@@ -59,6 +59,7 @@
     "fullmoon.keybinds.results.count": "단축키 %s개",
     "fullmoon.keybinds.results.empty": "일치하는 단축키 없음",
     "fullmoon.keybinds.results.empty.detail": "동작 이름이나 키를 입력하세요.",
+    "fullmoon.keybinds.entry.id": "식별자: %s",
     "fullmoon.keybinds.current.key": "지정된 키: %s",
     "fullmoon.keybinds.action.rebind": "키 변경",
     "fullmoon.keybinds.action.listening": "키 입력 대기 중...",

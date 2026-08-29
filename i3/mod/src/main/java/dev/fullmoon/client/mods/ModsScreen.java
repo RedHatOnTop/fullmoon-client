@@ -171,7 +171,22 @@ public final class ModsScreen extends SurfaceScreen {
         int descY = authorY + Tokens.Type.LABEL.leading() + Tokens.Space.COZY;
         String desc = item.description().isBlank() ? tr("no.description") : item.description();
         Typeset.drawWrapped(painter, Tokens.Type.BODY, desc, detail.x(), descY,
-            detail.w(), height < COMPACT_HEIGHT ? 3 : 5, Tokens.Color.INK_SECONDARY);
+            detail.w(), height < COMPACT_HEIGHT ? 3 : 4, Tokens.Color.INK_SECONDARY);
+
+        int cardY = descY + Tokens.Type.BODY.leading() * 3 + Tokens.Space.GUTTER;
+        painter.fill(detail.x(), cardY, detail.w(), 32, Tokens.Radius.SM, Tokens.Color.SURFACE_SUNKEN);
+        painter.border(detail.x(), cardY, detail.w(), 32, Tokens.Radius.SM, Tokens.Stroke.HAIR,
+            Tokens.Color.LINE_HAIRLINE);
+
+        int textY = cardY + (32 - Tokens.Type.BODY_STRONG.leading()) / 2;
+        Typeset.draw(painter, Tokens.Type.BODY_STRONG, item.id(),
+            detail.x() + Tokens.Space.COZY, textY, Tokens.Color.INK_PRIMARY);
+
+        int dotX = detail.right() - Typeset.width(Tokens.Type.LABEL, "활성") - Tokens.Space.SECTION;
+        painter.dot(dotX, cardY + 16, Tokens.Space.SNUG, Tokens.Color.STATUS_LIVE);
+        Typeset.drawRight(painter, Tokens.Type.LABEL, "활성",
+            detail.right() - Tokens.Space.COZY, cardY + (32 - Tokens.Type.LABEL.leading()) / 2,
+            Tokens.Color.INK_SECONDARY);
     }
 
     private void widgets(Painter painter) {

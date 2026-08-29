@@ -28,8 +28,9 @@ import net.minecraft.network.chat.Component;
 
 /** In-game player identity and network connection surface. */
 public final class AccountScreen extends SurfaceScreen {
-    private static final int MAX_CONTENT = 540;
+    private static final int MAX_CONTENT = 580;
     private static final int COMPACT_HEIGHT = 320;
+    private static final int CARD_HEIGHT = 68;
 
     private final Screen parent;
     private final TabRail hub;
@@ -68,17 +69,21 @@ public final class AccountScreen extends SurfaceScreen {
         content = new Box((width - frame) / 2, edge, frame, height - edge * 2);
         footerY = content.bottom() - Tokens.Type.LABEL.leading() - Tokens.Space.COZY;
 
-        int railY = content.y() + (compact ? Tokens.Type.TITLE.leading() : Tokens.Type.DISPLAY.leading()) + Tokens.Space.COZY;
+        int railY = content.y() + HubChrome.mastheadHeight(compact);
         hub.place(new Box(content.x(), railY, content.w(), TabRail.HEIGHT));
 
-        int bodyY = railY + TabRail.HEIGHT + Tokens.Space.LOOSE;
+        int bodyY = railY + TabRail.HEIGHT + Tokens.Space.GUTTER;
         body = Box.between(content.x(), bodyY, content.right(), footerY - Tokens.Space.GUTTER);
 
-        int buttonY = body.bottom() - Button.HEIGHT;
+        int profileCardY = body.y() + DevChrome.sectionHeadHeight();
         int copyUuidW = copyUuid.measure();
+        copyUuid.place(new Box(body.right() - copyUuidW - Tokens.Space.COZY,
+            profileCardY + CARD_HEIGHT - Button.HEIGHT - Tokens.Space.COZY, copyUuidW, Button.HEIGHT));
+
+        int serverCardY = profileCardY + CARD_HEIGHT + Tokens.Space.GUTTER + DevChrome.sectionHeadHeight();
         int copyServerW = copyServer.measure();
-        copyUuid.place(new Box(body.x(), buttonY, copyUuidW, Button.HEIGHT));
-        copyServer.place(new Box(body.x() + copyUuidW + Tokens.Space.COZY, buttonY, copyServerW, Button.HEIGHT));
+        copyServer.place(new Box(body.right() - copyServerW - Tokens.Space.COZY,
+            serverCardY + CARD_HEIGHT - Button.HEIGHT - Tokens.Space.COZY, copyServerW, Button.HEIGHT));
     }
 
     @Override
@@ -117,26 +122,44 @@ public final class AccountScreen extends SurfaceScreen {
         boolean live = client.level != null && server != null;
         String serverStatus = live ? server.ip : tr("server.offline");
 
+        // Profile Section
         int y = body.y();
         y = DevChrome.sectionHead(painter, tr("section.profile"), body.x(), y);
-        Typeset.draw(painter, Tokens.Type.TITLE, username, body.x(), y, Tokens.Color.INK_PRIMARY);
 
-        y += Tokens.Type.TITLE.leading() + Tokens.Space.SNUG;
-        Typeset.draw(painter, Tokens.Type.LABEL, tr("type", userType), body.x(), y, Tokens.Color.INK_TERTIARY);
+        painter.fill(body.x(), y, body.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Color.SURFACE_SUNKEN);
+        painter.border(body.x(), y, body.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Stroke.HAIR,
+            Tokens.Color.LINE_HAIRLINE);
 
-        y += Tokens.Type.LABEL.leading() + Tokens.Space.SNUG;
-        Typeset.draw(painter, Tokens.Type.BODY, "UUID: " + uuid, body.x(), y, Tokens.Color.INK_SECONDARY);
+        int textX = body.x() + Tokens.Space.COZY;
+        int row1Y = y + Tokens.Space.COZY;
+        Typeset.draw(painter, Tokens.Type.TITLE, username, textX, row1Y, Tokens.Color.INK_PRIMARY);
+        Typeset.drawRight(painter, Tokens.Type.LABEL, tr("type", userType),
+            body.right() - Tokens.Space.COZY, row1Y + (Tokens.Type.TITLE.leading() - Tokens.Type.LABEL.leading()) / 2,
+            Tokens.Color.INK_TERTIARY);
 
-        y += Tokens.Type.BODY.leading() + Tokens.Space.SECTION;
+        int row2Y = row1Y + Tokens.Type.TITLE.leading() + Tokens.Space.SNUG;
+        Typeset.draw(painter, Tokens.Type.BODY, "UUID: " + uuid, textX, row2Y, Tokens.Color.INK_SECONDARY);
+
+        // Connection Section
+        y += CARD_HEIGHT + Tokens.Space.GUTTER;
         y = DevChrome.sectionHead(painter, tr("section.connection"), body.x(), y);
 
-        int dotY = (int) (y + Typeset.capHeight(Tokens.Type.LABEL) / 2.0f);
-        painter.dot(body.x() + Tokens.Space.SNUG, dotY, Tokens.Space.SNUG,
-            live ? Tokens.Color.STATUS_LIVE : Tokens.Color.STATUS_IDLE);
+        painter.fill(body.x(), y, body.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Color.SURFACE_SUNKEN);
+        painter.border(body.x(), y, body.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Stroke.HAIR,
+            Tokens.Color.LINE_HAIRLINE);
 
+        int sRow1Y = y + Tokens.Space.COZY;
+        int dotCenterY = sRow1Y + Typeset.capHeight(Tokens.Type.BODY_STRONG) / 2;
+        painter.dot(textX + Tokens.Space.SNUG, dotCenterY, Tokens.Space.SNUG,
+            live ? Tokens.Color.STATUS_LIVE : Tokens.Color.STATUS_IDLE);
         Typeset.draw(painter, Tokens.Type.BODY_STRONG, serverStatus,
-            body.x() + Tokens.Space.SECTION, y,
-            live ? Tokens.Color.INK_PRIMARY : Tokens.Color.INK_TERTIARY);
+            textX + Tokens.Space.SECTION, sRow1Y,
+            live ? Tokens.Color.INK_PRIMARY : Tokens.Color.INK_SECONDARY);
+
+        int sRow2Y = sRow1Y + Tokens.Type.BODY_STRONG.leading() + Tokens.Space.SNUG;
+        String authText = live ? tr("footer.info") : tr("server.offline");
+        Typeset.draw(painter, Tokens.Type.LABEL, authText, textX + Tokens.Space.SECTION, sRow2Y,
+            Tokens.Color.INK_TERTIARY);
     }
 
     private void widgets(Painter painter) {

@@ -28,7 +28,6 @@ import net.minecraft.client.OptionInstance;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 
@@ -40,6 +39,7 @@ public final class SettingsScreen extends SurfaceScreen {
     private static final int DETAIL_MIN_HEIGHT = 144;
     private static final int COMPACT_HEIGHT = 320;
     private static final int QUERY_LIMIT = 64;
+    private static final int CARD_HEIGHT = 32;
     private static final Runnable INERT = () -> {};
 
     private static final List<Spec> SPECS = List.of(
@@ -91,7 +91,7 @@ public final class SettingsScreen extends SurfaceScreen {
             this.selected, this::picked));
 
         Item current = current();
-        toggle = current == null ? null : surface.add(new Toggle(tr("state.enabled"),
+        toggle = current == null ? null : surface.add(new Toggle("",
             current.option().get(), this::changed));
     }
 
@@ -113,10 +113,10 @@ public final class SettingsScreen extends SurfaceScreen {
         content = new Box((width - frame) / 2, edge, frame, height - edge * 2);
         footerY = content.bottom() - Tokens.Type.LABEL.leading() - Tokens.Space.COZY;
 
-        int railY = content.y() + (compact ? Tokens.Type.TITLE.leading() : Tokens.Type.DISPLAY.leading()) + Tokens.Space.COZY;
+        int railY = content.y() + HubChrome.mastheadHeight(compact);
         hub.place(new Box(content.x(), railY, content.w(), TabRail.HEIGHT));
 
-        int searchY = railY + TabRail.HEIGHT + Tokens.Space.LOOSE;
+        int searchY = railY + TabRail.HEIGHT + Tokens.Space.COZY;
         int clearWidth = clear.measure();
         search.place(new Box(content.x(), searchY,
             content.w() - clearWidth - Tokens.Space.COZY, TextField.HEIGHT));
@@ -133,9 +133,14 @@ public final class SettingsScreen extends SurfaceScreen {
         int listY = body.y() + DevChrome.sectionHeadHeight();
         results.place(Box.between(columns.head().x(), listY, columns.head().right(), body.bottom()));
         detail = columns.rest();
+
         if (toggle != null) {
-            toggle.place(new Box(detail.x(), detail.bottom() - Toggle.HEIGHT,
-                detail.w(), Toggle.HEIGHT));
+            int cardY = body.y() + DevChrome.sectionHeadHeight()
+                + Tokens.Type.TITLE.leading() + Tokens.Space.COZY
+                + Tokens.Type.BODY.leading() * 2 + Tokens.Space.GUTTER;
+            int toggleW = Toggle.TRACK_W;
+            toggle.place(new Box(detail.right() - toggleW - Tokens.Space.COZY,
+                cardY + (CARD_HEIGHT - Toggle.TRACK_H) / 2, toggleW, Toggle.TRACK_H));
         }
     }
 
@@ -179,11 +184,22 @@ public final class SettingsScreen extends SurfaceScreen {
         int y = DevChrome.sectionHead(painter, copy.section(), detail.x(), body.y());
         Typeset.draw(painter, Tokens.Type.TITLE, copy.label(), detail.x(), y,
             Tokens.Color.INK_PRIMARY);
-        int descriptionY = y + Tokens.Type.TITLE.leading() + Tokens.Space.COZY;
-        Typeset.drawWrapped(painter, Tokens.Type.BODY, copy.description(), detail.x(), descriptionY,
+
+        int descY = y + Tokens.Type.TITLE.leading() + Tokens.Space.COZY;
+        Typeset.drawWrapped(painter, Tokens.Type.BODY, copy.description(), detail.x(), descY,
             detail.w(), height < COMPACT_HEIGHT ? 2 : 3, Tokens.Color.INK_SECONDARY);
-        Typeset.draw(painter, Tokens.Type.LABEL, tr("source.minecraft"), detail.x(),
-            toggle.bounds().y() - Tokens.Type.LABEL.leading() - Tokens.Space.COZY,
+
+        int cardY = descY + Tokens.Type.BODY.leading() * 2 + Tokens.Space.GUTTER;
+        painter.fill(detail.x(), cardY, detail.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Color.SURFACE_SUNKEN);
+        painter.border(detail.x(), cardY, detail.w(), CARD_HEIGHT, Tokens.Radius.SM, Tokens.Stroke.HAIR,
+            Tokens.Color.LINE_HAIRLINE);
+
+        int textY = cardY + (CARD_HEIGHT - Tokens.Type.BODY_STRONG.leading()) / 2;
+        Typeset.draw(painter, Tokens.Type.BODY_STRONG, tr("state.enabled"),
+            detail.x() + Tokens.Space.COZY, textY, Tokens.Color.INK_PRIMARY);
+
+        int noteY = cardY + CARD_HEIGHT + Tokens.Space.COZY;
+        Typeset.draw(painter, Tokens.Type.LABEL, tr("source.minecraft"), detail.x(), noteY,
             Tokens.Color.INK_TERTIARY);
     }
 
@@ -270,7 +286,6 @@ public final class SettingsScreen extends SurfaceScreen {
         return new Spec(id, section, option);
     }
 
-    /** Screen replacement waits for the input dispatch that requested it to finish. */
     private static void showNext(Screen screen) {
         Minecraft client = Minecraft.getInstance();
         client.schedule(() -> client.setScreen(screen));
