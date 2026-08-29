@@ -1,10 +1,88 @@
 /* ── shell: frame, titlebar, sidebar, topbar, palette, dock ── */
 
 .app {
+  position: relative;
   display: grid;
   grid-template-rows: 40px 1fr;
   height: 100vh;
   animation: fade-in var(--dur-slow) var(--ease-standard);
+  background: transparent;
+}
+
+/* ── Atmospheric Backdrop ── */
+.game-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 0%, #0F172A 0%, #060913 100%);
+}
+
+.nebula-layer {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.22;
+  mix-blend-mode: screen;
+}
+
+.nebula-gold {
+  top: -10%;
+  right: 12%;
+  width: 650px;
+  height: 550px;
+  background: radial-gradient(circle, #F5D06E 0%, rgba(245, 208, 110, 0) 70%);
+}
+
+.nebula-indigo {
+  bottom: 5%;
+  left: 5%;
+  width: 750px;
+  height: 550px;
+  background: radial-gradient(circle, #3B82F6 0%, rgba(59, 130, 246, 0) 70%);
+  opacity: 0.15;
+}
+
+.nebula-cyan {
+  top: 30%;
+  left: 20%;
+  width: 500px;
+  height: 400px;
+  background: radial-gradient(circle, #06B6D4 0%, rgba(6, 182, 212, 0) 70%);
+  opacity: 0.10;
+}
+
+.starfield {
+  position: absolute;
+  inset: 0;
+}
+
+.twinkle-star {
+  position: absolute;
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 0 4px #FFFFFF;
+  animation: twinkle ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { transform: scale(0.8); opacity: 0.2; }
+  100% { transform: scale(1.3); opacity: 0.9; }
+}
+
+.backdrop-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 45%, rgba(3, 5, 10, 0.75) 100%);
+}
+
+.backdrop-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 .shell {

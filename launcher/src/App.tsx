@@ -6,6 +6,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import { PlayDock } from "./components/PlayDock";
 import { ProgressDock, Toasts } from "./components/Docks";
 import { LaunchOverlay } from "./widgets/LaunchOverlay";
+import { AtmosphericBackdrop } from "./widgets/AtmosphericBackdrop";
 import { Logo } from "./components/Logo";
 import { HomeScreen } from "./screens/Home";
 import { ModsScreen } from "./screens/Mods";
@@ -63,6 +64,7 @@ export default function App() {
   return (
     <div className="app">
       <TitleBar />
+      <AtmosphericBackdrop />
       <div className="grain" aria-hidden />
       <div className="shell">
         <Sidebar />
