@@ -457,6 +457,13 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-3);
   box-shadow: var(--shadow-2);
+  transition: transform var(--dur-slow) var(--ease-out), opacity var(--dur-slow) var(--ease-out);
+}
+
+.dock.hidden {
+  transform: translate(-50%, calc(100% + 40px));
+  opacity: 0;
+  pointer-events: none;
 }
 .dock-left { display: flex; align-items: center; gap: 6px; }
 .dock-divider { width: 1px; height: 24px; background: var(--line); }
