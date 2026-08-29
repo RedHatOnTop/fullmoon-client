@@ -17,7 +17,9 @@ const ko = {
     copy: "복사",
   },
   nav: {
-    home: "홈",
+    play: "플레이",
+    dashboard: "대시보드",
+    home: "플레이",
     instances: "인스턴스",
     mods: "모드",
     cosmetics: "코스메틱",
@@ -30,7 +32,9 @@ const ko = {
   },
   topbar: {
     sub: {
-      home: "최근 소식과 즐겨찾는 서버",
+      play: "만월 클라이언트 1클릭 시작 및 접속",
+      dashboard: "실시간 재화 원장, 공지 및 서버 통계",
+      home: "만월 클라이언트 1클릭 시작 및 접속",
       instances: "버전·모드팩별로 격리된 게임 디렉터리",
       mods: "1st-party 번들, 인스턴스별 토글",
       cosmetics: "내 클라이언트에만 보이는 나만의 치장",

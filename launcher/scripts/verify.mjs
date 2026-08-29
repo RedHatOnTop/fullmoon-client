@@ -75,18 +75,23 @@ try {
   await page.goto(URL, { waitUntil: "networkidle0", timeout: 20000 });
   await sleep(1500);
 
-  // 1. Home Dashboard (Servers)
-  await shot(page, "01-home");
+  // 1. Play Screen (Centered Hero Launchpad)
+  await shot(page, "01-play");
 
-  // 1b. Home Dashboard (Wallet Analytics)
-  await clickNav(page, "재화 통계 및 내역");
+  // 1b. Dashboard Screen (Wallet Analytics)
+  await clickNav(page, "대시보드");
+  await sleep(1000);
+  await shot(page, "01b-dashboard-wallet");
+
+  // 1c. Dashboard Screen (Servers Network)
+  await clickNav(page, "서버 관리 및 네트워크");
   await sleep(600);
-  await shot(page, "01b-wallet");
+  await shot(page, "01c-dashboard-servers");
 
-  // 1c. Home Dashboard (News Feed)
+  // 1d. Dashboard Screen (News Feed)
   await clickNav(page, "새 소식 및 패치노트");
   await sleep(600);
-  await shot(page, "01c-news");
+  await shot(page, "01d-dashboard-news");
 
   // 2. Mods Screen
   await clickNav(page, "모드");
@@ -129,12 +134,15 @@ try {
   await sleep(400);
 
   // 8. Launch Play
-  await clickNav(page, "홈");
+  await clickNav(page, "플레이");
   await sleep(600);
   await page.evaluate(() => {
-    const playBtn = [...document.querySelectorAll("button")].find(
-      (b) => b.textContent && b.textContent.includes("플레이"),
-    );
+    const playBtn =
+      document.querySelector(".massive-play-button") ||
+      document.querySelector(".playbtn-go") ||
+      [...document.querySelectorAll("button")].find(
+        (b) => b.textContent && (b.textContent.includes("PLAY NOW") || b.textContent.includes("플레이")),
+      );
     if (playBtn) playBtn.click();
   });
   await sleep(1200);

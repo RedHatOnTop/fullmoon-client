@@ -8,6 +8,8 @@ import { ProgressDock, Toasts } from "./components/Docks";
 import { LaunchOverlay } from "./widgets/LaunchOverlay";
 import { AtmosphericBackdrop } from "./widgets/AtmosphericBackdrop";
 import { Logo } from "./components/Logo";
+import { PlayScreen } from "./screens/Play";
+import { DashboardScreen } from "./screens/Dashboard";
 import { HomeScreen } from "./screens/Home";
 import { ModsScreen } from "./screens/Mods";
 import { CosmeticsScreen } from "./screens/Cosmetics";
@@ -17,7 +19,9 @@ import { useStore } from "./state/store";
 import { useT } from "./i18n";
 
 const SCREENS = {
-  home: HomeScreen,
+  play: PlayScreen,
+  dashboard: DashboardScreen,
+  home: PlayScreen,
   mods: ModsScreen,
   cosmetics: CosmeticsScreen,
   accounts: AccountsScreen,

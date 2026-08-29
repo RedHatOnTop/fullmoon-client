@@ -19,7 +19,9 @@ const en: Dict = {
     copy: "Copy",
   },
   nav: {
-    home: "Home",
+    play: "Play",
+    dashboard: "Dashboard",
+    home: "Play",
     instances: "Instances",
     mods: "Mods",
     cosmetics: "Cosmetics",
@@ -32,7 +34,9 @@ const en: Dict = {
   },
   topbar: {
     sub: {
-      home: "Latest news and favorite servers",
+      play: "Instant 1-click launch and connect",
+      dashboard: "Live economy ledger, announcements and servers",
+      home: "Instant 1-click launch and connect",
       instances: "Isolated game directories per version and modpack",
       mods: "First-party bundle, toggled per instance",
       cosmetics: "Client-side flair only you can see",

@@ -8,7 +8,8 @@ const GROUPS: Array<{ labelKey: string; items: Array<{ id: Screen; icon: IconNam
   {
     labelKey: "nav.group1",
     items: [
-      { id: "home", icon: "home" },
+      { id: "play", icon: "play" },
+      { id: "dashboard", icon: "home" },
       { id: "mods", icon: "puzzle" },
     ],
   },
