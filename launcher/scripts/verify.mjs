@@ -75,8 +75,18 @@ try {
   await page.goto(URL, { waitUntil: "networkidle0", timeout: 20000 });
   await sleep(1500);
 
-  // 1. Home Dashboard
+  // 1. Home Dashboard (Servers)
   await shot(page, "01-home");
+
+  // 1b. Home Dashboard (Wallet Analytics)
+  await clickNav(page, "재화 통계 및 내역");
+  await sleep(600);
+  await shot(page, "01b-wallet");
+
+  // 1c. Home Dashboard (News Feed)
+  await clickNav(page, "새 소식 및 패치노트");
+  await sleep(600);
+  await shot(page, "01c-news");
 
   // 2. Mods Screen
   await clickNav(page, "모드");
