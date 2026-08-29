@@ -398,3 +398,40 @@ theRegionsEdgesAreTheOnesThatCount()
   바꿨는지 모른다. 값 조절은 화살표와 드래그로 충분하다.
 - 서버가 있는 서피스는 아직 없다. 여기까지는 전부 오프라인 클라이언트 한 대에서 찍었고, 실제
   월드 위에 뜨는 표면과 HUD는 P2·P3다.
+
+## 2026-08-29 · P2 인게임 서피스 (설정, 단축키 편집 및 충돌 감지, 모드 브라우저, 계정)
+
+인게임에서 실제로 동작하는 4개 핵심 서피스(설정, 단축키, 모드, 계정)를 구현하고, 상단 `TabRail`을 통해 단일 허브로 통합했다. 모든 서피스는 `SurfaceScreen` 기반으로 단일 이벤트 파이프라인을 통과하며, 블러 처리된 스트라텀(`painter.blurredStratum()`)과 토큰 기반 디자인 시스템을 준수한다.
+
+- `ui/SurfaceScreen` — 마인크래프트 화면 입력을 `Surface` 이벤트(`press`, `release`, `pointer`, `scroll`, `key`, `type`)로 직접 변환하는 기본 추상 스크린.
+- `settings/SettingsScreen` — 검색 및 즉시 옵션 바인딩을 지원하는 마스터-디테일 설정 장부. `SettingSearch`로 NFKC 정규화 및 다국어 다중 단어 검색 지원.
+- `keybinds/KeybindsScreen` & `KeybindConflict` — 바닐라 및 클라이언트 키 바인딩 목록 표시, 충돌 실시간 감지(`status.danger` 및 경고 표시), 키 입력 대기(`listening`) 및 즉시 저장, 기본값 복원 기능.
+- `mods/ModsScreen` & `ModSearch` — `FabricLoader`로부터 활성 모드 목록 및 메타데이터(버전, 제작자, 설명, 환경)를 추출하여 표시하는 모드 브라우저.
+- `account/AccountScreen` — 플레이어 프로필(이름, UUID, 계정 유형), 서버 연결 상태(IP, 라이브 인디케이터 핑 점), UUID 및 서버 주소 클립보드 복사 기능.
+- 상단 통합 탭 레일: `설정` · `단축키` · `모드` · `계정` 4개 서피스가 단일 탭 레일로 매끄럽게 전환.
+- `ko_kr.json`, `en_us.json` 로컬라이징 완비 및 `Tokens.java` / `verify-tokens.mjs` 64개 파일 무결성 통과.
+
+### 증거
+
+`gradlew -p i3/mod clean build test --console=plain` → `BUILD SUCCESSFUL`. 테스트 **152개**, 실패 0 / 에러 0 / 스킵 0, 클래스 17개:
+
+| 클래스 | tests | failures |
+| --- | --- | --- |
+| `keybinds.KeybindTest` | 4 | 0 |
+| `layout.BoxTest` | 10 | 0 |
+| `layout.StackTest` | 7 | 0 |
+| `mods.ModSearchTest` | 1 | 0 |
+| `settings.SettingSearchTest` | 8 | 0 |
+| `text.TypesetTest` | 6 | 0 |
+| `ui.FocusTest` | 17 | 0 |
+| `ui.ListPanelTest` | 12 | 0 |
+| `ui.ListRowTest` | 6 | 0 |
+| `ui.SelectTest` | 11 | 0 |
+| `ui.SliderTest` | 8 | 0 |
+| `ui.StateTest` | 5 | 0 |
+| `ui.SurfaceTest` | 18 | 0 |
+| `ui.TabRailTest` | 6 | 0 |
+| `ui.TextFieldTest` | 17 | 0 |
+| `ui.TooltipTest` | 7 | 0 |
+| `ui.VoiceTest` | 9 | 0 |
+
