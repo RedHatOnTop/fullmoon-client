@@ -70,8 +70,8 @@ public final class FullmoonClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) ->
             ScreenKeyboardEvents.afterKeyPress(screen).register((current, key) -> {
                 if (bound(SETTINGS, key)) {
-                    if (current instanceof SettingsScreen settings) {
-                        settings.onClose();
+                    if (current instanceof dev.fullmoon.client.ui.SurfaceScreen surfaceScreen) {
+                        surfaceScreen.onClose();
                     } else {
                         client.setScreen(new SettingsScreen(current));
                     }

@@ -132,3 +132,18 @@ Four defects these captures caught:
   run against the previous one: the only pixels that moved were hints, all of them by four. The
   sides of a region are edges to align to, not walls to stand off; the gap now belongs to the
   control and to the two rules that close the column above and below.
+
+## P2 — in-game surfaces
+
+| file | what it settles |
+| --- | --- |
+| `p2-settings-960x540.png` | Settings screen opened via F9: 7 Minecraft options, search bar, toggle switch on detail pane, unified masthead with connection status dot, footer rules. |
+| `p2-keybinds-960x540.png` | Key bindings surface: 64 bindings in scrollable well, category grouping, bound key readout, conflict detection with warning indicators, rebind and reset actions. |
+| `p2-mods-960x540.png` | Active mods browser: 51 loaded Fabric mods with versions, author credits, descriptions, and environment flags. |
+| `p2-account-960x540.png` | Player identity and network session: profile username, UUID, offline/online auth badge, connection status, and clipboard copy actions. |
+
+Two defects these captures caught:
+
+- The connection status string used separate unlocalized keys across screens (`fullmoon.keybinds.server.disconnected`, etc.), leaving raw resource keys in the masthead. Unified into `HubChrome.connection` using the canonical localized string.
+- Keybinding category headers rendered raw Identifier paths (e.g. `minecraft:gameplay`). Added `HubChrome.categoryLabel` to resolve against vanilla language keys (`key.category.minecraft.gameplay` → `게임플레이`).
+

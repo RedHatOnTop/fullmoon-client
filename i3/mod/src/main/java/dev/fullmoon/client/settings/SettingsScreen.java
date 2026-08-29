@@ -14,6 +14,7 @@ import dev.fullmoon.client.render.Rgb;
 import dev.fullmoon.client.text.Typeset;
 import dev.fullmoon.client.ui.Button;
 import dev.fullmoon.client.ui.DevChrome;
+import dev.fullmoon.client.ui.HubChrome;
 import dev.fullmoon.client.ui.ListPanel;
 import dev.fullmoon.client.ui.ListRow;
 import dev.fullmoon.client.ui.SurfaceScreen;
@@ -161,27 +162,7 @@ public final class SettingsScreen extends SurfaceScreen {
 
     private void header(Painter painter) {
         boolean compact = height < COMPACT_HEIGHT;
-        Tokens.Type.Role brand = compact ? Tokens.Type.TITLE : Tokens.Type.DISPLAY;
-        int y = content.y();
-        painter.fill(content.x(), Typeset.capTop(brand, y), Tokens.Stroke.FOCUS,
-            Typeset.capHeight(brand), Tokens.Color.ACCENT);
-        int textX = content.x() + Tokens.Stroke.FOCUS + Tokens.Space.COZY;
-        Typeset.draw(painter, brand, "Fullmoon", textX, y, Tokens.Color.INK_PRIMARY);
-        connection(painter, y + Tokens.Space.TIGHT);
-    }
-
-    private void connection(Painter painter, int y) {
-        Minecraft client = Minecraft.getInstance();
-        ServerData server = client.getCurrentServer();
-        boolean live = client.level != null && server != null;
-        String status = live
-            ? (content.w() < 480 ? tr("server.live") : tr("server.connected", server.ip))
-            : tr("server.disconnected");
-        int width = Typeset.width(Tokens.Type.LABEL, status);
-        int textX = content.right() - width;
-        painter.dot(textX - Tokens.Space.COZY, y + Typeset.capHeight(Tokens.Type.LABEL) / 2.0f,
-            Tokens.Space.TIGHT, live ? Tokens.Color.STATUS_LIVE : Tokens.Color.STATUS_IDLE);
-        Typeset.draw(painter, Tokens.Type.LABEL, status, textX, y, Tokens.Color.INK_TERTIARY);
+        HubChrome.masthead(painter, content, compact);
     }
 
     private void details(Painter painter) {
