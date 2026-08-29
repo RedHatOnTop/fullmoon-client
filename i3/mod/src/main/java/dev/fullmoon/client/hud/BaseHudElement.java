@@ -10,7 +10,7 @@ import dev.fullmoon.client.text.Typeset;
 public abstract class BaseHudElement implements HudElement {
     protected static final int PADDING_H = Tokens.Space.COZY;
     protected static final int PADDING_V = Tokens.Space.SNUG;
-    protected static final int CHIP_HEIGHT = Tokens.Type.BODY_STRONG.leading() + PADDING_V * 2;
+    protected static final int CHIP_HEIGHT = 20;
 
     private final String id;
     private final String label;
@@ -105,12 +105,11 @@ public abstract class BaseHudElement implements HudElement {
             Tokens.Radius.SM, Tokens.Stroke.HAIR, Tokens.Color.LINE_HAIRLINE);
     }
 
-    /** Draws a standard single-line key-value chip with optical vertical centering. */
+    /** Draws a standard single-line key-value chip with shared baseline centering. */
     protected void drawChip(Painter painter, Box bounds, String key, String val, int dotColor) {
         drawContainer(painter, bounds);
 
-        int textY = Typeset.centred(Tokens.Type.BODY_STRONG, bounds.y(), bounds.h());
-        int labelY = Typeset.centred(Tokens.Type.LABEL, bounds.y(), bounds.h());
+        int textY = bounds.y() + (bounds.h() - 9) / 2;
         int currentX = bounds.x() + PADDING_H;
 
         if (dotColor != 0) {
@@ -120,7 +119,7 @@ public abstract class BaseHudElement implements HudElement {
         }
 
         if (key != null && !key.isEmpty()) {
-            Typeset.draw(painter, Tokens.Type.LABEL, key, currentX, labelY, Tokens.Color.INK_TERTIARY);
+            Typeset.draw(painter, Tokens.Type.LABEL, key, currentX, textY, Tokens.Color.INK_TERTIARY);
             currentX += Typeset.width(Tokens.Type.LABEL, key) + Tokens.Space.SNUG;
         }
 
