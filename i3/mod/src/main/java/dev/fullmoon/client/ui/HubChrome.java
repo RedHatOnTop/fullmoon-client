@@ -20,7 +20,7 @@ public final class HubChrome {
             + Tokens.Space.COZY;
     }
 
-    public static int masthead(Painter painter, Box content, boolean compact) {
+    public static void masthead(Painter painter, Box content, boolean compact) {
         Tokens.Type.Role brand = compact ? Tokens.Type.TITLE : Tokens.Type.DISPLAY;
         int y = content.y();
         painter.fill(content.x(), Typeset.capTop(brand, y), Tokens.Stroke.FOCUS,
@@ -28,10 +28,6 @@ public final class HubChrome {
         int textX = content.x() + Tokens.Stroke.FOCUS + Tokens.Space.COZY;
         Typeset.draw(painter, brand, "Fullmoon", textX, y, Tokens.Color.INK_PRIMARY);
         connection(painter, content, y + Tokens.Space.TIGHT);
-
-        int ruleY = y + (compact ? Tokens.Type.TITLE.leading() : Tokens.Type.DISPLAY.leading()) + Tokens.Space.COZY;
-        painter.hRule(content.x(), ruleY, content.w(), Tokens.Color.LINE_STRONG);
-        return ruleY;
     }
 
     public static void connection(Painter painter, Box content, int y) {

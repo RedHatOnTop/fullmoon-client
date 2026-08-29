@@ -337,7 +337,7 @@ public final class KeybindsScreen extends SurfaceScreen {
             String label = item.entry().label();
             String meta = item.conflicts().isEmpty()
                 ? item.entry().boundKey()
-                : "⚠ " + item.entry().boundKey();
+                : "! " + item.entry().boundKey();
             return new ListRow(label, () -> meta, INERT);
         }).toList();
     }
