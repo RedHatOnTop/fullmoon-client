@@ -183,7 +183,7 @@ export function HomeScreen() {
           >
             <Icon name="star" size={16} />
             <span>재화 통계 및 내역</span>
-            <span className="tab-badge">{wallet ? `${wallet.balance.toLocaleString("ko-KR")} C` : "모니터링"}</span>
+            <span className="tab-badge">{wallet ? `${wallet.balance.toLocaleString("ko-KR")}원` : "모니터링"}</span>
           </button>
           <button
             className={`game-nav-tab ${activeTab === "news" ? "active" : ""}`}
@@ -311,9 +311,9 @@ export function HomeScreen() {
             <div className="wallet-analytics-panel card">
               <div className="wallet-stats-overview">
                 <div className="stat-box main-balance">
-                  <span className="stat-label">보유 잔액 ({wallet?.currency ?? "코인"})</span>
+                  <span className="stat-label">보유 잔액</span>
                   <div className="stat-value-hero num">
-                    {wallet ? wallet.balance.toLocaleString("ko-KR") : "0"} <small className="unit-label">{wallet?.currency ?? "MOON"}</small>
+                    {wallet ? wallet.balance.toLocaleString("ko-KR") : "0"}<small className="unit-label">{wallet?.currency ?? "원"}</small>
                   </div>
                   <small className="stat-sub num">
                     마지막 갱신: {wallet ? fmtWhen(wallet.updatedAt) : "오프라인"}
@@ -323,7 +323,7 @@ export function HomeScreen() {
                 <div className="stat-box income">
                   <span className="stat-label">최근 총 획득량</span>
                   <div className="stat-value num text-ok">
-                    +{walletStats.income.toLocaleString("ko-KR")}
+                    +{walletStats.income.toLocaleString("ko-KR")}원
                   </div>
                   <small className="stat-sub">출석, 알바, 이벤트 보상 합산</small>
                 </div>
@@ -331,7 +331,7 @@ export function HomeScreen() {
                 <div className="stat-box expense">
                   <span className="stat-label">최근 총 사용량</span>
                   <div className="stat-value num text-danger">
-                    -{walletStats.expense.toLocaleString("ko-KR")}
+                    −{walletStats.expense.toLocaleString("ko-KR")}원
                   </div>
                   <small className="stat-sub">상점 아이템 및 코스메틱 구매</small>
                 </div>
@@ -360,10 +360,10 @@ export function HomeScreen() {
                       </div>
                       <div className="tx-amount-cell">
                         <span className={`tx-amount-text num ${tx.delta >= 0 ? "text-ok" : "text-danger"}`}>
-                          {tx.delta >= 0 ? "+" : "−"}{Math.abs(tx.delta).toLocaleString("ko-KR")} {wallet?.currency ?? "코인"}
+                          {tx.delta >= 0 ? "+" : "−"}{Math.abs(tx.delta).toLocaleString("ko-KR")} {wallet?.currency ?? "원"}
                         </span>
                         {tx.balanceAfter !== null && (
-                          <span className="tx-bal-after num">잔액 {tx.balanceAfter.toLocaleString("ko-KR")}</span>
+                          <span className="tx-bal-after num">잔액 {tx.balanceAfter.toLocaleString("ko-KR")}원</span>
                         )}
                       </div>
                     </div>
@@ -435,14 +435,13 @@ export function HomeScreen() {
           {/* Real Wallet Summary Card */}
           <section className="moon-wallet-card card">
             <div className="card-top-title">
-              <span className="stage-tag">재화 잔액</span>
-              <span className="wallet-currency num">{wallet?.currency ?? "코인"}</span>
+              <span className="stage-tag">보유 잔액</span>
+              <span className="wallet-currency num">{wallet?.currency ?? "원"}</span>
             </div>
 
             <div className="wallet-hero-amount">
-              <span className="coin-tag">MOON</span>
               <span className="amount-val num">{wallet ? wallet.balance.toLocaleString("ko-KR") : "0"}</span>
-              <span className="coin-unit">{wallet?.currency ?? "코인"}</span>
+              <span className="coin-unit">{wallet?.currency ?? "원"}</span>
             </div>
 
             <div className="wallet-quick-actions">

@@ -241,7 +241,7 @@ const DEFAULT_SETTINGS: Settings = {
 /* Wallet fixtures use the economy backend's own TX_LABELS vocabulary
    (coin-bridge-bot/src/economy/cardTheme.js) — a launcher panel that
    renames 출석 보상 or 알바 is a panel that drifts from the bot. */
-const WALLET: WalletInfo = { currency: "코인", balance: 128450, updatedAt: "2026-08-22T21:40:00Z" };
+const WALLET: WalletInfo = { currency: "원", balance: 128450, updatedAt: "2026-08-22T21:40:00Z" };
 
 const TXS: WalletTx[] = [
   { delta: -3500, reason: "discord.shop.buy", label: "상점 구매", balanceAfter: 128450, at: "2026-08-22T20:12:00Z" },

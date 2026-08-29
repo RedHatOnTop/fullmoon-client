@@ -67,7 +67,7 @@ const ko = {
   home: {
     quickJoin: "빠른 접속",
     walletTitle: "재화",
-    walletUnit: "코인",
+    walletUnit: "원",
     walletEmpty: "경제 연결이 아직 없습니다 — 서버에 접속하면 잔액이 표시됩니다.",
     srvTitle: "서버 상태",
     srvOffline: "오프라인",
