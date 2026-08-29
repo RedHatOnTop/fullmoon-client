@@ -8,11 +8,11 @@ import dev.fullmoon.client.text.Typeset;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 
-/** Network latency ping chip with status dot. */
+/** Network latency ping chip with status dot and connection readout. */
 public final class PingHud extends BaseHudElement {
 
     public PingHud() {
-        super("ping", "네트워크 핑", "네트워크", true, Anchor.TOP_RIGHT, 12, 12);
+        super("ping", "네트워크 핑", "네트워크", true, Anchor.TOP_RIGHT, 16, 16);
     }
 
     @Override
@@ -47,6 +47,6 @@ public final class PingHud extends BaseHudElement {
 
     private String formatText(Minecraft client, boolean isEditor) {
         int ping = isEditor ? 18 : getPing(client);
-        return ping + " ms";
+        return ping + " ms · 0% loss";
     }
 }

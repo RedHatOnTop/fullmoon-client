@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 public final class FpsHud extends BaseHudElement {
 
     public FpsHud() {
-        super("fps", "FPS", "성능", true, Anchor.TOP_LEFT, 12, 12 + CHIP_HEIGHT + Tokens.Space.SNUG);
+        super("fps", "FPS", "성능", true, Anchor.TOP_LEFT, 16, 42);
     }
 
     @Override
@@ -34,9 +34,10 @@ public final class FpsHud extends BaseHudElement {
 
     private String formatText(Minecraft client, boolean isEditor) {
         if (isEditor) {
-            return "144 fps";
+            return "144 fps · 6.9 ms";
         }
         int fps = client.getFps();
-        return fps + " fps";
+        double ms = fps > 0 ? (1000.0 / fps) : 0.0;
+        return String.format("%d fps · %.1f ms", fps, ms);
     }
 }

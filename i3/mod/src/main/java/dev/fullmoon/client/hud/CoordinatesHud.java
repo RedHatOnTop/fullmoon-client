@@ -15,7 +15,7 @@ import net.minecraft.world.entity.Entity;
 public final class CoordinatesHud extends BaseHudElement {
 
     public CoordinatesHud() {
-        super("coords", "좌표 및 방향", "플레이어", true, Anchor.TOP_LEFT, 12, 12);
+        super("coords", "좌표 및 방향", "플레이어", true, Anchor.TOP_LEFT, 16, 16);
     }
 
     @Override

@@ -100,7 +100,7 @@ public abstract class BaseHudElement implements HudElement {
     /** Draws a standard dark glass chip container. */
     protected void drawContainer(Painter painter, Box bounds) {
         painter.fill(bounds.x(), bounds.y(), bounds.w(), bounds.h(),
-            Tokens.Radius.SM, Rgb.alpha(Tokens.Color.SURFACE_VOID, 0.76f));
+            Tokens.Radius.SM, Rgb.alpha(Tokens.Color.SURFACE_VOID, 0.78f));
         painter.border(bounds.x(), bounds.y(), bounds.w(), bounds.h(),
             Tokens.Radius.SM, Tokens.Stroke.HAIR, Tokens.Color.LINE_HAIRLINE);
     }

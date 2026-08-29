@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 public final class ServerTickHud extends BaseHudElement {
 
     public ServerTickHud() {
-        super("tps", "서버 틱", "성능", false, Anchor.TOP_RIGHT, 12, 12 + (CHIP_HEIGHT + Tokens.Space.SNUG) * 2);
+        super("tps", "서버 틱", "성능", false, Anchor.TOP_RIGHT, 16, 68);
     }
 
     @Override

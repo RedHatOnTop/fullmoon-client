@@ -15,7 +15,7 @@ public final class ClockHud extends BaseHudElement {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     public ClockHud() {
-        super("clock", "시계", "일반", true, Anchor.TOP_RIGHT, 12, 12 + CHIP_HEIGHT + Tokens.Space.SNUG);
+        super("clock", "시계", "일반", true, Anchor.TOP_RIGHT, 16, 42);
     }
 
     @Override
