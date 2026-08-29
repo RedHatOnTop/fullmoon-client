@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 
-/** In-game coordinates, facing direction and biome chip. */
+/** In-game coordinates, facing direction and cardinal degrees readout. */
 public final class CoordinatesHud extends BaseHudElement {
 
     public CoordinatesHud() {
@@ -38,13 +38,17 @@ public final class CoordinatesHud extends BaseHudElement {
 
     private String formatText(Minecraft client, boolean isEditor) {
         if (isEditor || client.player == null) {
-            return "124.5  64.0  -320.8  (N)";
+            return "124.5  64.0  -320.8 · N (180°)";
         }
         Entity player = client.getCameraEntity() != null ? client.getCameraEntity() : client.player;
         double x = player.getX();
         double y = player.getY();
         double z = player.getZ();
         Direction dir = player.getDirection();
+        float yaw = player.getYRot();
+        int deg = Math.round(yaw % 360);
+        if (deg < 0) deg += 360;
+
         String dirName = switch (dir) {
             case NORTH -> "N";
             case SOUTH -> "S";
@@ -52,6 +56,6 @@ public final class CoordinatesHud extends BaseHudElement {
             case EAST -> "E";
             default -> "?";
         };
-        return String.format(Locale.ROOT, "%.1f  %.1f  %.1f  (%s)", x, y, z, dirName);
+        return String.format(Locale.ROOT, "%.1f  %.1f  %.1f · %s (%d°)", x, y, z, dirName, deg);
     }
 }

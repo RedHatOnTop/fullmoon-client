@@ -168,7 +168,17 @@ public final class HudEditorScreen extends Screen {
             int col = (mx - anchorBoxX) / (ANCHOR_CELL_SIZE + ANCHOR_CELL_GAP);
             int row = (my - anchorBoxY) / (ANCHOR_CELL_SIZE + ANCHOR_CELL_GAP);
             Anchor chosen = Anchor.fromGrid(col, row);
+
+            // Maintain exact on-screen position while switching anchor reference
+            int elemW = elem.measureWidth(Minecraft.getInstance());
+            int elemH = elem.measureHeight(Minecraft.getInstance());
+            int currScreenX = elem.anchor().computeX(width, elemW, elem.offsetX());
+            int currScreenY = elem.anchor().computeY(height, elemH, elem.offsetY());
+
             elem.setAnchor(chosen);
+            elem.setOffsetX(Math.max(0, chosen.computeOffsetX(width, elemW, currScreenX)));
+            elem.setOffsetY(Math.max(0, chosen.computeOffsetY(height, elemH, currScreenY)));
+
             HudElementRegistry.getInstance().save();
             return true;
         }
