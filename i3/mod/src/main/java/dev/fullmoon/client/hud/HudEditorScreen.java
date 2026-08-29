@@ -24,17 +24,18 @@ import net.minecraft.network.chat.Component;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
-/** Premier in-game HUD studio with spatial dot grid, 490px floating control pill, and bottom dock. */
+/** Premier in-game HUD studio with clean top header, centered inspector pill, and spacious bottom dock. */
 public final class HudEditorScreen extends Screen {
     private static final int SNAP = 4;
     private static final int GRID_STEP = 16;
     private static final int CORNER_LEN = 6;
     private static final int CORNER_THICK = Tokens.Stroke.FOCUS;
 
-    private static final int PILL_W = 490;
-    private static final int PILL_H = 34;
-    private static final int DOCK_H = 32;
-    private static final int DOCK_PILL_H = 22;
+    private static final int INSPECTOR_W = 340;
+    private static final int INSPECTOR_H = 34;
+    private static final int DOCK_H = 38;
+    private static final int DOCK_PILL_H = 26;
+    private static final int DOCK_PILL_GAP = 6;
     private static final int ANCHOR_CELL_SIZE = 9;
     private static final int ANCHOR_CELL_GAP = 1;
 
@@ -82,14 +83,16 @@ public final class HudEditorScreen extends Screen {
                 || elem.id().equals("ping") || elem.id().equals("clock") || elem.id().equals("keystrokes");
             elem.setEnabled(defaultEnabled);
             elem.setOffsetX(16);
-            if (elem.id().equals("fps") || elem.id().equals("clock")) {
-                elem.setOffsetY(42);
+            if (elem.id().equals("coords") || elem.id().equals("ping")) {
+                elem.setOffsetY(56);
+            } else if (elem.id().equals("fps") || elem.id().equals("clock")) {
+                elem.setOffsetY(82);
             } else if (elem.id().equals("tps")) {
-                elem.setOffsetY(68);
+                elem.setOffsetY(108);
             } else if (elem.id().equals("effects")) {
-                elem.setOffsetY(94);
+                elem.setOffsetY(134);
             } else {
-                elem.setOffsetY(16);
+                elem.setOffsetY(56);
             }
         }
         HudElementRegistry.getInstance().save();
@@ -97,20 +100,20 @@ public final class HudEditorScreen extends Screen {
 
     @Override
     protected void init() {
-        int pillX = (width - PILL_W) / 2;
-        int pillY = Tokens.Space.COZY;
-
+        int barY = 12;
         int closeW = closeBtn.measure();
         int resetW = resetBtn.measure();
 
-        closeBtn.place(new Box(pillX + PILL_W - Tokens.Space.SNUG - closeW, pillY + (PILL_H - Button.HEIGHT) / 2, closeW, Button.HEIGHT));
-        resetBtn.place(new Box(pillX + PILL_W - Tokens.Space.SNUG - closeW - Tokens.Space.SNUG - resetW, pillY + (PILL_H - Button.HEIGHT) / 2, resetW, Button.HEIGHT));
+        closeBtn.place(new Box(width - 24 - closeW, barY + (INSPECTOR_H - Button.HEIGHT) / 2, closeW, Button.HEIGHT));
+        resetBtn.place(new Box(width - 24 - closeW - Tokens.Space.COZY - resetW, barY + (INSPECTOR_H - Button.HEIGHT) / 2, resetW, Button.HEIGHT));
 
         HudElement current = selectedElement();
         if (current != null) {
+            int inspX = (width - INSPECTOR_W) / 2;
             enableToggle = surface.add(new Toggle("사용", current.enabled(), current::setEnabled));
             int toggleW = enableToggle.measure();
-            enableToggle.place(new Box(pillX + 245, pillY + (PILL_H - Toggle.HEIGHT) / 2, toggleW, Toggle.HEIGHT));
+            enableToggle.place(new Box(inspX + INSPECTOR_W - Tokens.Space.COZY - toggleW,
+                barY + (INSPECTOR_H - Toggle.HEIGHT) / 2, toggleW, Toggle.HEIGHT));
         }
     }
 
@@ -129,7 +132,7 @@ public final class HudEditorScreen extends Screen {
             int mx = (int) event.x();
             int my = (int) event.y();
 
-            // Check 3x3 Anchor grid click in pill
+            // Check 3x3 Anchor grid click in inspector pill
             if (handleAnchorGridClick(mx, my)) {
                 return true;
             }
@@ -163,10 +166,10 @@ public final class HudEditorScreen extends Screen {
         HudElement elem = selectedElement();
         if (elem == null) return false;
 
-        int pillX = (width - PILL_W) / 2;
-        int pillY = Tokens.Space.COZY;
-        int anchorBoxX = pillX + 130;
-        int anchorBoxY = pillY + (PILL_H - (ANCHOR_CELL_SIZE * 3 + ANCHOR_CELL_GAP * 2)) / 2;
+        int inspX = (width - INSPECTOR_W) / 2;
+        int inspY = 12;
+        int anchorBoxX = inspX + 135;
+        int anchorBoxY = inspY + (INSPECTOR_H - (ANCHOR_CELL_SIZE * 3 + ANCHOR_CELL_GAP * 2)) / 2;
 
         int totalGridW = ANCHOR_CELL_SIZE * 3 + ANCHOR_CELL_GAP * 2;
         int totalGridH = ANCHOR_CELL_SIZE * 3 + ANCHOR_CELL_GAP * 2;
@@ -202,7 +205,7 @@ public final class HudEditorScreen extends Screen {
             return false;
         }
 
-        int currX = dockX + Tokens.Space.SNUG;
+        int currX = dockX + Tokens.Space.LOOSE;
         int pillY = dockY + (DOCK_H - DOCK_PILL_H) / 2;
 
         for (HudElement elem : elements) {
@@ -215,7 +218,7 @@ public final class HudEditorScreen extends Screen {
                 init();
                 return true;
             }
-            currX += pillW + Tokens.Space.TIGHT;
+            currX += pillW + DOCK_PILL_GAP;
         }
         return true;
     }
@@ -304,7 +307,7 @@ public final class HudEditorScreen extends Screen {
         drawDynamicSnapGuides(painter);
         drawElements(painter);
         drawSelectedCornerTicks(painter);
-        drawControlPill(painter);
+        drawTopHeader(painter);
         drawModuleDock(painter, mouseX, mouseY);
         surface.draw(painter);
     }
@@ -412,30 +415,38 @@ public final class HudEditorScreen extends Screen {
         }
     }
 
-    private void drawControlPill(Painter painter) {
-        int pillX = (width - PILL_W) / 2;
-        int pillY = Tokens.Space.COZY;
+    private void drawTopHeader(Painter painter) {
+        int barY = 12;
 
-        // Container Floating Pill
-        painter.fill(pillX, pillY, PILL_W, PILL_H, Tokens.Radius.ROUND,
-            Rgb.alpha(Tokens.Color.SURFACE_BASE, 0.92f));
-        painter.border(pillX, pillY, PILL_W, PILL_H, Tokens.Radius.ROUND, Tokens.Stroke.HAIR,
-            Tokens.Color.LINE_HAIRLINE);
-
-        // Title & Accent Bar
+        // 1. Left Title & Accent Bar
         int capH = Typeset.capHeight(Tokens.Type.BODY_STRONG);
-        painter.fill(pillX + Tokens.Space.COZY, pillY + (PILL_H - capH) / 2,
-            Tokens.Stroke.FOCUS, capH, Tokens.Color.ACCENT);
-        int textX = pillX + Tokens.Space.COZY + Tokens.Stroke.FOCUS + Tokens.Space.SNUG;
-        Typeset.draw(painter, Tokens.Type.BODY_STRONG, "HUD Studio", textX,
-            pillY + (PILL_H - Tokens.Type.BODY_STRONG.leading()) / 2, Tokens.Color.INK_PRIMARY);
+        painter.fill(24, barY + (INSPECTOR_H - capH) / 2, Tokens.Stroke.FOCUS, capH, Tokens.Color.ACCENT);
+        int titleX = 24 + Tokens.Stroke.FOCUS + Tokens.Space.COZY;
+        Typeset.draw(painter, Tokens.Type.BODY_STRONG, "Fullmoon HUD Studio", titleX,
+            barY + (INSPECTOR_H - Tokens.Type.BODY_STRONG.leading()) / 2, Tokens.Color.INK_PRIMARY);
 
-        // 3x3 Anchor Grid
+        int snapX = titleX + Typeset.width(Tokens.Type.BODY_STRONG, "Fullmoon HUD Studio") + Tokens.Space.SNUG;
+        Typeset.draw(painter, Tokens.Type.LABEL, "· 4px 스냅", snapX,
+            barY + (INSPECTOR_H - Tokens.Type.LABEL.leading()) / 2, Tokens.Color.INK_TERTIARY);
+
+        // 2. Center Inspector Pill
         HudElement elem = selectedElement();
         if (elem != null) {
-            int anchorBoxX = pillX + 130;
+            int inspX = (width - INSPECTOR_W) / 2;
+            painter.fill(inspX, barY, INSPECTOR_W, INSPECTOR_H, Tokens.Radius.ROUND,
+                Rgb.alpha(Tokens.Color.SURFACE_BASE, 0.92f));
+            painter.border(inspX, barY, INSPECTOR_W, INSPECTOR_H, Tokens.Radius.ROUND, Tokens.Stroke.HAIR,
+                Tokens.Color.LINE_HAIRLINE);
+
+            // Selected module name on left
+            int modNameX = inspX + Tokens.Space.LOOSE;
+            Typeset.draw(painter, Tokens.Type.BODY_STRONG, elem.label(), modNameX,
+                barY + (INSPECTOR_H - Tokens.Type.BODY_STRONG.leading()) / 2, Tokens.Color.INK_PRIMARY);
+
+            // 3x3 Anchor Picker in center of inspector
+            int anchorBoxX = inspX + 135;
             int totalGridH = ANCHOR_CELL_SIZE * 3 + ANCHOR_CELL_GAP * 2;
-            int anchorBoxY = pillY + (PILL_H - totalGridH) / 2;
+            int anchorBoxY = barY + (INSPECTOR_H - totalGridH) / 2;
 
             for (int r = 0; r < 3; r++) {
                 for (int c = 0; c < 3; c++) {
@@ -453,7 +464,7 @@ public final class HudEditorScreen extends Screen {
 
             int anchorLabelX = anchorBoxX + ANCHOR_CELL_SIZE * 3 + ANCHOR_CELL_GAP * 2 + Tokens.Space.SNUG;
             Typeset.draw(painter, Tokens.Type.LABEL, elem.anchor().label(),
-                anchorLabelX, pillY + (PILL_H - Tokens.Type.LABEL.leading()) / 2, Tokens.Color.INK_SECONDARY);
+                anchorLabelX, barY + (INSPECTOR_H - Tokens.Type.LABEL.leading()) / 2, Tokens.Color.INK_SECONDARY);
         }
     }
 
@@ -468,7 +479,7 @@ public final class HudEditorScreen extends Screen {
         painter.border(dockX, dockY, dockW, DOCK_H, Tokens.Radius.ROUND, Tokens.Stroke.HAIR,
             Tokens.Color.LINE_HAIRLINE);
 
-        int currX = dockX + Tokens.Space.SNUG;
+        int currX = dockX + Tokens.Space.LOOSE;
         int pillY = dockY + (DOCK_H - DOCK_PILL_H) / 2;
 
         for (HudElement elem : elements) {
@@ -478,38 +489,39 @@ public final class HudEditorScreen extends Screen {
             boolean selected = elem.id().equals(selectedId);
 
             int bg = selected ? Rgb.alpha(Tokens.Color.SURFACE_RAISED, 0.95f)
-                : (hovered ? Rgb.alpha(Tokens.Color.SURFACE_VOID, 0.8f) : Tokens.Color.SURFACE_VOID);
+                : (hovered ? Rgb.alpha(Tokens.Color.SURFACE_VOID, 0.85f) : Tokens.Color.SURFACE_VOID);
             int border = selected ? Tokens.Color.ACCENT : Tokens.Color.LINE_HAIRLINE;
 
             painter.fill(pillBox.x(), pillBox.y(), pillBox.w(), pillBox.h(), Tokens.Radius.SM, bg);
             painter.border(pillBox.x(), pillBox.y(), pillBox.w(), pillBox.h(), Tokens.Radius.SM, Tokens.Stroke.HAIR, border);
 
-            // Status dot
+            // Status dot with generous left margin
             int dotColor = elem.enabled() ? Tokens.Color.STATUS_LIVE : Tokens.Color.INK_TERTIARY;
+            int dotX = pillBox.x() + 10;
             int dotY = pillBox.y() + pillBox.h() / 2;
-            painter.dot(pillBox.x() + Tokens.Space.SNUG + Tokens.Space.TIGHT, dotY, Tokens.Space.TIGHT, dotColor);
+            painter.dot(dotX, dotY, 2, dotColor);
 
-            int textX = pillBox.x() + Tokens.Space.SNUG + Tokens.Space.TIGHT * 2 + Tokens.Space.SNUG;
+            // Label text starting after dot with generous right margin
+            int textX = dotX + 8;
             int textY = pillBox.y() + (DOCK_PILL_H - Tokens.Type.LABEL.leading()) / 2;
             int ink = elem.enabled() ? Tokens.Color.INK_PRIMARY : Tokens.Color.INK_TERTIARY;
 
             Typeset.draw(painter, Tokens.Type.LABEL, elem.label(), textX, textY, ink);
 
-            currX += pillW + Tokens.Space.TIGHT;
+            currX += pillW + DOCK_PILL_GAP;
         }
     }
 
     private int measureDockPillWidth(HudElement elem) {
-        return Tokens.Space.SNUG + Tokens.Space.TIGHT * 2 + Tokens.Space.SNUG
-            + Typeset.width(Tokens.Type.LABEL, elem.label()) + Tokens.Space.SNUG;
+        return 10 + 4 + 8 + Typeset.width(Tokens.Type.LABEL, elem.label()) + 10;
     }
 
     private int computeDockWidth() {
-        int total = Tokens.Space.SNUG * 2;
+        int total = Tokens.Space.LOOSE * 2;
         for (int i = 0; i < elements.size(); i++) {
             total += measureDockPillWidth(elements.get(i));
             if (i < elements.size() - 1) {
-                total += Tokens.Space.TIGHT;
+                total += DOCK_PILL_GAP;
             }
         }
         return total;

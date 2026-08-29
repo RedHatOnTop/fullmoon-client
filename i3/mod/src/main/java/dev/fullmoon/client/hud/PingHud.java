@@ -12,7 +12,7 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 public final class PingHud extends BaseHudElement {
 
     public PingHud() {
-        super("ping", "네트워크 핑", "네트워크", true, Anchor.TOP_RIGHT, 16, 16);
+        super("ping", "네트워크 핑", "네트워크", true, Anchor.TOP_RIGHT, 16, 56);
     }
 
     @Override

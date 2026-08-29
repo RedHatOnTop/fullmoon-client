@@ -16,7 +16,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 public final class StatusEffectsHud extends BaseHudElement {
 
     public StatusEffectsHud() {
-        super("effects", "상태 효과", "플레이어", false, Anchor.TOP_RIGHT, 16, 94);
+        super("effects", "상태 효과", "플레이어", false, Anchor.TOP_RIGHT, 16, 134);
     }
 
     @Override

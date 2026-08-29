@@ -24,7 +24,7 @@ public final class ArmorHud extends BaseHudElement {
     };
 
     public ArmorHud() {
-        super("armor", "방어구 상태", "플레이어", false, Anchor.BOTTOM_LEFT, 12, 16);
+        super("armor", "방어구 상태", "플레이어", false, Anchor.BOTTOM_LEFT, 16, 56);
     }
 
     @Override

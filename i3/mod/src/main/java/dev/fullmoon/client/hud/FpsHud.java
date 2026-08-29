@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 public final class FpsHud extends BaseHudElement {
 
     public FpsHud() {
-        super("fps", "FPS", "성능", true, Anchor.TOP_LEFT, 16, 42);
+        super("fps", "FPS", "성능", true, Anchor.TOP_LEFT, 16, 82);
     }
 
     @Override

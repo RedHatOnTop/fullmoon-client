@@ -25,7 +25,7 @@ public final class KeystrokesHud extends BaseHudElement {
     private static boolean lastRmbState = false;
 
     public KeystrokesHud() {
-        super("keystrokes", "키스트로크", "플레이어", true, Anchor.BOTTOM_RIGHT, 16, 16);
+        super("keystrokes", "키스트로크", "플레이어", true, Anchor.BOTTOM_RIGHT, 16, 56);
     }
 
     public static void recordClick(boolean lmb, boolean rmb) {
