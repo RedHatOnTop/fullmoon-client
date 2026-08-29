@@ -23,6 +23,9 @@ public final class HudElementRegistry {
         register(new PingHud());
         register(new ClockHud());
         register(new KeystrokesHud());
+        register(new ServerTickHud());
+        register(new ArmorHud());
+        register(new StatusEffectsHud());
 
         try {
             configPath = FabricLoader.getInstance().getConfigDir().resolve("fullmoon").resolve("hud.json");
