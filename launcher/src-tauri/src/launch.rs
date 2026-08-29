@@ -339,6 +339,7 @@ fn watch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeMap;
 
     #[test]
     fn substitutes_known_keys() {
@@ -357,5 +358,80 @@ mod tests {
         assert_eq!(level_of("[12:00:00] [main/ERROR]: boom"), "ERROR");
         assert_eq!(level_of("[12:00:00] [main/WARN]: hmm"), "WARN");
         assert_eq!(level_of("[12:00:00] [main/INFO]: fine"), "INFO");
+    }
+
+    #[test]
+    fn plan_composes_jvm_and_game_args_correctly() {
+        use crate::version::Arguments;
+
+        let version = VersionJson {
+            id: "1.21.4".into(),
+            main_class: Some("net.minecraft.client.main.Main".into()),
+            inherits_from: None,
+            asset_index: None,
+            assets: Some("17".into()),
+            downloads: BTreeMap::new(),
+            libraries: vec![],
+            arguments: Some(Arguments {
+                jvm: vec![
+                    Arg::Plain("-Djava.library.path=${natives_directory}".into()),
+                    Arg::Plain("-cp".into()),
+                    Arg::Plain("${classpath}".into()),
+                ],
+                game: vec![
+                    Arg::Plain("--username".into()),
+                    Arg::Plain("${auth_player_name}".into()),
+                    Arg::Plain("--version".into()),
+                    Arg::Plain("${version_name}".into()),
+                    Arg::Plain("--gameDir".into()),
+                    Arg::Plain("${game_directory}".into()),
+                ],
+            }),
+            minecraft_arguments: None,
+            java_version: None,
+        };
+
+        let inst = Instance {
+            id: "test-instance".into(),
+            name: "Test Instance".into(),
+            version_id: "1.21.4".into(),
+            loader: "vanilla".into(),
+            installed: true,
+            installing: None,
+            memory_mb: 4096,
+            icon_hue: 200,
+            created_at: "2026-08-29T00:00:00Z".into(),
+            last_played_at: None,
+            quick_play_server: None,
+        };
+
+        let settings = Settings {
+            java_path: Some("/usr/bin/java".into()),
+            java_args: "-XX:+UseG1GC".into(),
+            memory_mb: 4096,
+            concurrency: 8,
+            theme: "dark".into(),
+            accent: "#F5D06E".into(),
+            language: "ko".into(),
+            telemetry: false,
+        };
+
+        let account = Account {
+            uuid: "00000000-0000-0000-0000-000000000000".into(),
+            username: "Player123".into(),
+            skin_hue: 200,
+            skin_url: None,
+            source: "offline".into(),
+            capes: vec![],
+        };
+
+        let plan = plan(&version, &inst, &settings, &account, None, None).unwrap();
+        assert_eq!(plan.program, PathBuf::from("/usr/bin/java"));
+        assert!(plan.args.contains(&"-Xmx4096M".to_string()));
+        assert!(plan.args.contains(&"-Xms2048M".to_string()));
+        assert!(plan.args.contains(&"-XX:+UseG1GC".to_string()));
+        assert!(plan.args.contains(&"net.minecraft.client.main.Main".to_string()));
+        assert!(plan.args.contains(&"--username".to_string()));
+        assert!(plan.args.contains(&"Player123".to_string()));
     }
 }
