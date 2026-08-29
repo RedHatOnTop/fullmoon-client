@@ -2445,13 +2445,53 @@
    PLAY SCREEN — Centered Hero Launchpad (Dawn/Hoyo Inspired)
    ══════════════════════════════════════════════════════════════════ */
 
+.play-screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  width: 100%;
+}
+
 .play-screen {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 20px;
-  min-height: 100%;
+  min-height: calc(100vh - 180px);
   padding: 10px 0 0;
+}
+
+.play-scroll-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 10px 0;
+}
+
+.play-scroll-divider .divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
+
+.scroll-indicator-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(16, 22, 40, 0.6);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(8px);
+}
+
+.play-dashboard-section {
+  width: 100%;
 }
 
 .play-center-stage {
@@ -2632,7 +2672,7 @@
 
 .play-servers-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 

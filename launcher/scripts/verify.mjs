@@ -78,15 +78,15 @@ try {
   // 1. Play Screen (Centered Hero Launchpad)
   await shot(page, "01-play");
 
-  // 1b. Dashboard Screen (Wallet Analytics)
+  // 1b. Dashboard Screen (Servers Overview)
   await clickNav(page, "대시보드");
   await sleep(1000);
-  await shot(page, "01b-dashboard-wallet");
+  await shot(page, "01b-dashboard-servers");
 
-  // 1c. Dashboard Screen (Servers Network)
-  await clickNav(page, "서버 관리 및 네트워크");
+  // 1c. Dashboard Screen (Wallet Analytics)
+  await clickNav(page, "재화 통계 및 내역");
   await sleep(600);
-  await shot(page, "01c-dashboard-servers");
+  await shot(page, "01c-dashboard-wallet");
 
   // 1d. Dashboard Screen (News Feed)
   await clickNav(page, "새 소식 및 패치노트");

@@ -217,8 +217,9 @@ const NEWS: NewsItem[] = [
 ];
 
 const SERVERS: ServerEntry[] = [
-  { id: "s1", name: "풀문 로비", address: "lobby.fullmoon.ink", motd: "만월의 정원 — 26.1.2", players: 14, maxPlayers: 120, pingMs: 9, hue: 45 },
-  { id: "s2", name: "생야생", address: "wild.fullmoon.ink", motd: "시즌 1 — 첫 야생", players: 37, maxPlayers: 120, pingMs: 11, hue: 170 },
+  { id: "s1", name: "로비", address: "lobby.fullmoon.ink", motd: "만월의 정원 — 26.1.2", players: 14, maxPlayers: 120, pingMs: 9, hue: 45 },
+  { id: "s2", name: "야생", address: "wild.fullmoon.ink", motd: "시즌 1 — 첫 야생", players: 37, maxPlayers: 120, pingMs: 11, hue: 170 },
+  { id: "s3", name: "훈련장", address: "practice.fullmoon.ink", motd: "전투·점프맵 훈련장", players: 8, maxPlayers: 60, pingMs: 10, hue: 270 },
 ];
 
 const JAVA_RUNTIMES: JavaRuntime[] = [
