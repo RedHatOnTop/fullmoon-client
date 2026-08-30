@@ -116,7 +116,7 @@ export function CosmeticsScreen() {
               />
             </div>
             <span className="cos-stage-drag mono">{t("cosmetics.dragHint")}</span>
-            <span className="cos-stage-label mono">client-side render</span>
+            <span className="cos-stage-label mono">클라이언트 실시간 렌더링</span>
           </div>
         </section>
 

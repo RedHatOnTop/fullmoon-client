@@ -73,7 +73,7 @@ export function HomeScreen() {
 
         <div className="game-hero-body">
           <div className="hero-eyebrow">
-            <span>OFFICIAL CLIENT</span>
+            <span>공식 클라이언트</span>
             <span className="divider">/</span>
             <span>FABRIC 26.1.2</span>
           </div>
@@ -143,9 +143,9 @@ export function HomeScreen() {
         <div className="game-hero-visual" aria-hidden="true">
           <Moonrise className="game-hero-moon" />
           <div className="game-hero-brand-tag">
-            <span>{BRAND.name.toUpperCase()} CLIENT</span>
+            <span>풀문 공식 클라이언트</span>
             <b className="num">1.0.0</b>
-            <small className="num">{target ? `${target.id} target` : "26.1.2"}</small>
+            <small className="num">{target ? `${target.id} 타겟` : "26.1.2 타겟"}</small>
           </div>
         </div>
       </section>
@@ -386,7 +386,7 @@ export function HomeScreen() {
           {/* Real 3D Avatar Stage */}
           <section className="avatar-stage-card card">
             <div className="card-top-title">
-              <span className="stage-tag">3D DRESSROOM</span>
+              <span className="stage-tag">3D 드레스룸</span>
               <button className="stage-jump-btn" onClick={() => setScreen("cosmetics")}>
                 <Icon name="feather" size={13} />
                 <span>장착 변경</span>
