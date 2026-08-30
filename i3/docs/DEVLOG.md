@@ -891,3 +891,103 @@ those two frames the installed bridge was restored to
 served the first two sessions, and the same value P7 recorded restoring to — and Paper was stopped over
 RCON with no JVM left holding `:25566` or `:25577`. Nothing was installed on the production Oracle host
 at any point in this phase.
+
+## 2026-08-30 · MapLayout — the map's decisions move inside the gate
+
+P9 shipped with a sentence attached to it: "`MapScreen` is not gated and has no unit test. Every claim
+above about the hint, the click, the band and `Enter` is a claim about the frames." Half of that was a
+boundary and half of it was a gap. The boundary is real — a `Screen` reaches `Minecraft.getInstance()`,
+a `Painter` and `I18n` in nearly every method, and nothing in this repo can call it without a running
+client. The gap was that the screen's *arithmetic* was in there too, and arithmetic is exactly what a
+test can hold.
+
+`MapLayout` is that arithmetic, 171 lines and 44 gated ones, at 100% of both counters. `MapScreen` went
+from 589 lines to 556 and now holds only what needs a client.
+
+- `MapLayout.of(width, height, actionWidth, actionHeight)` divides the window: the compact threshold,
+  the page margin, header and footer heights, the rail width, the plane snapped to whole `CELL_SIZE`
+  cells, the action band's height from the type it stacks, and the button's box inside it. `init()` is
+  one call and one `request.place(layout.action())`.
+- The rail's vertical steps became named positions — `positionHeading`, `centreFact`, `scaleFact`,
+  `routesHeading`, `routesTop`, `routeRow(index)` — instead of a `y` cursor that each drawing method
+  advanced and returned. `section` no longer returns an `int`, because a heading is not a cursor.
+- `routeCapacity`, `visibleRoutes` and `beyond` replace the loop that broke when the next row would
+  cross the band. `whatTheRailShowsPlusWhatItAdmitsToIsEveryPublishedRoute` is the invariant the rail's
+  `목록 밖 N개` depends on, and it is now a test rather than a frame.
+- `cellAt(px, py, snapshot)` is the hit test: off-plane answers empty, and on-plane it measures from
+  the raster, not from the slot the raster sits in. `pointerCellsAreMeasuredFromThePlaneNotTheSlot` is
+  the one that would have caught an off-by-a-margin, which at `칸당 16블록` is several routes wide.
+- `raster` and `plot` moved out of `MapCanvas` into `MapLayout`, and `MapCanvas` calls them. P9 had
+  made them public so the screen could round the way the ring was drawn; the rounding rule and the
+  geometry that uses it now live together, and there is still exactly one of it.
+
+`MapLayout.NONE` exists because `of(0, 0, …)` is not an empty layout. A window of zero still produces
+a 3×3 plane at (12, 60) — `Math.max(CELL_SIZE, …)` guarantees it — so `map().holds(x, y)` answered
+`true` for a pixel in the corner before `init()` had run. The all-`Box.EMPTY` sentinel is the pre-`init`
+value; nine pixels of live hit area is the kind of thing that is invisible until it is a bug report
+about a click that did something on a screen that was not up yet.
+
+`node design/verify-tokens.mjs` failed the first time, on `MapLayoutTest.java:25`: the snapshot fixture
+filled its cells with `0xFF000000`. The scanner is right and the fix is the sibling tests' own habit —
+`TerrainSnapshot.Cell.unmapped(7)`, the same meaningless small int `TerrainSnapshotTest` and
+`TerrainSampleTest` use, because a fixture that needs a snapshot's *dimensions* has no business naming
+a colour.
+
+### Gates on the committed tree
+
+```text
+./gradlew -p . clean test jacocoTestReport jacocoTestCoverageVerification
+  --no-build-cache --rerun-tasks                          → 7 tasks executed, 27 suites,
+                                                            232 tests, 0 failures, 0 errors, 0 skipped
+node design/verify-tokens.mjs                             → scanned 106 file(s)
+                                                            no colour or motion literals outside the token block
+node generate.mjs (in design/)                            → all contrast floors met,
+                                                            status.warn on surface.base 9.35 : 1 (>= 3)
+```
+
+The gated core is 96.18% line and 89.30% branch, up from P9's 95.90% and 88.92%. `MapLayout` is
+44/44 lines and 14/14 branches; `MapLayoutTest` is 17 tests. Every other gated class is where P9 left
+it — `MapMarkers` 36/36 and 34/34, `MapViewport` 32/32 and 12/12, `TerrainSnapshot` 26/26 and 24/24,
+`WorldNames` 9/9 and 12/12, `WarpRoutes` 13/13 and 4/4.
+
+What is still outside the gate is now only client runtime: drawing, `I18n` lookups, terrain sampling
+off `Minecraft.getInstance()`, the channel send, and the key and mouse dispatch `Screen` owns. That is
+a boundary with a reason, not a gap with an excuse.
+
+### Executed Paper flow
+
+A refactor that claims to preserve behaviour has to be run. Local Paper on `:25566` (non-production),
+shipped `FullmoonBridge.jar` at `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c` —
+no fixture installed, so nothing to restore — and two capture sessions retaking P9's baselines:
+
+```sh
+timeout 900 python3 tools/capture.py /tmp/p9r-960 --geometry 1920x1080 --scale 2 --server 127.0.0.1:25566 \
+  "hint:wait=8,M,wait=3,move=832x181,click,wait=2,move=362x455" \
+  "chosen:click"
+timeout 900 python3 tools/capture.py /tmp/p9r-640 --geometry 1280x720 --scale 2 --server 127.0.0.1:25566 \
+  "compact:wait=8,M,wait=3,move=554x169,click,wait=2,move=233x131"
+```
+
+```text
+[19:55:22] (Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[19:55:27] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+[19:55:32] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[19:56:49] (Fullmoon/Map) Map open: 148x88 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[19:56:54] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+```
+
+Those two raster sizes are the claim. 226×140 and 148×88 are the cell counts P8 and P9 logged at the
+same two window sizes, which means the extracted `of()` and `raster()` divide the window into the same
+plane the shipped code did — and the `Map route chosen:` lines mean the extracted `cellAt` and `plot`
+land on the same marker pixels: rail row 0 at GUI (832, 181) chose `palace_gate`, and the click at
+(362, 455) chose `aux_palace at 500 16`, the arithmetic P9 wrote out longhand.
+
+The frames agree. `p9r-map-hint-960x540.png` is layout-identical to `p9-map-hint-960x540.png` — same
+rail rows, `중심 500 -100`, `축척 칸당 2블록`, `항로 6곳`, the same hint plate `별궁 중앙 홀 · X 500 Z 16`,
+the same marker plates and footer legend — and `p9r-map-chosen-960x540.png` still has `별궁 중앙 홀`
+chosen with `중심` unmoved. `p9r-map-compact-640x360.png` is the compact branch: origin (12, 60),
+148×88, two rail rows and `목록 밖 4개`, nothing clipped. The differences are session facts only —
+`불러온 지형 81%` against the baseline's `89%`, and the player mark where Paper placed these runs
+(`502.5, 72.0, -15.5` and `503.5, 72.0, -16.5`) rather than P9's. Neither session asks for a teleport:
+the extraction moved where a marker is, not what confirming one does, and P9's four warp-state frames
+still carry that half. Nothing was installed on the production Oracle host.

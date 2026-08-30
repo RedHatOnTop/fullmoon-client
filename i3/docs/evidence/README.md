@@ -289,3 +289,30 @@ all three sessions, which is worth stating plainly rather than dressing a clean 
 What they carry that the tests cannot is the hint text over a live raster, the plane holding still
 under a marker click, the loading and resolved states of one button, and a teleport that visibly moved
 the player.
+
+## P9-R — the MapLayout extraction, held against P9's own frames
+
+`MapScreen` shipped in P9 with the sentence "not gated and has no unit test" attached to it. Its
+layout arithmetic and its hit test are pure and now live in `MapLayout`, gated at 100% of 44 lines
+and 14 branches. A refactor that keeps a screen's behaviour has to be shown keeping it, so these
+three frames are the P9 baselines retaken on the extracted code.
+
+| file | what it settles |
+| --- | --- |
+| `p9r-map-hint-960x540.png` | The same session shape as `p9-map-hint-960x540.png`: rail row 0 clicked, then the pointer parked at GUI (362, 455). Rail rows, `중심 500 -100`, `축척 칸당 2블록`, `항로 6곳`, the hint plate `별궁 중앙 홀 · X 500 Z 16`, the marker plates and the footer legend all land where the baseline has them. `MapLayout.cellAt` reaches the marker `MapScreen`'s deleted copy reached. |
+| `p9r-map-chosen-960x540.png` | One click later, `별궁 중앙 홀` chosen in the band and lit in the rail with `중심` still `500 -100` — P9's sharpest frame, redrawn from `MapLayout.plot` instead of `MapCanvas.plot`. |
+| `p9r-map-compact-640x360.png` | The compact branch of `MapLayout.of`, which is the one worth a second frame: edge `Tokens.Space.LOOSE`, raster origin (12, 60), 148×88 cells, `routeCapacity` 2, so two rail rows and `목록 밖 4개`, band and live `이동 요청` uncropped. |
+| `p9r-live-client.log` / `p9r-live-server.log` | `Map open: 226x140 cells` and `Map open: 148x88 cells` — the same two rasters P8 and P9 logged — against Paper's handshake and `6 waypoint(s)` for both sessions. |
+
+No fixture was installed and nothing was owed one. Both sessions ran the shipped
+`FullmoonBridge.jar` at `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, the
+value P9 recorded restoring to, so there was nothing to restore afterwards. Neither session asks for
+a teleport: the extraction touched where a marker is, not what happens when one is confirmed, and
+P9's four warp-state frames still carry that. Nothing was installed on the production Oracle host.
+
+The frames differ from the baselines in two places, both session facts rather than layout. The
+footer reads `불러온 지형 81%` against the baseline's `89%`, because chunk load is a race with the
+rig's shutter; and the player mark sits where Paper placed this run — `502.5, 72.0, -15.5` and
+`503.5, 72.0, -16.5` — not where it placed the P9 runs. The compact frame also has `만월궁 정문`
+chosen where the baseline has `만월궁 대전`: this session clicked rail row 0 and then only hovered
+the 대전 marker, which is the hint-without-choosing half of the contract at the compact size.

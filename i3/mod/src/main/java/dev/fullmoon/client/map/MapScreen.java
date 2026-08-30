@@ -45,31 +45,14 @@ import org.slf4j.LoggerFactory;
  */
 public final class MapScreen extends Screen {
     private static final Logger LOG = LoggerFactory.getLogger("Fullmoon/Map");
-    private static final int CELL_SIZE = 3;
     private static final int PAN_CELLS = 12;
-    private static final int COMPACT_WIDTH = 700;
-    private static final int HEADER_HEIGHT = 48;
-    private static final int FOOTER_HEIGHT = 24;
-    private static final int RAIL_WIDTH = 208;
-    private static final int COMPACT_RAIL_WIDTH = 148;
-    private static final int ROUTE_ROW_HEIGHT = 34;
-
-    /**
-     * How near the pointer has to be, in cells, to be on a marker. Two and a half cells is the
-     * outer ring {@link MapCanvas} draws around a chosen one: the target a player aims at is the
-     * ring they can see, not the block under it.
-     */
-    private static final double HIT_CELLS = 2.5;
 
     private final Screen parent;
     private final Surface surface = new Surface();
     private final Button request;
     private MapViewport viewport;
     private TerrainSample terrain;
-    private Box content = Box.EMPTY;
-    private Box map = Box.EMPTY;
-    private Box rail = Box.EMPTY;
-    private Box band = Box.EMPTY;
+    private MapLayout layout = MapLayout.NONE;
     private List<RouteHit> routeHits = List.of();
     private List<MapMarkers.Placed> placed = List.of();
     private String selectedId = "";
@@ -100,22 +83,8 @@ public final class MapScreen extends Screen {
 
     @Override
     protected void init() {
-        int edge = width < COMPACT_WIDTH ? Tokens.Space.LOOSE : Tokens.Space.SECTION;
-        content = new Box(edge, edge, width - edge * 2, height - edge * 2);
-        Box body = Box.between(content.x(), content.y() + HEADER_HEIGHT,
-            content.right(), content.bottom() - FOOTER_HEIGHT);
-        int railWidth = width < COMPACT_WIDTH ? COMPACT_RAIL_WIDTH : RAIL_WIDTH;
-        Box.Split columns = body.splitLeft(body.w() - railWidth - Tokens.Space.SECTION,
-            Tokens.Space.SECTION);
-        Box mapSlot = columns.head();
-        map = new Box(mapSlot.x(), mapSlot.y(),
-            Math.max(CELL_SIZE, mapSlot.w() / CELL_SIZE * CELL_SIZE),
-            Math.max(CELL_SIZE, mapSlot.h() / CELL_SIZE * CELL_SIZE));
-        rail = columns.rest();
-        band = new Box(rail.x(), rail.bottom() - bandHeight(), rail.w(), bandHeight());
-        int buttonWidth = Math.min(band.w(), Math.max(request.measure(), band.w() * 2 / 3));
-        request.place(new Box(band.right() - buttonWidth, band.bottom() - Button.HEIGHT,
-            buttonWidth, Button.HEIGHT));
+        layout = MapLayout.of(width, height, request.measure(), Button.HEIGHT);
+        request.place(layout.action());
         refreshTerrain();
         // The map sends one packet and only when a player asks for it, so this line is what pairs a
         // capture with the server that published the routes the frame is marking.
@@ -153,7 +122,7 @@ public final class MapScreen extends Screen {
 
         Painter painter = new Painter(gfx);
         header(painter);
-        MapCanvas.draw(painter, map, CELL_SIZE, terrain, viewport,
+        MapCanvas.draw(painter, layout.map(), MapLayout.CELL_SIZE, terrain, viewport,
             new MapCanvas.Marks(placed, selectedId,
                 under.map(MapMarkers.Placed::id).orElse(""), true), playerPoint());
         rail(painter);
@@ -194,11 +163,11 @@ public final class MapScreen extends Screen {
             return true;
         }
         if (key == InputConstants.KEY_EQUALS || key == InputConstants.KEY_ADD) {
-            zoom(true, map.midX(), map.midY());
+            zoom(true, layout.map().midX(), layout.map().midY());
             return true;
         }
         if (key == InputConstants.KEY_MINUS) {
-            zoom(false, map.midX(), map.midY());
+            zoom(false, layout.map().midX(), layout.map().midY());
             return true;
         }
         // Enter without the button focused still asks, because a player who has just clicked a
@@ -219,7 +188,7 @@ public final class MapScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX,
             double scrollY) {
-        if (!map.holds(mouseX, mouseY) || scrollY == 0.0) {
+        if (!layout.map().holds(mouseX, mouseY) || scrollY == 0.0) {
             return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
         }
         zoom(scrollY > 0.0, (int) mouseX, (int) mouseY);
@@ -265,6 +234,7 @@ public final class MapScreen extends Screen {
     }
 
     private void header(Painter painter) {
+        Box content = layout.content();
         int brandY = content.y();
         painter.fill(content.x(), Typeset.capTop(Tokens.Type.DISPLAY, brandY),
             Tokens.Stroke.FOCUS, Typeset.capHeight(Tokens.Type.DISPLAY), Tokens.Color.ACCENT);
@@ -275,42 +245,40 @@ public final class MapScreen extends Screen {
             brandY + Tokens.Type.DISPLAY.leading(), Tokens.Color.INK_TERTIARY);
         Typeset.drawRight(painter, Tokens.Type.LABEL, tr("authority"), content.right(),
             brandY + Tokens.Space.TIGHT, Tokens.Color.INK_TERTIARY);
-        painter.hRule(content.x(), content.y() + HEADER_HEIGHT - Tokens.Space.COZY,
+        painter.hRule(content.x(), layout.headerBottom() - Tokens.Space.COZY,
             content.w(), Tokens.Color.LINE_STRONG);
     }
 
     private void rail(Painter painter) {
+        Box rail = layout.rail();
         painter.vRule(rail.x() - Tokens.Space.LOOSE, rail.y(), rail.h(),
             Tokens.Color.LINE_HAIRLINE);
-        int y = section(painter, tr("position"), rail.y());
-        drawFact(painter, tr("centre"), coordinate(viewport.centerX(), viewport.centerZ()), y);
-        y += Tokens.Type.BODY.leading() + Tokens.Space.SNUG;
-        drawFact(painter, tr("scale"), tr("scale.value", viewport.blocksPerCell()), y);
-        y += Tokens.Type.BODY.leading() + Tokens.Space.SECTION;
+        section(painter, tr("position"), layout.positionHeading());
+        drawFact(painter, tr("centre"), coordinate(viewport.centerX(), viewport.centerZ()),
+            layout.centreFact());
+        drawFact(painter, tr("scale"), tr("scale.value", viewport.blocksPerCell()),
+            layout.scaleFact());
 
         List<BridgeProtocol.Waypoint> routes = currentRoutes();
-        y = section(painter, tr("routes", routes.size()), y);
+        section(painter, tr("routes", routes.size()), layout.routesHeading());
+        int shown = layout.visibleRoutes(routes.size());
         List<RouteHit> hits = new java.util.ArrayList<>();
-        int bottom = band.y() - Tokens.Space.GUTTER;
-        for (BridgeProtocol.Waypoint route : routes) {
-            if (y + ROUTE_ROW_HEIGHT > bottom) {
-                break;
-            }
-            Box row = new Box(rail.x(), y, rail.w(), ROUTE_ROW_HEIGHT);
-            drawRoute(painter, row, route);
-            hits.add(new RouteHit(row, route));
-            y += ROUTE_ROW_HEIGHT;
+        for (int index = 0; index < shown; index++) {
+            Box row = layout.routeRow(index);
+            drawRoute(painter, row, routes.get(index));
+            hits.add(new RouteHit(row, routes.get(index)));
         }
         routeHits = List.copyOf(hits);
+        int below = layout.routeRow(shown).y();
         if (routes.isEmpty()) {
-            Typeset.drawWrapped(painter, Tokens.Type.BODY, tr("routes.empty"), rail.x(), y,
+            Typeset.drawWrapped(painter, Tokens.Type.BODY, tr("routes.empty"), rail.x(), below,
                 rail.w(), 3, Tokens.Color.INK_TERTIARY);
-        } else if (hits.size() < routes.size()) {
+        } else if (layout.beyond(routes.size()) > 0) {
             // A rail too short to list every route still has to admit it. The map keeps marking
             // the ones the list dropped, so the count is the only place the loss is visible.
             Typeset.draw(painter, Tokens.Type.LABEL,
-                tr("routes.beyond", routes.size() - hits.size()), rail.x(),
-                y + Tokens.Space.SNUG, Tokens.Color.INK_TERTIARY);
+                tr("routes.beyond", layout.beyond(routes.size())), rail.x(),
+                below + Tokens.Space.SNUG, Tokens.Color.INK_TERTIARY);
         }
     }
 
@@ -337,6 +305,7 @@ public final class MapScreen extends Screen {
      * a warp was allowed, and reading one where the other was expected is worse than two lines.
      */
     private void actionBand(Painter painter) {
+        Box band = layout.band();
         painter.hRule(band.x(), band.y(), band.w(), Tokens.Color.LINE_HAIRLINE);
         int labelY = band.y() + Tokens.Space.COZY;
         Typeset.draw(painter, Tokens.Type.LABEL, tr("chosen"), band.x(), labelY,
@@ -359,21 +328,23 @@ public final class MapScreen extends Screen {
 
     /** The name and the coordinates of the marker the pointer is on, inside the plane it is on. */
     private void hint(Painter painter, MapMarkers.Placed marker) {
-        Box raster = MapCanvas.raster(map, CELL_SIZE, terrain.snapshot());
-        int x = MapCanvas.plot(raster.x(), marker.column(), CELL_SIZE);
-        int y = MapCanvas.plot(raster.y(), marker.row(), CELL_SIZE);
+        Box raster = MapLayout.raster(layout.map(), MapLayout.CELL_SIZE, terrain.snapshot());
+        int x = MapLayout.plot(raster.x(), marker.column(), MapLayout.CELL_SIZE);
+        int y = MapLayout.plot(raster.y(), marker.row(), MapLayout.CELL_SIZE);
         BridgeProtocol.Waypoint route = route(marker.id());
         if (route == null) {
             return;
         }
         Box near = new Box(x - Tokens.Space.COZY, y - Tokens.Space.COZY,
             Tokens.Space.GUTTER, Tokens.Space.GUTTER);
-        Tooltip.draw(painter, tr("marker.hint", route.name(), route.x(), route.z()), near, map);
+        Tooltip.draw(painter, tr("marker.hint", route.name(), route.x(), route.z()), near,
+            layout.map());
     }
 
     private void footer(Painter painter) {
-        int y = content.bottom() - FOOTER_HEIGHT + Tokens.Space.COZY;
-        painter.hRule(content.x(), content.bottom() - FOOTER_HEIGHT, content.w(),
+        Box content = layout.content();
+        int y = layout.footerTop() + Tokens.Space.COZY;
+        painter.hRule(content.x(), layout.footerTop(), content.w(),
             Tokens.Color.LINE_HAIRLINE);
         Typeset.draw(painter, Tokens.Type.LABEL, tr("footer.keys"), content.x(), y,
             Tokens.Color.INK_TERTIARY);
@@ -384,15 +355,16 @@ public final class MapScreen extends Screen {
         Typeset.drawRight(painter, Tokens.Type.LABEL, status, content.right(), y, color);
     }
 
-    private int section(Painter painter, String label, int y) {
+    private void section(Painter painter, String label, int y) {
+        Box rail = layout.rail();
         painter.fill(rail.x(), y + Tokens.Space.TIGHT, Tokens.Stroke.FOCUS,
             Tokens.Type.LABEL.px(), Tokens.Color.ACCENT);
         Typeset.draw(painter, Tokens.Type.LABEL, label,
             rail.x() + Tokens.Space.COZY, y, Tokens.Color.INK_TERTIARY);
-        return y + Tokens.Type.LABEL.leading() + Tokens.Space.COZY;
     }
 
     private void drawFact(Painter painter, String label, String value, int y) {
+        Box rail = layout.rail();
         Typeset.draw(painter, Tokens.Type.LABEL, label, rail.x(), y,
             Tokens.Color.INK_TERTIARY);
         Typeset.tabularRight(painter, Tokens.Type.BODY_STRONG, value, rail.right(), y,
@@ -405,8 +377,11 @@ public final class MapScreen extends Screen {
     }
 
     private void zoom(boolean in, int mouseX, int mouseY) {
-        int column = Math.clamp((mouseX - map.x()) / CELL_SIZE, 0, terrain.snapshot().width() - 1);
-        int row = Math.clamp((mouseY - map.y()) / CELL_SIZE, 0, terrain.snapshot().height() - 1);
+        Box map = layout.map();
+        int column = Math.clamp((mouseX - map.x()) / MapLayout.CELL_SIZE, 0,
+            terrain.snapshot().width() - 1);
+        int row = Math.clamp((mouseY - map.y()) / MapLayout.CELL_SIZE, 0,
+            terrain.snapshot().height() - 1);
         viewport = in
             ? viewport.zoomInAt(column, row, terrain.snapshot().width(), terrain.snapshot().height())
             : viewport.zoomOutAt(column, row, terrain.snapshot().width(), terrain.snapshot().height());
@@ -482,18 +457,15 @@ public final class MapScreen extends Screen {
     }
 
     private Optional<MapMarkers.Placed> markerAt(double mouseX, double mouseY) {
-        if (!map.holds(mouseX, mouseY)) {
-            return Optional.empty();
-        }
-        Box raster = MapCanvas.raster(map, CELL_SIZE, terrain.snapshot());
-        return MapMarkers.at(placed, (mouseX - raster.x()) / CELL_SIZE,
-            (mouseY - raster.y()) / CELL_SIZE, HIT_CELLS);
+        return layout.cellAt(mouseX, mouseY, terrain.snapshot())
+            .flatMap(cell -> MapMarkers.at(placed, cell.column(), cell.row(),
+                MapLayout.HIT_CELLS));
     }
 
     private void refreshTerrain() {
         Minecraft client = Minecraft.getInstance();
-        int columns = Math.max(1, map.w() / CELL_SIZE);
-        int rows = Math.max(1, map.h() / CELL_SIZE);
+        int columns = Math.max(1, layout.map().w() / MapLayout.CELL_SIZE);
+        int rows = Math.max(1, layout.map().h() / MapLayout.CELL_SIZE);
         if (client.level == null) {
             terrain = blank(columns, rows);
             sampleFailed = false;
@@ -564,11 +536,6 @@ public final class MapScreen extends Screen {
         TerrainSnapshot snapshot = new TerrainSnapshot(width, height,
             Collections.nCopies(Math.multiplyExact(width, height), cell));
         return TerrainSample.of(snapshot);
-    }
-
-    private static int bandHeight() {
-        return Tokens.Space.COZY + Tokens.Type.LABEL.leading() + Tokens.Space.SNUG
-            + Tokens.Type.BODY_STRONG.leading() + Tokens.Space.COZY + Button.HEIGHT;
     }
 
     private static String coordinate(double x, double z) {

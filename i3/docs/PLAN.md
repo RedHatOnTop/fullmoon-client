@@ -121,3 +121,8 @@ Evidence: a live Paper session where the hint, the chosen marker, the in-flight 
 server's answer are frames of one flow, with the client and server log lines for the id that was
 sent; the hit test and the reason vocabulary at 100% line and branch in the pure core; a fresh
 58-gate Hallmark audit.
+
+P9 shipped noting that `MapScreen` itself had no unit test. That is answered after the fact: its
+geometry and hit test were extracted into `MapLayout`, gated at 100% of both counters, leaving only
+client runtime outside the gate. Same day, same frames retaken to show behaviour held — see the
+DEVLOG entry and the `p9r-*` evidence.

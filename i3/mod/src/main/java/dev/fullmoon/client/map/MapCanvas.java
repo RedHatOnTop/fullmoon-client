@@ -21,7 +21,7 @@ public final class MapCanvas {
     public static void draw(Painter painter, Box bounds, int cellSize,
             TerrainSample terrain, MapViewport viewport, Marks marks,
             MapViewport.GridPoint player) {
-        Box raster = raster(bounds, cellSize, terrain.snapshot());
+        Box raster = MapLayout.raster(bounds, cellSize, terrain.snapshot());
 
         painter.fill(raster.x(), raster.y(), raster.w(), raster.h(),
             Tokens.Color.SURFACE_SUNKEN);
@@ -68,8 +68,8 @@ public final class MapCanvas {
             ? MapMarkers.declutter(marks.markers(), marker -> labelBox(raster, cellSize, marker))
             : marks.markers();
         for (MapMarkers.Placed marker : named) {
-            int x = plot(raster.x(), marker.column(), cellSize);
-            int y = plot(raster.y(), marker.row(), cellSize);
+            int x = MapLayout.plot(raster.x(), marker.column(), cellSize);
+            int y = MapLayout.plot(raster.y(), marker.row(), cellSize);
             boolean chosen = marker.id().equals(marks.chosenId());
             int ink = chosen ? Tokens.Color.ACCENT : Tokens.Color.INK_PRIMARY;
             if (chosen || marker.id().equals(marks.underPointerId())) {
@@ -93,27 +93,10 @@ public final class MapCanvas {
 
     /** The plate a label sits on, which is also the area another label may not take. */
     private static Box labelBox(Box raster, int cellSize, MapMarkers.Placed marker) {
-        return new Box(plot(raster.x(), marker.column(), cellSize) + Tokens.Space.COZY,
-            plot(raster.y(), marker.row(), cellSize) - Tokens.Space.SNUG,
+        return new Box(MapLayout.plot(raster.x(), marker.column(), cellSize) + Tokens.Space.COZY,
+            MapLayout.plot(raster.y(), marker.row(), cellSize) - Tokens.Space.SNUG,
             Typeset.width(Tokens.Type.LABEL, marker.label()),
             Tokens.Type.LABEL.px()).inset(-Tokens.Space.TIGHT);
-    }
-
-    /**
-     * Where a cell coordinate lands on screen. Public because a surface that hit-tests markers or
-     * hangs a hint off one has to round the same way the ring it is aiming at was drawn.
-     */
-    public static int plot(int origin, double cell, int cellSize) {
-        return origin + (int) Math.round(cell * cellSize);
-    }
-
-    /**
-     * The plane the terrain actually fills inside {@code bounds}. A screen sizes its slot to whole
-     * cells and gets the same box back, but the box is what a pointer is measured against, so the
-     * screen and the drawing cannot each work it out for themselves.
-     */
-    public static Box raster(Box bounds, int cellSize, TerrainSnapshot snapshot) {
-        return bounds.centred(snapshot.width() * cellSize, snapshot.height() * cellSize);
     }
 
     /**
@@ -141,8 +124,8 @@ public final class MapCanvas {
                 || player.row() < 0.0 || player.row() > snapshot.height() - 1) {
             return;
         }
-        int x = plot(raster.x(), player.column(), cellSize);
-        int y = plot(raster.y(), player.row(), cellSize);
+        int x = MapLayout.plot(raster.x(), player.column(), cellSize);
+        int y = MapLayout.plot(raster.y(), player.row(), cellSize);
         painter.ring(x, y, Tokens.Space.SNUG,
             Tokens.Stroke.FOCUS, Tokens.Color.ACCENT);
         painter.hRule(x - Tokens.Space.COZY, y,
