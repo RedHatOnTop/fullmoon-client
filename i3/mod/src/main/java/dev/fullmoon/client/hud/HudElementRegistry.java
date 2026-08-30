@@ -1,5 +1,6 @@
 package dev.fullmoon.client.hud;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,11 +11,16 @@ import java.util.Objects;
 
 import net.fabricmc.loader.api.FabricLoader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Global registry and lifecycle manager for all in-game HUD modules. */
 public final class HudElementRegistry {
+    private static final Logger LOGGER = LoggerFactory.getLogger("Fullmoon/Hud");
     private static final HudElementRegistry INSTANCE = new HudElementRegistry();
 
     private final Map<String, HudElement> registry = new LinkedHashMap<>();
+    private final HudWatch watch = new HudWatch();
     private Path configPath;
 
     private HudElementRegistry() {
@@ -55,12 +61,37 @@ public final class HudElementRegistry {
         if (configPath == null) return;
         HudConfig config = HudConfig.load(configPath);
         applyConfig(config);
+        watch.authored(modifiedMs());
     }
 
     public void save() {
         if (configPath == null) return;
         HudConfig config = exportConfig();
         config.save(configPath);
+        watch.authored(modifiedMs());
+    }
+
+    /**
+     * Takes an edit made to the file while the game is running — the launcher's HUD editor writes
+     * the same {@code config/fullmoon/hud.json} this registry saves, so a layout chosen out there
+     * has to land here without a restart.
+     */
+    public void poll(long nowMs) {
+        if (configPath == null || !watch.due(nowMs)) return;
+        long modified = modifiedMs();
+        if (!watch.changed(modified)) return;
+        HudConfig config = HudConfig.load(configPath);
+        applyConfig(config);
+        LOGGER.info("Adopted hud.json edited outside the game: {} element(s), mtime {}",
+            config.elements == null ? 0 : config.elements.size(), modified);
+    }
+
+    private long modifiedMs() {
+        try {
+            return Files.getLastModifiedTime(configPath).toMillis();
+        } catch (Exception e) {
+            return 0L;
+        }
     }
 
     public void applyConfig(HudConfig config) {

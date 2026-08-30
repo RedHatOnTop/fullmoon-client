@@ -69,6 +69,8 @@ jacoco { toolVersion = "0.8.15" }
 
 fun verifiedCoreClasses() = files(sourceSets.main.get().output.asFileTree.matching {
     include(
+        "dev/fullmoon/client/hud/Anchor*",
+        "dev/fullmoon/client/hud/HudWatch*",
         "dev/fullmoon/client/settings/SettingSearch*",
         "dev/fullmoon/client/network/BridgeProtocol*",
         "dev/fullmoon/client/network/BridgeState*",

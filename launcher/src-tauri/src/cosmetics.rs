@@ -1,10 +1,12 @@
 /* The launcher half of the cosmetics contract.
  *
- * The loadout lives once, per account, in the launcher's own store; the mod
- * reads a copy inside the instance because that is the only directory it can
- * find without being told where the launcher keeps its files. The copy is
- * rewritten on every equip and again at launch, and the mod re-reads on mtime,
- * so equipping while the game is running changes the cape without a restart. */
+ * The loadout lives once, per account, in the launcher's own store; a copy goes
+ * inside the instance because that is the only directory a mod can find without
+ * being told where the launcher keeps its files. The copy is rewritten on every
+ * equip and again at launch.
+ *
+ * Nothing reads it yet: the client we bundle draws no capes, wings or trails, so
+ * equipping changes the launcher's own preview and nothing in the world. */
 use std::collections::HashMap;
 
 use crate::{error::Result, paths, store};

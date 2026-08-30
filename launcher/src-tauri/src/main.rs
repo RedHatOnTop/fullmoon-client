@@ -8,6 +8,7 @@ mod cosmetics;
 mod download;
 mod error;
 mod fabric;
+mod hud;
 mod install;
 mod java;
 mod launch;

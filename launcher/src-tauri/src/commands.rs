@@ -9,7 +9,7 @@ use tauri::{AppHandle, State};
 use crate::{
     catalog, cosmetics,
     error::{Error, Result},
-    install, java,
+    hud, install, java,
     meta,
     model::*,
     mods, paths, ping, store,
@@ -396,16 +396,13 @@ pub async fn cosmetics_equip(
 
 #[tauri::command]
 pub async fn hud_get(instance_id: String) -> Result<HudConfig> {
-    Ok(store::read_or(&paths::instance_hud_file(&instance_id), || {
-        catalog::get().default_hud.clone()
-    })
-    .await)
+    Ok(hud::read(&instance_id).await)
 }
 
 #[tauri::command]
 pub async fn hud_set(instance_id: String, cfg: HudConfig) -> Result<()> {
-    // this file is the contract with the in-game mod, not launcher scratch
-    store::write(&paths::instance_hud_file(&instance_id), &cfg).await
+    // this file is the contract with the in-game client, not launcher scratch
+    hud::write(&instance_id, &cfg).await
 }
 
 // ── home ──────────────────────────────────────────────────────
