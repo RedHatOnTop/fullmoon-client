@@ -2455,10 +2455,10 @@
 .play-screen {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
-  min-height: calc(100vh - 180px);
-  padding: 10px 0 0;
+  justify-content: flex-end;
+  gap: 28px;
+  min-height: calc(100vh - 160px);
+  padding: 40px 0 10px;
 }
 
 .play-scroll-divider {
@@ -2500,7 +2500,8 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  margin: 10px 0 20px;
+  margin-top: auto;
+  margin-bottom: 4px;
 }
 
 .play-player-nametag {
@@ -2538,7 +2539,7 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 18px;
   z-index: 3;
 }
 
