@@ -87,7 +87,7 @@ Evidence: route selection, in-flight, accepted, and compact captures from a real
 matching client and server logs for `palace_gate`; reducer and payload boundary tests; a fresh
 58-gate Hallmark audit.
 
-## P8 — in-game map
+## P8 — in-game map · done
 
 A north-up map of the terrain the client already has, and nothing else: a column outside the
 client cache draws as unmapped rather than as invented ground, and the footer says what fraction
