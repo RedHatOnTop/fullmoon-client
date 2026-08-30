@@ -89,7 +89,7 @@ export function PlayScreen() {
           {/* Left: Server List Strip */}
           <div className="play-servers-section">
             <div className="section-head-bar">
-              <span className="section-title-label">공식 서버</span>
+              <span className="section-title-label">네트워크 월드 · play.fullmoon.ink</span>
               <button className="view-more-link" onClick={() => setScreen("dashboard")}>
                 <span>대시보드에서 관리</span>
                 <Icon name="arrowRight" size={12} />
