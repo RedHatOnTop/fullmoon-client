@@ -303,7 +303,7 @@ export function SettingsScreen() {
                   <span>{t("settings.build")}</span>
                   <b className="mono">{isRealCore ? "rust core / tauri" : "ui-standalone / vite"}</b>
                 </div>
-                <div><span>MC</span><b className="num">{target?.id ?? "…"}</b></div>
+                <div><span>마인크래프트</span><b className="num">{target?.id ?? "…"}</b></div>
               </div>
               {/* the shell decides which core answers, so this line has to ask
                   rather than assert — it claimed mock while the rust core was live */}

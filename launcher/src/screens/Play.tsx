@@ -67,7 +67,7 @@ export function PlayScreen() {
             <div className="play-btn-content">
               <Icon name="play" size={24} strokeWidth={2.4} />
               <div className="play-btn-text">
-                <span className="main-word">PLAY NOW</span>
+                <span className="main-word">게임 시작</span>
                 <span className="sub-instance-tag">
                   {selectedInstance ? selectedInstance.name : `${BRAND.name} 26.1.2`}
                 </span>
