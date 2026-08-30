@@ -2,6 +2,7 @@ package dev.fullmoon.client.map;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import dev.fullmoon.client.layout.Box;
 
@@ -43,6 +44,34 @@ public final class MapMarkers {
             }
         }
         return List.copyOf(named);
+    }
+
+    /**
+     * The marker under a point in cell space, or empty.
+     *
+     * <p>Nearest wins and ledger order breaks a tie, because two markers a player cannot tell
+     * apart at this scale have to resolve the same way every frame: a hint that names one route
+     * and a click that chooses another is a surface lying about where the pointer is.
+     */
+    public static Optional<Placed> at(List<Placed> markers, double column, double row,
+            double radiusCells) {
+        if (markers == null || !(radiusCells > 0.0)) {
+            throw new IllegalArgumentException(
+                "Map markers and a positive hit radius are required");
+        }
+        Placed nearest = null;
+        double reach = radiusCells * radiusCells;
+        double best = Double.POSITIVE_INFINITY;
+        for (Placed marker : List.copyOf(markers)) {
+            double dx = marker.column() - column;
+            double dz = marker.row() - row;
+            double distance = dx * dx + dz * dz;
+            if (distance <= reach && distance < best) {
+                nearest = marker;
+                best = distance;
+            }
+        }
+        return Optional.ofNullable(nearest);
     }
 
     private static Placed place(Marker marker, MapViewport viewport, int columns, int rows) {

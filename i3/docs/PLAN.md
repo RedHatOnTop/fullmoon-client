@@ -1,6 +1,6 @@
 # i3 build plan
 
-Nine phases. Each one ends in a commit whose evidence is a capture or a test run, not a
+Ten phases. Each one ends in a commit whose evidence is a capture or a test run, not a
 description. Captures come off `Xvfb :9` (see `docs/evidence/README.md`); no phase is reported
 done on a plan or a green compile alone.
 
@@ -102,3 +102,22 @@ terrain in the same frame, the published routes marked against the ledger's own 
 and a zoom pair that keeps the block under the cursor fixed. The pure core is at 100% line and
 branch on every gated map class; `TerrainSampler` has no unit test, because it needs a live
 `ClientLevel`, so those frames are the only evidence it has. A fresh 58-gate Hallmark audit.
+
+## P9 — warp from the map
+
+The map stops being a read-only instrument: the routes it already marks become the way a player
+asks to be moved. A marker under the pointer names itself and its coordinates; a click chooses it
+without moving the plane, because a map that jumps under the cursor loses the thing that was just
+aimed at, while a rail row still centres on the route it picks. One confirm action sends the id,
+and it is the request P7 already defined — the client still owns no teleport, and the server still
+answers with an id, an ok and a reason. The denial vocabulary moves into the pure core so two
+surfaces cannot drift on it.
+
+This supersedes P8's contract that "the map asks for no teleport of its own". P8's captures and
+its audit stand as taken; the sentence they were true for is answered here rather than rewritten,
+and the gates whose answers change (15, 17, 46) change in P9's audit.
+
+Evidence: a live Paper session where the hint, the chosen marker, the in-flight request and the
+server's answer are frames of one flow, with the client and server log lines for the id that was
+sent; the hit test and the reason vocabulary at 100% line and branch in the pure core; a fresh
+58-gate Hallmark audit.

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import dev.fullmoon.client.layout.Box;
 
@@ -100,6 +101,30 @@ class MapMarkersTest {
     private static Box labelBox(MapMarkers.Placed marker) {
         return new Box((int) (marker.column() * 3), (int) (marker.row() * 3),
             marker.label().length() * 4, 8);
+    }
+
+    @Test
+    void findsTheNearestMarkerInReachAndBreaksTiesByLedgerOrder() {
+        MapMarkers.Placed west = new MapMarkers.Placed("west", "West Gate", 10.0, 4.0);
+        MapMarkers.Placed east = new MapMarkers.Placed("east", "East Gate", 12.0, 4.0);
+        MapMarkers.Placed twin = new MapMarkers.Placed("twin", "Twin Gate", 10.0, 4.0);
+        List<MapMarkers.Placed> markers = List.of(west, east, twin);
+
+        assertEquals(Optional.of(west), MapMarkers.at(markers, 10.4, 4.0, 2.5));
+        assertEquals(Optional.of(east), MapMarkers.at(markers, 11.6, 4.0, 2.5));
+        assertEquals(Optional.of(west), MapMarkers.at(markers, 10.0, 4.0, 2.5));
+        assertEquals(Optional.of(west), MapMarkers.at(List.of(west), 12.5, 4.0, 2.5));
+        assertEquals(Optional.empty(), MapMarkers.at(List.of(west), 12.6, 4.0, 2.5));
+        assertEquals(Optional.empty(), MapMarkers.at(List.of(), 10.0, 4.0, 2.5));
+    }
+
+    @Test
+    void refusesToHitTestWithoutMarkersOrAPositiveRadius() {
+        assertThrows(IllegalArgumentException.class, () -> MapMarkers.at(null, 0.0, 0.0, 2.5));
+        assertThrows(IllegalArgumentException.class,
+            () -> MapMarkers.at(List.of(), 0.0, 0.0, 0.0));
+        assertThrows(IllegalArgumentException.class,
+            () -> MapMarkers.at(List.of(), 0.0, 0.0, Double.NaN));
     }
 
     @Test

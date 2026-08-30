@@ -282,17 +282,7 @@ public final class WarpScreen extends SurfaceScreen {
     }
 
     private static String reason(String reason) {
-        String key = switch (reason) {
-            case "cooldown" -> "cooldown";
-            case "permission" -> "permission";
-            case "world" -> "world";
-            case "unknown" -> "unknown";
-            case "unloaded" -> "unloaded";
-            case "timeout" -> "timeout";
-            case "client_send" -> "client_send";
-            default -> "server";
-        };
-        return tr("reason." + key);
+        return tr("reason." + WarpRoutes.reasonKey(reason));
     }
 
     private static void showNext(Screen screen) {
