@@ -1,0 +1,12 @@
+[18:11:24] [Server thread/INFO]: [FullmoonBridge] fullmoon-bridge enabled: 6 waypoint(s) on fullmoon:v1 (proto 1)
+[18:22:06] [Server thread/INFO]: Player475[/127.0.0.1:42550] logged in with entity id 161 at ([minecraft:overworld]500.5, 72.0, -35.5)
+[18:22:06] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player475 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[18:22:24] [Server thread/INFO]: [FullmoonBridge] warp Player475 -> aux_palace
+[18:22:27] [Server thread/INFO]: [FullmoonBridge] warp denied for Player475: cooldown
+[18:23:46] [Server thread/INFO]: Player582[/127.0.0.1:46912] logged in with entity id 326 at ([minecraft:overworld]501.5, 72.0, -35.5)
+[18:23:47] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player582 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[18:24:02] [Server thread/INFO]: [FullmoonBridge] warp Player582 -> palace_keep
+[18:28:46] [Server thread/INFO]: [FullmoonBridge] fullmoon-bridge enabled: 6 waypoint(s) on fullmoon:v1 (proto 1)
+[18:30:08] [Server thread/INFO]: Player49[/127.0.0.1:58116] logged in with entity id 175 at ([minecraft:overworld]495.5, 72.0, -20.5)
+[18:30:09] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player49 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[18:30:27] [Server thread/INFO]: [FullmoonBridge] warp Player49 -> aux_palace

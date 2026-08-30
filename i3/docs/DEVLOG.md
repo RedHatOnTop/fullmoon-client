@@ -736,3 +736,158 @@ The zoom pair is arithmetic a reader can redo. The pointer sat at GUI (337, 295)
 The six frames are committed under `docs/evidence/p8-map-*.png` with the two log extracts and
 `docs/evidence/p8-hallmark-audit.md`. Nothing was installed on the server, so nothing was restored;
 Paper was stopped after the second set.
+
+## 2026-08-30 · P9 warp from the map
+
+The map stops being a read-only instrument. The routes it already marked are how a player asks to be
+moved, over the request P7 defined — the client still owns no teleport, and the server still answers
+with an id, an `ok` and a reason.
+
+This supersedes one sentence of P8: "the map asks for no teleport of its own". P8's captures and its
+audit stand as taken. `PLAN.md` answers that sentence in a new phase instead of editing the phase it
+was true for, and the three Hallmark gates whose answers change — 15, 17 and 46 — are answered again
+in `docs/evidence/p9-hallmark-audit.md`.
+
+- `MapMarkers.at` hit-tests in cell space: the nearest marker inside the radius wins and ledger order
+  breaks a tie. Two markers a player cannot separate at `칸당 16블록` have to resolve the same way every
+  frame, because a hint that names one route while a click chooses another is a surface lying about
+  where the pointer is.
+- `WarpRoutes.reasonKey` now holds the denial vocabulary. It was a seven-arm `switch` inside
+  `WarpScreen`; the map asks for the same warp over the same channel, and a vocabulary copied into two
+  screens is a vocabulary that drifts in one of them. Membership in a `List` rather than a string
+  `switch`, because a multi-label string switch compiles to a hashCode lookup plus `equals` chains
+  whose false arms are unreachable, and a gated class cannot reach 100% branch through them.
+- `MapScreen` grew the pointer half of the contract: a hint naming the marker under the cursor and its
+  coordinates, a click that chooses the marker where it stands, a rail row that still centres on what
+  it picks, an action band carrying the one confirm action, and `Enter` as its keyboard road.
+  `HIT_CELLS` is 2.5 — the outer ring `MapCanvas` draws around a chosen marker — so the target is the
+  ring a player can see, not the block under it.
+- A choice outlives every viewport move. Panning away from a destination is not changing your mind
+  about it, so pan, zoom and `R` no longer clear it; the rail row stays lit and the marker stays ringed
+  however far off frame it goes.
+- `MapCanvas.draw` takes a `Marks` record instead of a list and a flag, and `raster` and `plot` became
+  public, because a surface that hit-tests a ring has to round the way the ring was drawn.
+- `fullmoon.map.marker.hint`, `.chosen` and `.chosen.none` in both languages, and the footer legend
+  gained `클릭 선택 · Enter 이동 요청`. The status line reads out of `fullmoon.warp.*`, the ledger's own
+  namespace, so one server answer never gets two vocabularies.
+
+### What the frames settle
+
+Nothing in these captures corrected the implementation. Three sessions, eight frames, every one right
+on the first attempt. What they settle is the part no test in this repo can reach.
+
+The sharpest is an accident of the geometry. `p9-map-chosen-960x540.png` has `별궁 중앙 홀` chosen — a
+route at `500 16` — while `중심` still reads `500 -100`. The claim "a click chooses the marker where it
+stands, so the plane does not move out from under the cursor" is one frame wide, and that is the frame.
+The rail row above it is lit at the same time, which is the other half: a row centres, a marker does
+not.
+
+Two facts of the rig shaped how the rest were taken.
+
+- The join position drifts between runs. P8 saw `503 -17` and `507 -36`; these three sessions started
+  at `500.5 -35.5`, `501.5 -35.5` and `495.5 -20.5`. A marker pixel derived from wherever the player
+  happened to land is not a number a reader can redo, so every run opens the map and clicks rail row 0
+  first. From there the plane is centred on `palace_gate` and every marker is arithmetic.
+- A loopback warp round trip is under a tenth of a second and the rig's shutter is at least 1.6 s, so
+  the in-flight frame is unreachable against the shipped plugin. It is the only frame with a fixture
+  behind it, disclosed below.
+
+### Gates on the committed tree
+
+```text
+./gradlew -p . clean test jacocoTestCoverageVerification  → 215 tests, 0 failures, 0 errors, 0 skipped
+node design/verify-tokens.mjs                             → scanned 104 file(s)
+                                                            no colour or motion literals outside the token block
+```
+
+The gated core is 95.90% line and 88.92% branch in aggregate. Both classes P9 changed are at 100% of
+both: `MapMarkers` 36/36 lines and 34/34 branches, `WarpRoutes` 13/13 and 4/4. The map classes P8 left
+at 100% are still there — `MapViewport` 32/32 and 12/12, `TerrainSnapshot` 26/26 and 24/24,
+`TerrainSample` 6/6 and 4/4, `WorldNames` 9/9 and 12/12.
+
+`MapScreen` is not gated and has no unit test, the same as P8. Every claim above about the hint, the
+click, the band and `Enter` is a claim about the frames.
+
+### Executed Paper flow
+
+Three sessions against the local Paper server on `:25566`. The first two ran the shipped
+`FullmoonBridge.jar`; the third ran a fixture, and only the two in-flight frames come from it.
+
+The 960×540 session asked for the same route twice, and Paper answered differently each time:
+
+```text
+[18:22:21] [Render thread/INFO] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[18:22:24] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:22:24] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (accepted)
+[18:22:27] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:22:27] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (cooldown)
+```
+
+against Paper's own two lines for those two requests:
+
+```text
+[18:22:24] [Server thread/INFO]: [FullmoonBridge] warp Player475 -> aux_palace
+[18:22:27] [Server thread/INFO]: [FullmoonBridge] warp denied for Player475: cooldown
+```
+
+The refusal is the shipped plugin's `COOLDOWN_MS = 4000` and nothing else — two requests three seconds
+apart by the client's own clock. `p9-map-denied-960x540.png` is what `WarpRoutes.reasonKey("cooldown")`
+renders: `요청 거절 · 재사용 대기 중` in the danger ink, above a `이동 요청` that is still live, because a
+cooldown is a wait and not a wall.
+
+The marker pixels are arithmetic, and this is it longhand. At 960×540 GUI px the edge is
+`Tokens.Space.SECTION`, so content is (24, 24, 912, 492), the body starts 48 px below it, and the 208 px
+rail plus a 24 px gutter leave the plane 680 px wide — whole 3 px cells make it 678×420, the 226×140
+the client logged. `MapViewport.project` puts a route at
+`(world − centre) / blocksPerCell + (cells − 1) / 2` and `MapCanvas.plot` rounds that to
+`origin + round(cell × 3)` from the raster origin (24, 72). Centred on `palace_gate` at `칸당 2블록`,
+`aux_palace` at `500 16` is column `(500 − 500) / 2 + 112.5 = 112.5` and row
+`(16 − (−100)) / 2 + 69.5 = 127.5`, so GUI (24 + 338, 72 + 383) = **(362, 455)**.
+`p9-map-hint-960x540.png` put the pointer there and read `별궁 중앙 홀 · X 500 Z 16` while `만월궁 정문`
+was still the chosen route. `palace_keep` at `500 -140` is row `−20 + 69.5 = 49.5`, GUI **(362, 221)**.
+
+The compact session redoes the same arithmetic at another size: edge `Tokens.Space.LOOSE`, raster origin
+(12, 60), 148×88 cells, which puts `palace_keep` at column `73.5` and row `23.5` — GUI **(233, 131)**.
+`p9-map-compact-640x360.png` read `만월궁 대전 · X 500 Z -140` there, with `목록 밖 4개` under the two rail
+rows that fit and nothing clipped. Its accepted frame was requested with a bare `Return` while the
+pointer sat on the marker and nothing held the keyboard, which is the branch in `keyPressed` that exists
+for a player whose hand is on the mouse:
+
+```text
+[18:24:00] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_keep at 500 -140 in world
+[18:24:02] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request palace_keep
+[18:24:02] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result palace_keep (accepted)
+[18:24:02] [Server thread/INFO]: [FullmoonBridge] warp Player582 -> palace_keep
+```
+
+Both accepted frames prove the teleport landed and not merely that a banner drew: the player mark moves
+onto the marker that was chosen, `aux_palace` at (362, 455) in the 960 set and `palace_keep` at
+(233, 131) in the compact one.
+
+#### The one fixture, and its restore
+
+`p9-map-inflight-960x540.png` and `p9-map-inflight-resolved-960x540.png` come from a temporary Paper
+plugin built from the shipped bridge source with one insertion: `handleTpRequest`'s body was renamed
+`handleTpRequestNow` and a `runTaskLater(..., 80L)` put in front of it. No decision changed — unknown
+id, permission, cooldown, world, chunk warm-up, teleport and result are the production path untouched —
+the handler just starts 4 s late, inside the client's `WARP_TIMEOUT_MILLIS` of 5 s. The hold is legible
+in the log, and the answer at the end of it is the same `accepted` the live plugin gave:
+
+```text
+[18:30:22] [Render thread/INFO] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[18:30:23] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:30:27] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (accepted)
+[18:30:27] [Server thread/INFO]: [FullmoonBridge] warp Player49 -> aux_palace
+```
+
+That is why the pair is committed and not just the in-flight shot. The first frame is `서버 응답 대기 중`
+in amber with the button in its loading state; the second is the same session four seconds later,
+`이동 승인됨` in green with the button live again and the player mark on the aux_palace marker. The
+fixture delayed the answer; it did not choose it.
+
+The fixture jar was SHA-256 `1d8a2e6e66341836c56a8fe2ec659c03314151071cb1d7005a808cb83567c376`. After
+those two frames the installed bridge was restored to
+`db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c` — byte-identical to the jar that
+served the first two sessions, and the same value P7 recorded restoring to — and Paper was stopped over
+RCON with no JVM left holding `:25566` or `:25577`. Nothing was installed on the production Oracle host
+at any point in this phase.

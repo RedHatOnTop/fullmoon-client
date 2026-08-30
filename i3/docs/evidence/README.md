@@ -249,3 +249,43 @@ Two defects and one legibility failure came out of these captures:
   sit on the plaza, both near-white, and light ink on them was a guess at best. Each label now draws
   its own plate at the same box the collision test uses, so a name is legible over any block the map
   can render. This is why the committed frames are the third capture of this phase, not the first.
+
+## P9 — warp from the map
+
+| file | what it settles |
+| --- | --- |
+| `p9-map-hint-960x540.png` | The pointer at GUI (362, 455), the cell `MapViewport.project` puts `별궁 중앙 홀` in when the plane is centred on `만월궁 정문` at `칸당 2블록`. The hint names the marker and its coordinates — `별궁 중앙 홀 · X 500 Z 16` — while the chosen route is still `만월궁 정문`, so hovering reads and does not choose. |
+| `p9-map-chosen-960x540.png` | The same pointer, one click later. `별궁 중앙 홀` is now chosen in the band and lit in the rail, and `중심` still reads `500 -100`: a marker click chooses where the marker stands, so the plane does not move out from under the cursor. A rail row still centres, which is why both behaviours needed separate frames. |
+| `p9-map-accepted-960x540.png` | `이동 승인됨` in the live ink after one confirm action, with the player mark now on the aux_palace marker at (362, 455). The banner and the teleport are the same event, not two. |
+| `p9-map-denied-960x540.png` | The shipped plugin's `COOLDOWN_MS = 4000` refusing a second request three seconds after the first: `요청 거절 · 재사용 대기 중` in the danger ink, which is `WarpRoutes.reasonKey("cooldown")` resolved through `fullmoon.warp.reason.*`. `이동 요청` stays live underneath, because a cooldown is a wait and not a wall. |
+| `p9-map-inflight-960x540.png` | The window between the request and the answer: `서버 응답 대기 중` in the warn ink with the button in its loading state and the chosen route unchanged. Reachable only with the fixture disclosed below — on loopback the real round trip is shorter than the rig's shutter. |
+| `p9-map-inflight-resolved-960x540.png` | The same session four seconds later: `이동 승인됨`, the button live again, the player mark on the marker. The pair is what shows the fixture delayed the answer without choosing it. |
+| `p9-map-compact-640x360.png` | The compact layout, where the arithmetic is different and the contract is not: raster origin (12, 60), 148×88 cells, `만월궁 대전` at GUI (233, 131) and its hint reading `만월궁 대전 · X 500 Z -140`. Two rail rows fit, `목록 밖 4개` accounts for the rest, and the band and the live `이동 요청` are uncropped. |
+| `p9-map-compact-accepted-640x360.png` | The same route accepted after a bare `Return` with the pointer on the marker and nothing holding the keyboard — the keyboard road for a player whose hand is on the mouse — with the player mark landing on (233, 131). |
+| `p9-live-client.log` / `p9-live-server.log` | All three sessions' `Map open:`, `Map route chosen:`, `Sent … warp request` and `Received … warp result` lines against Paper's own `warp <player> -> <id>` and `warp denied for <player>: cooldown` for the same ids at the same seconds. |
+| `p9-hallmark-audit.md` | The fresh six-axis critique and all 58 Hallmark gates, with 15, 17 and 46 answered anew for a map that now carries a focusable button, a tooltip, and a teleport request. |
+
+One fixture was installed, for the in-flight pair only. It was built from the shipped bridge source
+with a single insertion — `handleTpRequest`'s body renamed `handleTpRequestNow`, a
+`runTaskLater(..., 80L)` in front of it — so unknown id, permission, cooldown, world, chunk warm-up,
+teleport and result all remain the production path and only the start is 4 s late, inside the client's
+5 s timeout. Its jar was SHA-256
+`1d8a2e6e66341836c56a8fe2ec659c03314151071cb1d7005a808cb83567c376`. The other six frames ran the
+shipped jar, and afterwards the installed bridge was restored to
+`db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, the value P6 and P7 also recorded
+restoring to. Paper was stopped over RCON with no JVM left on `:25566` or `:25577`. Nothing was
+installed on the production Oracle host.
+
+The pairing is on the route id and the answer, not just the handshake. The client logs the id it sent
+and the verdict it received; Paper logs `warp Player475 -> aux_palace` for the accept and
+`warp denied for Player475: cooldown` for the refusal three seconds later, so the accepted and denied
+frames are two halves of one exchange rather than two moods of one screen. The join lines in the same
+file are why every run clicks rail row 0 before anything else: Paper placed the three players at
+`500.5 -35.5`, `501.5 -35.5` and `495.5 -20.5`, and a marker pixel measured from a drifting spawn is
+not a number a reader can redo. Centred on `palace_gate`, it is.
+
+These captures corrected nothing. Every frame the phase owed came out right on the first attempt of
+all three sessions, which is worth stating plainly rather than dressing a clean run as a discovery.
+What they carry that the tests cannot is the hint text over a live raster, the plane holding still
+under a marker click, the loading and resolved states of one button, and a teleport that visibly moved
+the player.
