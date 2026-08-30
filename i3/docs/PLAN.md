@@ -17,9 +17,9 @@ figures, baseline placement. `tokens.json` → `Tokens.java` + `tokens.css` with
 `SpecimenScreen` on F6, reachable from the title screen without a mixin.
 
 Evidence: `docs/evidence/p0-*.png` — the specimen rendered at 640×360 GUI px, the type roll at
-2× showing all three faces, the figure pair. Nine contrast floors PASS in `generate.mjs`.
+2× showing all three faces, the figure pair. Ten contrast floors PASS in `generate.mjs`.
 
-## P1 — layout, event bus, widget kit
+## P1 — layout, event bus, widget kit · done
 
 Box layout (the left spine and the master–detail split the surfaces need), focus traversal with
 a visible ring, an event bus for mouse/key/scroll/char. Widgets: button, toggle, slider, select,
@@ -30,7 +30,7 @@ Evidence: one state-matrix capture per widget, all eight cells in frame. JUnit o
 arithmetic and the focus order. A keyboard-only traversal capture: no mouse, ring visible at
 every stop.
 
-## P2 — in-game surfaces
+## P2 — in-game surfaces · done
 
 Mod menu, settings with search, keybind editor with conflict detection, account surface. All on
 the blurred stratum, all `Esc`/`Tab` correct, all strings in `ko_kr` and `en_us`.
@@ -39,7 +39,7 @@ Evidence: captures taken while connected to the local Paper server on `:25566`, 
 conflict shown resolving, and a resource-pack reload that leaves the metrics correct (the
 reload listener ordering against `FONTS` is what this proves).
 
-## P3 — HUD and its editor
+## P3 — HUD and its editor · done
 
 Elements through `HudElementRegistry`: coordinates, clock, ping, server tick, effects. A drag
 editor with snapping on a 4 px grid, L-shaped corner ticks, per-element toggles, anchors that
@@ -49,7 +49,7 @@ Evidence: HUD in world, editor with its snap guides, a config round-trip test, a
 change that keeps every element on its anchor. Frame cost is quoted from the game's own
 profiler output or not claimed at all.
 
-## P4 — launcher core
+## P4 — launcher core · done
 
 Tauri v2 with the work in Rust: version manifest fetch, asset and library download with sha1
 verification and resume, Fabric loader install, instance layout, offline account, JVM argument
@@ -59,7 +59,7 @@ against an empty `msClientId` and stays unverified until there is one — stated
 Evidence: the launcher spawning a game that reaches the title screen, with the spawn command
 and the client log quoted. A test that corrupts one asset's sha1 and fails the install.
 
-## P5 — launcher UI
+## P5 — launcher UI · done
 
 The front end on the same tokens: first run, install progress, instance list, play, settings,
 error surfaces. Eight states again, and every animation on transform/opacity with a
@@ -67,7 +67,7 @@ error surfaces. Eight states again, and every animation on transform/opacity wit
 
 Evidence: per-state captures, a first-run-to-play sequence, and a reduced-motion pair.
 
-## P6 — server channel and the slop test
+## P6 — server channel and the slop test · done
 
 A `fullmoon:v1` plugin channel: server-pushed HUD values and notices, versioned payloads, a
 client that degrades silently on an older server. Then the 58-gate slop test read for the first
@@ -103,7 +103,7 @@ and a zoom pair that keeps the block under the cursor fixed. The pure core is at
 branch on every gated map class; `TerrainSampler` has no unit test, because it needs a live
 `ClientLevel`, so those frames are the only evidence it has. A fresh 58-gate Hallmark audit.
 
-## P9 — warp from the map
+## P9 — warp from the map · done
 
 The map stops being a read-only instrument: the routes it already marks become the way a player
 asks to be moved. A marker under the pointer names itself and its coordinates; a click chooses it
