@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,20 @@ final class BridgeStateTest {
 
         assertEquals(BridgeState.Mode.ACTIVE, state.mode());
         assertEquals(1, state.serverProtocol());
+    }
+
+    @Test
+    void welcomeAndSyncReplaceTheServerOwnedWaypointSnapshot() {
+        BridgeProtocol.Waypoint gate = waypoint("gate", 0, 64, 0);
+        BridgeProtocol.Waypoint keep = waypoint("keep", 40, 80, -60);
+        BridgeState welcomed = BridgeState.apply(
+            BridgeState.connected(1_000), new BridgeProtocol.Welcome(1, List.of(gate)), 1_100);
+        BridgeState synced = BridgeState.apply(
+            welcomed, new BridgeProtocol.WaypointSync(1, List.of(keep)), 1_200);
+
+        assertEquals(List.of(gate), welcomed.waypoints());
+        assertEquals(List.of(keep), synced.waypoints());
+        assertTrue(welcomed.waypoints() != synced.waypoints());
     }
 
     @Test
@@ -48,6 +63,62 @@ final class BridgeStateTest {
 
         assertSame(waiting, BridgeState.apply(waiting, sync, 1_100));
         assertSame(waiting, BridgeState.apply(waiting, notice, 1_100));
+        assertSame(waiting, BridgeState.apply(waiting,
+            new BridgeProtocol.WaypointSync(1, List.of(waypoint("gate", 0, 64, 0))), 1_100));
+    }
+
+    @Test
+    void aKnownWarpRequestWaitsForTheMatchingServerDecision() {
+        BridgeState active = activeWith(waypoint("gate", 0, 64, 0));
+        BridgeState requested = BridgeState.requestWarp(active, "gate", 2_000);
+        BridgeState unrelated = BridgeState.apply(requested,
+            new BridgeProtocol.TpResult(1, "keep", false, "cooldown"), 2_100);
+        BridgeState accepted = BridgeState.apply(unrelated,
+            new BridgeProtocol.TpResult(1, "gate", true, ""), 2_200);
+
+        assertEquals("gate", requested.pendingWarp().orElseThrow().id());
+        assertTrue(requested.warpOutcome().isEmpty());
+        assertSame(requested, unrelated);
+        assertTrue(accepted.pendingWarp().isEmpty());
+        assertTrue(accepted.warpOutcome().orElseThrow().ok());
+        assertEquals("gate", accepted.warpOutcome().orElseThrow().id());
+    }
+
+    @Test
+    void warpRequestRejectsUnknownInactiveAndConcurrentIds() {
+        BridgeState active = activeWith(waypoint("gate", 0, 64, 0));
+        BridgeState requested = BridgeState.requestWarp(active, "gate", 2_000);
+        BridgeState disconnected = BridgeState.disconnected();
+
+        assertSame(active, BridgeState.requestWarp(active, "missing", 2_000));
+        assertSame(disconnected, BridgeState.requestWarp(disconnected, "gate", 2_000));
+        assertSame(requested, BridgeState.requestWarp(requested, "gate", 2_100));
+    }
+
+    @Test
+    void pendingWarpTimesOutAndItsOutcomeExpiresFromTheSurface() {
+        BridgeState requested = BridgeState.requestWarp(
+            activeWith(waypoint("gate", 0, 64, 0)), "gate", 2_000);
+
+        assertSame(requested, BridgeState.tick(requested, 6_999));
+        BridgeState timedOut = BridgeState.tick(requested, 7_000);
+
+        assertTrue(timedOut.pendingWarp().isEmpty());
+        assertEquals("timeout", timedOut.warpOutcome().orElseThrow().reason());
+        assertTrue(BridgeState.liveWarpOutcome(timedOut, 10_999).isPresent());
+        assertTrue(BridgeState.liveWarpOutcome(timedOut, 11_000).isEmpty());
+    }
+
+    @Test
+    void aLocalSendFailureUsesTheSameVisibleOutcomePath() {
+        BridgeState requested = BridgeState.requestWarp(
+            activeWith(waypoint("gate", 0, 64, 0)), "gate", 2_000);
+
+        BridgeState failed = BridgeState.failWarp(requested, "gate", "client_send", 2_100);
+
+        assertTrue(failed.pendingWarp().isEmpty());
+        assertFalse(failed.warpOutcome().orElseThrow().ok());
+        assertEquals("client_send", failed.warpOutcome().orElseThrow().reason());
     }
 
     @Test
@@ -97,6 +168,9 @@ final class BridgeStateTest {
         assertEquals(BridgeState.Mode.DISCONNECTED, disconnected.mode());
         assertTrue(disconnected.metrics().isEmpty());
         assertTrue(disconnected.notice().isEmpty());
+        assertTrue(disconnected.waypoints().isEmpty());
+        assertTrue(disconnected.pendingWarp().isEmpty());
+        assertTrue(disconnected.warpOutcome().isEmpty());
         assertFalse(state.equals(disconnected));
     }
 
@@ -120,6 +194,16 @@ final class BridgeStateTest {
     private static BridgeState active() {
         return BridgeState.apply(
             BridgeState.connected(1_000), new BridgeProtocol.Welcome(1), 1_100);
+    }
+
+    private static BridgeState activeWith(BridgeProtocol.Waypoint waypoint) {
+        return BridgeState.apply(BridgeState.connected(1_000),
+            new BridgeProtocol.Welcome(1, List.of(waypoint)), 1_100);
+    }
+
+    private static BridgeProtocol.Waypoint waypoint(String id, int x, int y, int z) {
+        return new BridgeProtocol.Waypoint(
+            id, id, "moon", x, y, z, "world", "palace", "");
     }
 
     private static BridgeProtocol.Notice notice(String id, int durationMillis) {

@@ -1,5 +1,6 @@
 package dev.fullmoon.client.network;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -8,14 +9,22 @@ public record BridgeState(
         int serverProtocol,
         long connectedAt,
         Optional<Metrics> metrics,
-        Optional<ActiveNotice> notice) {
+        Optional<ActiveNotice> notice,
+        List<BridgeProtocol.Waypoint> waypoints,
+        Optional<PendingWarp> pendingWarp,
+        Optional<WarpOutcome> warpOutcome) {
     public static final long HANDSHAKE_TIMEOUT_MILLIS = 5_000;
     public static final long METRICS_STALE_MILLIS = 5_000;
+    public static final long WARP_TIMEOUT_MILLIS = 5_000;
+    public static final long WARP_OUTCOME_MILLIS = 4_000;
 
     public BridgeState {
         Objects.requireNonNull(mode, "mode");
         Objects.requireNonNull(metrics, "metrics");
         Objects.requireNonNull(notice, "notice");
+        waypoints = List.copyOf(Objects.requireNonNull(waypoints, "waypoints"));
+        Objects.requireNonNull(pendingWarp, "pendingWarp");
+        Objects.requireNonNull(warpOutcome, "warpOutcome");
     }
 
     public enum Mode {
@@ -47,6 +56,19 @@ public record BridgeState(
         }
     }
 
+    public record PendingWarp(String id, long requestedAt) {
+        public PendingWarp {
+            Objects.requireNonNull(id, "id");
+        }
+    }
+
+    public record WarpOutcome(String id, boolean ok, String reason, long receivedAt) {
+        public WarpOutcome {
+            Objects.requireNonNull(id, "id");
+            Objects.requireNonNull(reason, "reason");
+        }
+    }
+
     public static BridgeState disconnected() {
         return empty(Mode.DISCONNECTED, 0, 0);
     }
@@ -71,13 +93,48 @@ public record BridgeState(
         if (message instanceof BridgeProtocol.Notice incoming) {
             return notice(state, incoming, now);
         }
+        if (message instanceof BridgeProtocol.WaypointSync sync) {
+            return waypoints(state, sync.waypoints());
+        }
+        if (message instanceof BridgeProtocol.TpResult result) {
+            return warpResult(state, result, now);
+        }
         return state;
+    }
+
+    public static BridgeState requestWarp(BridgeState state, String waypointId, long now) {
+        Objects.requireNonNull(state, "state");
+        if (state.mode != Mode.ACTIVE || state.pendingWarp.isPresent()
+                || state.waypoints.stream().noneMatch(waypoint -> waypoint.id().equals(waypointId))) {
+            return state;
+        }
+        return new BridgeState(
+            state.mode, state.serverProtocol, state.connectedAt, state.metrics, state.notice,
+            state.waypoints, Optional.of(new PendingWarp(waypointId, now)), Optional.empty());
+    }
+
+    public static BridgeState failWarp(
+            BridgeState state, String waypointId, String reason, long now) {
+        Objects.requireNonNull(state, "state");
+        Objects.requireNonNull(waypointId, "waypointId");
+        Objects.requireNonNull(reason, "reason");
+        Optional<PendingWarp> pending = state.pendingWarp;
+        if (pending.isEmpty() || !pending.orElseThrow().id().equals(waypointId)) {
+            return state;
+        }
+        return withWarpOutcome(state, new WarpOutcome(waypointId, false, reason, now));
     }
 
     public static BridgeState tick(BridgeState state, long now) {
         Objects.requireNonNull(state, "state");
         if (state.mode == Mode.WAITING && now - state.connectedAt >= HANDSHAKE_TIMEOUT_MILLIS) {
             return empty(Mode.FALLBACK, 0, state.connectedAt);
+        }
+        Optional<PendingWarp> pending = state.pendingWarp;
+        if (pending.isPresent()
+                && now - pending.orElseThrow().requestedAt() >= WARP_TIMEOUT_MILLIS) {
+            return withWarpOutcome(state,
+                new WarpOutcome(pending.orElseThrow().id(), false, "timeout", now));
         }
         return state;
     }
@@ -92,14 +149,25 @@ public record BridgeState(
         return state.notice.filter(value -> now < value.expiresAt);
     }
 
+    public static Optional<WarpOutcome> liveWarpOutcome(BridgeState state, long now) {
+        Objects.requireNonNull(state, "state");
+        return state.warpOutcome.filter(
+            value -> now - value.receivedAt < WARP_OUTCOME_MILLIS);
+    }
+
     private static BridgeState welcome(BridgeState state, BridgeProtocol.Welcome welcome) {
+        if (state.mode != Mode.WAITING) {
+            return state;
+        }
         if (welcome.proto() < BridgeProtocol.VERSION) {
             return empty(Mode.FALLBACK, welcome.proto(), state.connectedAt);
         }
         if (welcome.proto() > BridgeProtocol.VERSION) {
             return empty(Mode.INCOMPATIBLE, welcome.proto(), state.connectedAt);
         }
-        return empty(Mode.ACTIVE, welcome.proto(), state.connectedAt);
+        return new BridgeState(
+            Mode.ACTIVE, welcome.proto(), state.connectedAt, Optional.empty(), Optional.empty(),
+            welcome.waypoints(), Optional.empty(), Optional.empty());
     }
 
     private static BridgeState metrics(
@@ -111,7 +179,8 @@ public record BridgeState(
         Metrics next = new Metrics(
             sync.revision(), sync.ticksPerSecond(), sync.tickMilliseconds(), now);
         return new BridgeState(
-            state.mode, state.serverProtocol, state.connectedAt, Optional.of(next), state.notice);
+            state.mode, state.serverProtocol, state.connectedAt, Optional.of(next), state.notice,
+            state.waypoints, state.pendingWarp, state.warpOutcome);
     }
 
     private static BridgeState notice(
@@ -120,11 +189,36 @@ public record BridgeState(
             incoming.id(), incoming.title(), incoming.body(), incoming.severity(),
             now, now + incoming.durationMillis());
         return new BridgeState(
-            state.mode, state.serverProtocol, state.connectedAt, state.metrics, Optional.of(next));
+            state.mode, state.serverProtocol, state.connectedAt, state.metrics, Optional.of(next),
+            state.waypoints, state.pendingWarp, state.warpOutcome);
+    }
+
+    private static BridgeState waypoints(
+            BridgeState state, List<BridgeProtocol.Waypoint> waypoints) {
+        return new BridgeState(
+            state.mode, state.serverProtocol, state.connectedAt, state.metrics, state.notice,
+            waypoints, state.pendingWarp, state.warpOutcome);
+    }
+
+    private static BridgeState warpResult(
+            BridgeState state, BridgeProtocol.TpResult result, long now) {
+        Optional<PendingWarp> pending = state.pendingWarp;
+        if (pending.isEmpty() || !pending.orElseThrow().id().equals(result.id())) {
+            return state;
+        }
+        return withWarpOutcome(state,
+            new WarpOutcome(result.id(), result.ok(), result.reason(), now));
+    }
+
+    private static BridgeState withWarpOutcome(BridgeState state, WarpOutcome outcome) {
+        return new BridgeState(
+            state.mode, state.serverProtocol, state.connectedAt, state.metrics, state.notice,
+            state.waypoints, Optional.empty(), Optional.of(outcome));
     }
 
     private static BridgeState empty(Mode mode, int serverProtocol, long connectedAt) {
         return new BridgeState(
-            mode, serverProtocol, connectedAt, Optional.empty(), Optional.empty());
+            mode, serverProtocol, connectedAt, Optional.empty(), Optional.empty(), List.of(),
+            Optional.empty(), Optional.empty());
     }
 }

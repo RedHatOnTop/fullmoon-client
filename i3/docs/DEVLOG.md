@@ -595,3 +595,65 @@ The server also emitted this unrelated lobby-build warning:
 Neither error interrupted the local join, protocol exchange, HUD update, notice display, or legacy
 fallback. The full Hallmark audit and contrast evidence are in
 `docs/evidence/p6-hallmark-audit.md`.
+
+## 2026-08-30 · P7 native server route ledger
+
+P7 completes the client half of the existing `fullmoon:v1` warp contract without modifying the
+concurrent launcher worktree or the production Paper source.
+
+- `BridgeProtocol` now validates complete waypoint snapshots, rejects duplicate or malformed route
+  IDs, bounds coordinates and copy, decodes `waypoint_sync`, `tp_result`, and `screen_open`, and
+  emits `tp_request` with only the server-owned route ID.
+- `BridgeState` immutably replaces route snapshots, admits one known request at a time, applies only
+  a matching server result, exposes a bounded outcome, and turns a silent request into a timeout.
+- `FullmoonChannel` opens the native route screen only after a compatible handshake, sends requests
+  through the registered Fabric payload, refreshes an open screen after a full snapshot update, and
+  converts local send failure into the same visible outcome path.
+- `WarpScreen` is a token-only master-detail ledger with all live distances, one primary request
+  action, a persistent keyboard ring, explicit server-authority copy, and no icons, gradients,
+  motion, purple, or fabricated destination description.
+- `ListPanel` now bounds a restored scroll origin to the viewport. The live selection capture found
+  that selecting row three in a six-row list hid rows one and two even though all six fit; the final
+  capture and regression test verify the correction.
+
+### Test-first evidence
+
+The first protocol/state run failed before implementation with the expected missing contract:
+
+```text
+BridgeStateTest.java:199: error: cannot find symbol
+symbol:   class Waypoint
+location: class BridgeProtocol
+51 errors
+BUILD FAILED in 1s
+```
+
+The route ordering/distance test then failed with three missing `WarpRoutes` symbols, and the visual
+regression produced two missing `ListPanel.boundedFirst` symbols before their implementations were
+added. The final `./gradlew clean check` run executed 193 tests with zero failures, errors, or
+skips. The gated protocol, state, search, and route classes reached 94.76% line coverage and 84.75%
+branch coverage.
+
+### Executed Paper flow
+
+A temporary Paper fixture used the production bridge source, called its existing
+`openWarpScreen` method after handshake, and delayed the production request handler by 80 ticks so
+the waiting state could be captured. The client log records:
+
+```text
+[15:15:06] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[15:15:06] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[15:15:07] [Render thread/INFO] (Fullmoon/Channel) Opened fullmoon:v1 warp screen
+[15:15:24] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request palace_gate
+[15:15:28] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result palace_gate (accepted)
+```
+
+The server accepted the same ID and logged `warp Player969 -> palace_gate`. The selected, pending,
+accepted, and 640×360 compact frames are committed under `docs/evidence/p7-warp-*.png`. The fixture
+held the overworld at dusk tick 13000 with clear weather. The installed bridge was restored to
+SHA-256 `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, and both Paper ports were
+closed after capture.
+
+The shipped Paper plugin exposes `openWarpScreen` but currently has no production caller. That
+server-side trigger is explicitly unverified and unchanged; this phase verifies the complete
+client behavior when the protocol event arrives.

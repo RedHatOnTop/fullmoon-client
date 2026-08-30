@@ -1,9 +1,12 @@
 package dev.fullmoon.client.network;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dev.fullmoon.client.FullmoonClient;
+import dev.fullmoon.client.warp.WarpScreen;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -11,6 +14,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -54,8 +58,35 @@ public final class FullmoonChannel {
         return BridgeState.liveNotice(STATE.get(), now);
     }
 
+    public static List<BridgeProtocol.Waypoint> waypoints() {
+        return STATE.get().waypoints();
+    }
+
+    public static Optional<BridgeState.PendingWarp> pendingWarp() {
+        return STATE.get().pendingWarp();
+    }
+
+    public static Optional<BridgeState.WarpOutcome> warpOutcome(long now) {
+        return BridgeState.liveWarpOutcome(STATE.get(), now);
+    }
+
     public static BridgeState state() {
         return STATE.get();
+    }
+
+    public static boolean requestWarp(BridgeProtocol.Waypoint waypoint) {
+        Objects.requireNonNull(waypoint, "waypoint");
+        long now = System.currentTimeMillis();
+        while (true) {
+            BridgeState before = STATE.get();
+            BridgeState requested = BridgeState.requestWarp(before, waypoint.id(), now);
+            if (requested == before) {
+                return false;
+            }
+            if (STATE.compareAndSet(before, requested)) {
+                return sendWarpRequest(waypoint);
+            }
+        }
     }
 
     private static void connect() {
@@ -92,8 +123,53 @@ public final class FullmoonChannel {
             }
         } else if (message instanceof BridgeProtocol.Notice notice && after != before) {
             LOG.info("Received fullmoon:v1 notice {}", notice.id());
+        } else if (message instanceof BridgeProtocol.WaypointSync sync && after != before) {
+            LOG.info("Replaced fullmoon:v1 waypoint snapshot ({} routes)", sync.waypoints().size());
+            refreshWarpScreen();
+        } else if (message instanceof BridgeProtocol.TpResult result && after != before) {
+            LOG.info("Received fullmoon:v1 warp result {} ({})", result.id(),
+                result.ok() ? "accepted" : result.reason());
+        } else if (message instanceof BridgeProtocol.ScreenOpen open) {
+            openScreen(before, open);
         } else if (message instanceof BridgeProtocol.Unknown unknown) {
             LOG.debug("Ignored fullmoon:v1 payload type {}", unknown.type());
+        }
+    }
+
+    private static boolean sendWarpRequest(BridgeProtocol.Waypoint waypoint) {
+        try {
+            ClientPlayNetworking.send(new Envelope(BridgeProtocol.teleportRequest(waypoint.id())));
+            LOG.info("Sent fullmoon:v1 warp request {}", waypoint.id());
+            return true;
+        } catch (RuntimeException error) {
+            long now = System.currentTimeMillis();
+            STATE.updateAndGet(state ->
+                BridgeState.failWarp(state, waypoint.id(), "client_send", now));
+            LOG.error("Failed to send fullmoon:v1 warp request {}", waypoint.id(), error);
+            return false;
+        }
+    }
+
+    private static void openScreen(BridgeState state, BridgeProtocol.ScreenOpen open) {
+        if (state.mode() != BridgeState.Mode.ACTIVE || open.proto() != state.serverProtocol()) {
+            return;
+        }
+        if (!"warp".equals(open.screen())) {
+            LOG.debug("Ignored fullmoon:v1 screen {}", open.screen());
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.screen instanceof WarpScreen) {
+            return;
+        }
+        client.setScreen(new WarpScreen(client.screen));
+        LOG.info("Opened fullmoon:v1 warp screen");
+    }
+
+    private static void refreshWarpScreen() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.screen instanceof WarpScreen screen) {
+            client.setScreen(screen.refreshed());
         }
     }
 

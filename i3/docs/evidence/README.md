@@ -181,3 +181,31 @@ Two visual decisions came from the rendered frames:
   gradient, blur bloom, animation, or redundant action. The world remains the visual subject.
 - Missing support never masquerades as healthy data. The legacy frame visibly says `TPS —` rather
   than keeping the editor's sample or inventing a nominal 20 TPS reading.
+
+## P7 — native server route ledger
+
+| file | what it settles |
+| --- | --- |
+| `p7-warp-selected-960x540.png` | A real six-route Paper snapshot with `palace_gate` selected. All six rows remain visible, while the detail plane shows only server-published group, ID, world, coordinates, and live distance. |
+| `p7-warp-pending-960x540.png` | The ID-only request is in flight. The one action stops answering, retains its keyboard ring, and reports server-waiting state without animation or optimistic teleport copy. |
+| `p7-warp-accepted-960x540.png` | Paper accepted `palace_gate`, the client received the matching result, the distance changed from 83 m to 1 m, and the footer reports the accepted decision. |
+| `p7-warp-compact-640x360.png` | All routes, facts, the action, and keyboard footer remain contained at 640×360 GUI px. |
+| `p7-live-client.log` / `p7-live-server.log` | Matching hello, welcome, `screen_open`, `tp_request palace_gate`, and accepted server teleport. |
+| `p7-hallmark-audit.md` | The fresh six-axis critique and all 58 Hallmark gates for the route surface. |
+
+The Paper fixture was a temporary copy of `FullmoonBridgePlugin` that called the plugin's existing
+`openWarpScreen` API one second after handshake and delayed the production request handler by 80
+ticks so the in-flight state could be photographed. It held only the overworld at dusk tick 13000
+with clear weather. The actual permission, cooldown, world, chunk warm-up, teleport, and result
+handler remained the production code path. After capture, the installed bridge was restored to
+SHA-256 `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c` and Paper was stopped.
+
+The production plugin currently exposes `openWarpScreen` but does not call it from `/워프` or
+another shipped command. P7 changes only the client, so automatic production invocation remains a
+server-side integration task rather than an unverified client claim.
+
+One defect was found only in the rendered selection flow. `ListPanel` restored its view with the
+selected row at the top even when all six rows fit, so selecting the third route hid the first two
+without a scrollbar while the heading still said six. The draw pass now bounds the restored first
+row against the actual viewport. A regression test covers both all-rows-fit and scrolled cases,
+and the final selected capture visibly contains all six routes.

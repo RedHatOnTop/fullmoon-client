@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,124 @@ final class BridgeProtocolTest {
         BridgeProtocol.Welcome second = assertInstanceOf(
             BridgeProtocol.Welcome.class, BridgeProtocol.decode(framed).message().orElseThrow());
         assertEquals(first, second);
+    }
+
+    @Test
+    void welcomeCarriesAValidatedImmutableWaypointSnapshot() {
+        BridgeProtocol.Welcome welcome = assertInstanceOf(
+            BridgeProtocol.Welcome.class, BridgeProtocol.decode(json("""
+                {"type":"welcome","proto":1,"waypoints":[
+                  {"id":"palace_gate","name":"Palace Gate","icon":"moon",
+                   "x":500,"y":72,"z":-140,"world":"world","group":"palace",
+                   "perm":"warp.palace"}
+                ]}
+                """)).message().orElseThrow());
+
+        BridgeProtocol.Waypoint waypoint = welcome.waypoints().getFirst();
+        assertEquals("palace_gate", waypoint.id());
+        assertEquals("Palace Gate", waypoint.name());
+        assertEquals("moon", waypoint.icon());
+        assertEquals(500, waypoint.x());
+        assertEquals(72, waypoint.y());
+        assertEquals(-140, waypoint.z());
+        assertEquals("world", waypoint.world());
+        assertEquals("palace", waypoint.group());
+        assertEquals("warp.palace", waypoint.permission());
+        assertThrows(UnsupportedOperationException.class, () -> welcome.waypoints().clear());
+    }
+
+    @Test
+    void waypointSnapshotsRejectTheWholeInvalidSnapshot() {
+        assertEquals("waypoints must be an array", decodeError("""
+            {"type":"welcome","proto":1,"waypoints":{}}
+            """));
+        assertEquals("waypoint 0 id is required", decodeError("""
+            {"type":"welcome","proto":1,"waypoints":[
+              {"name":"Gate","x":0,"y":64,"z":0,"world":"world"}
+            ]}
+            """));
+        assertEquals("waypoint 0 id is invalid", decodeError("""
+            {"type":"welcome","proto":1,"waypoints":[
+              {"id":"Bad ID","name":"Gate","x":0,"y":64,"z":0,"world":"world"}
+            ]}
+            """));
+        assertEquals("waypoint 0 name is required", decodeError("""
+            {"type":"welcome","proto":1,"waypoints":[
+              {"id":"gate","name":" ","x":0,"y":64,"z":0,"world":"world"}
+            ]}
+            """));
+        assertEquals("waypoint 0 coordinates are invalid", decodeError("""
+            {"type":"welcome","proto":1,"waypoints":[
+              {"id":"gate","name":"Gate","x":0.5,"y":64,"z":0,"world":"world"}
+            ]}
+            """));
+        assertEquals("waypoint 0 world is required", decodeError("""
+            {"type":"welcome","proto":1,"waypoints":[
+              {"id":"gate","name":"Gate","x":0,"y":64,"z":0}
+            ]}
+            """));
+        assertEquals("waypoint id is duplicated: gate", decodeError("""
+            {"type":"welcome","proto":1,"waypoints":[
+              {"id":"gate","name":"One","x":0,"y":64,"z":0,"world":"world"},
+              {"id":"gate","name":"Two","x":1,"y":64,"z":1,"world":"world"}
+            ]}
+            """));
+    }
+
+    @Test
+    void waypointSyncAndServerActionsUseTheV1OperationalContract() {
+        BridgeProtocol.WaypointSync sync = assertInstanceOf(
+            BridgeProtocol.WaypointSync.class, BridgeProtocol.decode(json("""
+                {"type":"waypoint_sync","waypoints":[]}
+                """)).message().orElseThrow());
+        BridgeProtocol.TpResult accepted = assertInstanceOf(
+            BridgeProtocol.TpResult.class, BridgeProtocol.decode(json("""
+                {"type":"tp_result","id":"palace_gate","ok":true}
+                """)).message().orElseThrow());
+        BridgeProtocol.TpResult denied = assertInstanceOf(
+            BridgeProtocol.TpResult.class, BridgeProtocol.decode(json("""
+                {"type":"tp_result","id":"palace_gate","ok":false,"reason":"cooldown"}
+                """)).message().orElseThrow());
+        BridgeProtocol.ScreenOpen open = assertInstanceOf(
+            BridgeProtocol.ScreenOpen.class, BridgeProtocol.decode(json("""
+                {"type":"screen_open","screen":"warp","data":{"source":"command"}}
+                """)).message().orElseThrow());
+
+        assertEquals(BridgeProtocol.VERSION, sync.proto());
+        assertTrue(sync.waypoints().isEmpty());
+        assertTrue(accepted.ok());
+        assertEquals("", accepted.reason());
+        assertFalse(denied.ok());
+        assertEquals("cooldown", denied.reason());
+        assertEquals("warp", open.screen());
+    }
+
+    @Test
+    void serverActionsRejectMissingOrMalformedAuthorityFields() {
+        assertEquals("tp_result id is required", decodeError("""
+            {"type":"tp_result","ok":true}
+            """));
+        assertEquals("tp_result ok must be a boolean", decodeError("""
+            {"type":"tp_result","id":"gate","ok":"yes"}
+            """));
+        assertEquals("tp_result reason is required when denied", decodeError("""
+            {"type":"tp_result","id":"gate","ok":false}
+            """));
+        assertEquals("screen_open screen is required", decodeError("""
+            {"type":"screen_open"}
+            """));
+    }
+
+    @Test
+    void teleportRequestContainsOnlyTheValidatedServerOwnedId() {
+        String request = new String(BridgeProtocol.teleportRequest("palace_gate"),
+            StandardCharsets.UTF_8);
+
+        assertEquals("{\"type\":\"tp_request\",\"id\":\"palace_gate\"}", request);
+        assertEquals("waypoint id is required", BridgeProtocol.waypointIdError(" "));
+        assertEquals("waypoint id is invalid", BridgeProtocol.waypointIdError("../../spawn"));
+        assertEquals("waypoint id is required", assertThrows(IllegalArgumentException.class,
+            () -> BridgeProtocol.teleportRequest(null)).getMessage());
     }
 
     @Test

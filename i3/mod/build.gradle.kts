@@ -72,6 +72,7 @@ fun verifiedCoreClasses() = files(sourceSets.main.get().output.asFileTree.matchi
         "dev/fullmoon/client/settings/SettingSearch*",
         "dev/fullmoon/client/network/BridgeProtocol*",
         "dev/fullmoon/client/network/BridgeState*",
+        "dev/fullmoon/client/warp/WarpRoutes*",
     )
 })
 

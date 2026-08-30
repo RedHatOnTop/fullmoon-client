@@ -1,6 +1,6 @@
 # i3 build plan
 
-Seven phases. Each one ends in a commit whose evidence is a capture or a test run, not a
+Eight phases. Each one ends in a commit whose evidence is a capture or a test run, not a
 description. Captures come off `Xvfb :9` (see `docs/evidence/README.md`); no phase is reported
 done on a plan or a green compile alone.
 
@@ -75,3 +75,14 @@ time and answered gate by gate, and the six-axis self-critique stamp.
 
 Evidence: a packet round trip against local Paper with both logs, a gate-by-gate pass table,
 the stamp.
+
+## P7 — native server route ledger · done
+
+Complete the remaining `fullmoon:v1` warp contract: validated waypoint snapshots, full-snapshot
+replacement, ID-only requests, matched server results, timeouts, and server-directed screen open.
+The screen is a master-detail route ledger over live Paper data with one request action and no
+client-owned teleport authority.
+
+Evidence: route selection, in-flight, accepted, and compact captures from a real Paper session;
+matching client and server logs for `palace_gate`; reducer and payload boundary tests; a fresh
+58-gate Hallmark audit.

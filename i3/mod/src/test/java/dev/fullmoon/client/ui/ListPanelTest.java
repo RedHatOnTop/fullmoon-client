@@ -82,6 +82,12 @@ class ListPanelTest {
         assertEquals(-1, well(0, 3).selected());
     }
 
+    @Test
+    void aRestoredSelectionCannotHideLeadingRowsWhenTheWholeListFits() {
+        assertEquals(0, ListPanel.boundedFirst(2, 6, 6));
+        assertEquals(7, ListPanel.boundedFirst(11, 12, 5));
+    }
+
     /** The mark leads and the view follows, which is what keeps the marked row on screen. */
     @Test
     void arrowsMoveTheMarkAndDragTheViewBehindThem() {
