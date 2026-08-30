@@ -1,6 +1,6 @@
 # i3 build plan
 
-Eight phases. Each one ends in a commit whose evidence is a capture or a test run, not a
+Nine phases. Each one ends in a commit whose evidence is a capture or a test run, not a
 description. Captures come off `Xvfb :9` (see `docs/evidence/README.md`); no phase is reported
 done on a plan or a green compile alone.
 
@@ -86,3 +86,19 @@ client-owned teleport authority.
 Evidence: route selection, in-flight, accepted, and compact captures from a real Paper session;
 matching client and server logs for `palace_gate`; reducer and payload boundary tests; a fresh
 58-gate Hallmark audit.
+
+## P8 — in-game map
+
+A north-up map of the terrain the client already has, and nothing else: a column outside the
+client cache draws as unmapped rather than as invented ground, and the footer says what fraction
+of the frame is real. Five survey scales with cursor-anchored zoom, arrow panning, one key back
+to the player. The only markers are the routes the server published over `fullmoon:v1`, filtered
+to the dimension the player is standing in, and clicking one centres the map on it — the map asks
+for no teleport of its own. `MapCanvas` draws the plane for the screen and stays shaped for a HUD
+minimap, which is not in this phase.
+
+Evidence: captures of a real Paper session at 960×540 and 640×360 with loaded and unloaded
+terrain in the same frame, the published routes marked against the ledger's own six destinations,
+and a zoom pair that keeps the block under the cursor fixed. The pure core is at 100% line and
+branch on every gated map class; `TerrainSampler` has no unit test, because it needs a live
+`ClientLevel`, so those frames are the only evidence it has. A fresh 58-gate Hallmark audit.
