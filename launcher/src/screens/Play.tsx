@@ -37,8 +37,8 @@ export function PlayScreen() {
     <div className="play-screen-wrapper stagger">
       {/* ── 1. Focus Hero Stage (Play Now) ── */}
       <div className="play-screen">
-        {/* Center Hero Avatar & Big Launchpad Stage */}
-        <div className="play-center-stage">
+        {/* Upper Character Stage */}
+        <div className="play-character-stage">
           {/* Floating Player Nametag */}
           <div className="play-player-nametag">
             <span className="player-name-text">{activeAccount?.username ?? "BlackCow"}</span>
@@ -54,34 +54,34 @@ export function PlayScreen() {
               zoom={1.08}
             />
           </div>
+        </div>
 
-          {/* Big Central Launch Action Group */}
-          <div className="play-action-cluster">
-            <button
-              className="massive-play-button"
-              disabled={!installedAny}
-              onClick={() => quickPlay()}
-            >
-              <div className="play-btn-glow" />
-              <div className="play-btn-content">
-                <Icon name="play" size={24} strokeWidth={2.4} />
-                <div className="play-btn-text">
-                  <span className="main-word">PLAY NOW</span>
-                  <span className="sub-instance-tag">
-                    {selectedInstance ? selectedInstance.name : `${BRAND.name} 26.1.2`}
-                  </span>
-                </div>
+        {/* Lower Launch Action Group */}
+        <div className="play-action-cluster">
+          <button
+            className="massive-play-button"
+            disabled={!installedAny}
+            onClick={() => quickPlay()}
+          >
+            <div className="play-btn-glow" />
+            <div className="play-btn-content">
+              <Icon name="play" size={24} strokeWidth={2.4} />
+              <div className="play-btn-text">
+                <span className="main-word">PLAY NOW</span>
+                <span className="sub-instance-tag">
+                  {selectedInstance ? selectedInstance.name : `${BRAND.name} 26.1.2`}
+                </span>
               </div>
-            </button>
+            </div>
+          </button>
 
-            <button
-              className="play-quick-config-btn"
-              title="설정 및 인스턴스 옵션"
-              onClick={() => setScreen("settings")}
-            >
-              <Icon name="gear" size={20} />
-            </button>
-          </div>
+          <button
+            className="play-quick-config-btn"
+            title="설정 및 인스턴스 옵션"
+            onClick={() => setScreen("settings")}
+          >
+            <Icon name="gear" size={20} />
+          </button>
         </div>
 
         {/* Bottom Deck: Quick Servers & Featured News */}
