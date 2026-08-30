@@ -26,7 +26,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 
 /** Premier in-game HUD studio with clean top header, centered inspector pill, and spacious bottom dock. */
 public final class HudEditorScreen extends Screen {
-    private static final int SNAP = 4;
     private static final int GRID_STEP = 16;
     private static final int CORNER_LEN = 6;
     private static final int CORNER_THICK = Tokens.Stroke.FOCUS;
@@ -244,9 +243,9 @@ public final class HudEditorScreen extends Screen {
                 int rawX = elem.anchor().computeX(width, elem.measureWidth(Minecraft.getInstance()), dragInitialOffsetX) + dx;
                 int rawY = elem.anchor().computeY(height, elem.measureHeight(Minecraft.getInstance()), dragInitialOffsetY) + dy;
 
-                // 4px grid snap
-                int snappedX = Math.round(rawX / (float) SNAP) * SNAP;
-                int snappedY = Math.round(rawY / (float) SNAP) * SNAP;
+                int step = HudElementRegistry.getInstance().gridSnap();
+                int snappedX = HudGrid.snap(rawX, step);
+                int snappedY = HudGrid.snap(rawY, step);
 
                 Anchor nearest = Anchor.nearest(width, height, elem.measureWidth(Minecraft.getInstance()),
                     elem.measureHeight(Minecraft.getInstance()), snappedX, snappedY);

@@ -57,6 +57,7 @@ fn main() {
             commands::cosmetics_equip,
             commands::hud_get,
             commands::hud_set,
+            commands::hud_reset,
             commands::news_feed,
             commands::servers_list,
             commands::servers_save,

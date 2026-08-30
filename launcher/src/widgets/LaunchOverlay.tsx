@@ -6,7 +6,7 @@ import { useT } from "../i18n";
 import type { LogLevel } from "../core/bindings";
 
 const LEVEL_CLASS: Record<LogLevel, string> = {
-  PINION: "lov-accent",
+  OURS: "lov-accent",
   ERROR: "lov-err",
   WARN: "lov-warn",
   INFO: "lov-dim",

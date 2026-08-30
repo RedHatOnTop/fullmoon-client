@@ -22,6 +22,7 @@ public final class HudElementRegistry {
     private final Map<String, HudElement> registry = new LinkedHashMap<>();
     private final HudWatch watch = new HudWatch();
     private Path configPath;
+    private int gridSnap = HudGrid.DEFAULT_STEP;
 
     private HudElementRegistry() {
         register(new CoordinatesHud());
@@ -55,6 +56,11 @@ public final class HudElementRegistry {
 
     public HudElement get(String id) {
         return registry.get(id);
+    }
+
+    /** The snap step the file carries, which the launcher's editor may have chosen. */
+    public int gridSnap() {
+        return gridSnap;
     }
 
     public void load() {
@@ -95,7 +101,9 @@ public final class HudElementRegistry {
     }
 
     public void applyConfig(HudConfig config) {
-        if (config == null || config.elements == null) return;
+        if (config == null) return;
+        gridSnap = HudGrid.sanitize(config.gridSnap);
+        if (config.elements == null) return;
         for (Map.Entry<String, HudConfig.ElementState> entry : config.elements.entrySet()) {
             HudElement elem = registry.get(entry.getKey());
             if (elem != null && entry.getValue() != null) {
@@ -115,6 +123,7 @@ public final class HudElementRegistry {
 
     public HudConfig exportConfig() {
         HudConfig config = new HudConfig();
+        config.gridSnap = gridSnap;
         for (HudElement elem : registry.values()) {
             HudConfig.ElementState state = new HudConfig.ElementState(
                 elem.enabled(),

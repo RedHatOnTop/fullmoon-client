@@ -48,6 +48,14 @@ pub async fn write(instance_id: &str, cfg: &HudConfig) -> Result<()> {
     store::write(&paths::instance_hud_file(instance_id), cfg).await
 }
 
+/// Put the catalogue default back and hand it to the caller. The defaults live in the core, so an
+/// editor that wants them back asks for them rather than restating them.
+pub async fn reset(instance_id: &str) -> Result<HudConfig> {
+    let cfg = defaults();
+    write(instance_id, &cfg).await?;
+    Ok(cfg)
+}
+
 /// The mod reads this on its first frame; ship the default layout with the install rather than
 /// making the player open an editor once to create it. An existing file is the player's.
 pub async fn seed(instance_id: &str) -> Result<()> {
@@ -59,6 +67,11 @@ pub async fn seed(instance_id: &str) -> Result<()> {
 }
 
 fn validate(cfg: &HudConfig) -> Result<()> {
+    // both editors snap a drag to this step, and the mod's own HudGrid::sanitize would quietly
+    // read a zero as four — writing one would make the two surfaces round differently
+    if cfg.grid_snap == 0 {
+        return Err(Error::Invalid("hud gridSnap must be at least one pixel".into()));
+    }
     for (id, state) in &cfg.elements {
         if !ANCHORS.contains(&state.anchor.as_str()) {
             return Err(Error::Invalid(format!(
@@ -213,5 +226,13 @@ mod tests {
             cfg.elements.get_mut("fps").unwrap().scale = bad;
             assert!(validate(&cfg).is_err(), "scale {bad}");
         }
+
+        // read() forgives a zero because the file may not be ours; write() does not, because
+        // this one would be.
+        let mut cfg = defaults();
+        cfg.grid_snap = 0;
+        assert!(validate(&cfg).is_err());
+        cfg.grid_snap = 1;
+        assert!(validate(&cfg).is_ok());
     }
 }

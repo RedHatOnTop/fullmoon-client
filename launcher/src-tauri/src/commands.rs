@@ -405,6 +405,11 @@ pub async fn hud_set(instance_id: String, cfg: HudConfig) -> Result<()> {
     hud::write(&instance_id, &cfg).await
 }
 
+#[tauri::command]
+pub async fn hud_reset(instance_id: String) -> Result<HudConfig> {
+    hud::reset(&instance_id).await
+}
+
 // ── home ──────────────────────────────────────────────────────
 
 #[tauri::command]
