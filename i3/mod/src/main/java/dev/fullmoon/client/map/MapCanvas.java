@@ -67,18 +67,38 @@ public final class MapCanvas {
 
     private static void drawMarkers(Painter painter, Box raster, int cellSize,
             List<MapMarkers.Placed> markers, boolean labels) {
-        for (MapMarkers.Placed marker : markers) {
-            int x = raster.x() + (int) Math.round(marker.column() * cellSize);
-            int y = raster.y() + (int) Math.round(marker.row() * cellSize);
+        List<MapMarkers.Placed> named = labels
+            ? MapMarkers.declutter(markers, marker -> labelBox(raster, cellSize, marker))
+            : markers;
+        for (MapMarkers.Placed marker : named) {
+            int x = plot(raster.x(), marker.column(), cellSize);
+            int y = plot(raster.y(), marker.row(), cellSize);
             painter.ring(x, y, Tokens.Space.SNUG, Tokens.Stroke.FOCUS,
                 Tokens.Color.INK_PRIMARY);
             painter.dot(x, y, Tokens.Space.HAIR, Tokens.Color.INK_PRIMARY);
             if (labels && !marker.label().isBlank()) {
+                // Terrain is the subject and it can be any colour, so the name carries its own
+                // ground rather than trusting whatever block it lands on.
+                Box plate = labelBox(raster, cellSize, marker);
+                painter.fill(plate.x(), plate.y(), plate.w(), plate.h(),
+                    Rgb.alpha(Tokens.Color.SURFACE_VOID, 0.78f));
                 Typeset.draw(painter, Tokens.Type.LABEL, marker.label(),
                     x + Tokens.Space.COZY, y - Tokens.Space.SNUG,
                     Tokens.Color.INK_PRIMARY);
             }
         }
+    }
+
+    /** The plate a label sits on, which is also the area another label may not take. */
+    private static Box labelBox(Box raster, int cellSize, MapMarkers.Placed marker) {
+        return new Box(plot(raster.x(), marker.column(), cellSize) + Tokens.Space.COZY,
+            plot(raster.y(), marker.row(), cellSize) - Tokens.Space.SNUG,
+            Typeset.width(Tokens.Type.LABEL, marker.label()),
+            Tokens.Type.LABEL.px()).inset(-Tokens.Space.TIGHT);
+    }
+
+    private static int plot(int origin, double cell, int cellSize) {
+        return origin + (int) Math.round(cell * cellSize);
     }
 
     private static void drawPlayer(Painter painter, Box raster, int cellSize,
@@ -87,8 +107,8 @@ public final class MapCanvas {
                 || player.row() < 0.0 || player.row() > snapshot.height() - 1) {
             return;
         }
-        int x = raster.x() + (int) Math.round(player.column() * cellSize);
-        int y = raster.y() + (int) Math.round(player.row() * cellSize);
+        int x = plot(raster.x(), player.column(), cellSize);
+        int y = plot(raster.y(), player.row(), cellSize);
         painter.ring(x, y, Tokens.Space.SNUG,
             Tokens.Stroke.FOCUS, Tokens.Color.ACCENT);
         painter.hRule(x - Tokens.Space.COZY, y,

@@ -138,6 +138,7 @@
     "fullmoon.map.scale": "Scale",
     "fullmoon.map.scale.value": "%s blocks per cell",
     "fullmoon.map.routes": "%s routes",
+    "fullmoon.map.routes.beyond": "%s beyond the list",
     "fullmoon.map.routes.empty": "No routes published for this world",
     "fullmoon.map.footer.keys": "Esc close · Arrows pan · Wheel or ± zoom · R recentre",
     "fullmoon.map.status.coverage": "%s%% terrain loaded",

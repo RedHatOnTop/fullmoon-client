@@ -209,3 +209,43 @@ selected row at the top even when all six rows fit, so selecting the third route
 without a scrollbar while the heading still said six. The draw pass now bounds the restored first
 row against the actual viewport. A regression test covers both all-rows-fit and scrolled cases,
 and the final selected capture visibly contains all six routes.
+
+## P8 — in-game map
+
+| file | what it settles |
+| --- | --- |
+| `p8-map-960x540.png` | A live Paper session at `칸당 2블록`. The plane carries loaded terrain and unmapped corners in the same frame, the footer reports `불러온 지형 93%`, and all six published routes are listed in the rail with five of them marked in view. |
+| `p8-map-survey-960x540.png` | The same session two scales out at `칸당 8블록`. The footer drops to `불러온 지형 8%` and the 92% the client has never loaded draws as empty grid, not as invented ground. Six rings remain; two labels are blanked where they would have landed on a kept one. |
+| `p8-map-zoom-960x540.png` | The other half of the zoom pair. The pointer sat at GUI (337, 295) — cell (104, 74) of the 226×140 raster — over world (431, 16) at `칸당 8블록`; after one wheel notch the rail reads `465 -2` at `칸당 4블록`, which puts (431, 16) back under the same cell. |
+| `p8-map-route-960x540.png` | Clicking the third rail row centres the plane on it: `동쪽 달빛 게이트` wears the accent wash and bar, and `중심` becomes `564 0` — the coordinates the row itself publishes. No teleport is requested; the map has no such authority. |
+| `p8-map-compact-640x360.png` | The compact layout at 640×360 GUI px. The rail fits four of the six rows and says so with `목록 밖 2개`, while the plane still marks `별궁 중앙 홀`, whose row the rail dropped. |
+| `p8-map-compact-survey-640x360.png` | The compact rail at `칸당 8블록`: `불러온 지형 20%`, six rings, four labels, and the overflow line still accounting for the two rows it cannot show. |
+| `p8-live-client.log` / `p8-live-server.log` | Both sessions' hello, welcome, and `Map open:` provenance against Paper's own handshake and waypoint count. |
+| `p8-hallmark-audit.md` | The fresh six-axis critique and all 58 Hallmark gates for the map. |
+
+No fixture was installed for P8 and none was owed. `welcome` already carries the waypoint snapshot,
+so the shipped `FullmoonBridge.jar` publishes the six routes on handshake with no test-only code in
+the path — the reason the two log files pair on `6 waypoint(s)` and nothing else. Nothing was
+restored afterwards because nothing was replaced; Paper was stopped once both sets were taken.
+
+The pairing is tighter than the handshake. Paper logs where it places a joining player, the map
+centres on the player when it opens, and `%.0f` rounds that coordinate for the rail — so the
+server's `502.5, 72.0, -16.5` is the `503 -17` the 960 frames read, and its `506.5, 72.0, -35.5`
+is the `507 -36` of the compact set. The raster sizes in the same lines, 226×140 and 148×88 cells,
+are the two window sizes divided by the 3 px cell.
+
+Two defects and one legibility failure came out of these captures:
+
+- Labels collided at coarse scales. At `칸당 8블록` the six routes crowd into a few dozen pixels and
+  three names overprinted into an unreadable smear. The rule now lives in pure `MapMarkers.declutter`
+  with the measurement injected as a `LabelBox`, because `Typeset.width` needs a running client and a
+  collision rule inside `MapCanvas` could not be tested. Ledger order decides who keeps the name, so
+  the same labels drop every frame instead of flickering; the ring and dot stay on every marker, so a
+  coarse scale costs names, never destinations. A regression test covers it.
+- The rail truncated the route list silently. It listed as many rows as fit and said nothing about
+  the rest while the heading still counted six. It now prints `목록 밖 2개`, visible in both compact
+  frames and correctly absent from the 960 frames where all six fit.
+- Names were unreadable over bright terrain. `만월궁 정문` sits on the palace wall and the gate labels
+  sit on the plaza, both near-white, and light ink on them was a guess at best. Each label now draws
+  its own plate at the same box the collision test uses, so a name is legible over any block the map
+  can render. This is why the committed frames are the third capture of this phase, not the first.

@@ -20,6 +20,11 @@ the machine: the geometry sizes the Xvfb and the client window as one number, si
 smaller than the display is a photograph with a mat around it, and gui scale is on `auto` in any
 fresh options.txt — and run/ is not in the repo.
 
+A shot is a name and the things done before it is photographed: a key by its keysym, `type=TEXT`,
+`wait=SECONDS`, `move=XxY`, `click[=left|middle|right]` or `scroll=up|down`. The pointer verbs are
+there because a cursor-anchored zoom and a click on a row are claims about where the pointer was,
+and a keyboard-only rig can only photograph the claims it cannot make.
+
     tools/capture.py /tmp/out --geometry 1920x1080 kit:F7 focus-1:Tab focus-2:Tab
 """
 
@@ -55,7 +60,7 @@ def parse_shot(text):
 def parse_geometry(text):
     found = re.fullmatch(r"(\d+)x(\d+)", text)
     if not found:
-        raise argparse.ArgumentTypeError(f"want WxH in device pixels, got {text!r}")
+        raise argparse.ArgumentTypeError(f"want WxH, got {text!r}")
     return int(found.group(1)), int(found.group(2))
 
 
@@ -133,6 +138,12 @@ def main():
                     type_text(d, key.removeprefix("type="))
                 elif key.startswith("wait="):
                     time.sleep(float(key.removeprefix("wait=")))
+                elif key.startswith("move="):
+                    move(d, args.scale, key.removeprefix("move="))
+                elif key.startswith("scroll="):
+                    press(d, key.removeprefix("scroll="))
+                elif key.startswith("click"):
+                    press(d, key.partition("=")[2] or "left")
                 else:
                     tap(d, key)
                 time.sleep(args.gap)
@@ -191,6 +202,32 @@ def tap(d, name):
     d.sync()
     time.sleep(0.05)
     xtest.fake_input(d, X.KeyRelease, code)
+    d.sync()
+
+
+BUTTONS = {"left": 1, "middle": 2, "right": 3, "up": 4, "down": 5}
+
+
+def move(d, scale, text):
+    """Take the pointer to a gui pixel, because that is the only coordinate a reader can derive.
+
+    Every number in a layout is gui pixels; the device pixel it lands on is the scale the rig was
+    handed times that, and nobody reading a capture should have to do that multiplication to check
+    where the cursor was.
+    """
+    column, row = parse_geometry(text)
+    xtest.fake_input(d, X.MotionNotify, x=column * scale, y=row * scale)
+    d.sync()
+
+
+def press(d, name):
+    button = BUTTONS.get(name)
+    if button is None:
+        sys.exit(f"no pointer button named {name!r}")
+    xtest.fake_input(d, X.ButtonPress, button)
+    d.sync()
+    time.sleep(0.05)
+    xtest.fake_input(d, X.ButtonRelease, button)
     d.sync()
 
 

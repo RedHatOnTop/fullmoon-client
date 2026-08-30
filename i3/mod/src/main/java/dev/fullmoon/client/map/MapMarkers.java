@@ -1,6 +1,9 @@
 package dev.fullmoon.client.map;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import dev.fullmoon.client.layout.Box;
 
 /** Pure projection and clipping for server-published map markers. */
 public final class MapMarkers {
@@ -15,6 +18,31 @@ public final class MapMarkers {
             .map(marker -> place(marker, viewport, columns, rows))
             .filter(placed -> visible(placed, columns, rows))
             .toList();
+    }
+
+    /**
+     * The same markers, with every label that would land on a kept one blanked.
+     *
+     * <p>Ledger order decides who keeps the name, so a coarse scale drops the same labels every
+     * frame instead of flickering between them. The ring stays on every marker either way: a
+     * dropped label costs the name, never the destination.
+     */
+    public static List<Placed> declutter(List<Placed> markers, LabelBox labels) {
+        if (markers == null || labels == null) {
+            throw new IllegalArgumentException("Map markers and a label box are required");
+        }
+        List<Box> kept = new ArrayList<>();
+        List<Placed> named = new ArrayList<>();
+        for (Placed marker : List.copyOf(markers)) {
+            Box box = marker.label().isBlank() ? Box.EMPTY : labels.of(marker);
+            if (!box.empty() && kept.stream().noneMatch(box::overlaps)) {
+                kept.add(box);
+                named.add(marker);
+            } else {
+                named.add(new Placed(marker.id(), "", marker.column(), marker.row()));
+            }
+        }
+        return List.copyOf(named);
     }
 
     private static Placed place(Marker marker, MapViewport viewport, int columns, int rows) {
@@ -34,6 +62,11 @@ public final class MapMarkers {
             }
             label = label == null ? "" : label;
         }
+    }
+
+    /** The box a label would fill, which only a running client can measure. */
+    public interface LabelBox {
+        Box of(Placed marker);
     }
 
     public record Placed(String id, String label, double column, double row) {}

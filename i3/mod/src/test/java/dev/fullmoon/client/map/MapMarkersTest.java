@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
+import dev.fullmoon.client.layout.Box;
+
 import org.junit.jupiter.api.Test;
 
 class MapMarkersTest {
@@ -68,6 +70,36 @@ class MapMarkersTest {
         source.clear();
 
         assertEquals(1, placed.size());
+    }
+
+    @Test
+    void blanksTheLabelsThatWouldLandOnAKeptOneAndKeepsEveryMarker() {
+        List<MapMarkers.Placed> markers = List.of(
+            new MapMarkers.Placed("west", "West Gate", 10.0, 4.0),
+            new MapMarkers.Placed("east", "East Gate", 12.0, 4.0),
+            new MapMarkers.Placed("south", "South Gate", 10.0, 8.0),
+            new MapMarkers.Placed("anon", "", 10.0, 4.0));
+
+        List<MapMarkers.Placed> named = MapMarkers.declutter(markers, MapMarkersTest::labelBox);
+
+        assertEquals(List.of("West Gate", "", "South Gate", ""),
+            named.stream().map(MapMarkers.Placed::label).toList());
+        assertEquals(List.of("west", "east", "south", "anon"),
+            named.stream().map(MapMarkers.Placed::id).toList());
+    }
+
+    @Test
+    void refusesToDeclutterWithoutMarkersOrALabelBox() {
+        assertThrows(IllegalArgumentException.class,
+            () -> MapMarkers.declutter(null, MapMarkersTest::labelBox));
+        assertThrows(IllegalArgumentException.class,
+            () -> MapMarkers.declutter(List.of(), null));
+    }
+
+    /** Four px a character and eight px a line, so the overlap is arithmetic a reader can check. */
+    private static Box labelBox(MapMarkers.Placed marker) {
+        return new Box((int) (marker.column() * 3), (int) (marker.row() * 3),
+            marker.label().length() * 4, 8);
     }
 
     @Test

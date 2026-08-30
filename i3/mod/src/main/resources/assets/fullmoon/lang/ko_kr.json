@@ -138,6 +138,7 @@
     "fullmoon.map.scale": "축척",
     "fullmoon.map.scale.value": "칸당 %s블록",
     "fullmoon.map.routes": "항로 %s곳",
+    "fullmoon.map.routes.beyond": "목록 밖 %s개",
     "fullmoon.map.routes.empty": "이 월드에 공개된 항로 없음",
     "fullmoon.map.footer.keys": "Esc 닫기 · 방향키 이동 · 휠·± 확대 · R 내 위치",
     "fullmoon.map.status.coverage": "불러온 지형 %s%%",

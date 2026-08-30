@@ -657,3 +657,82 @@ closed after capture.
 The shipped Paper plugin exposes `openWarpScreen` but currently has no production caller. That
 server-side trigger is explicitly unverified and unchanged; this phase verifies the complete
 client behavior when the protocol event arrives.
+
+## 2026-08-30 · P8 in-game map
+
+P8 draws the terrain the client already has and the routes the server already published, and refuses
+to draw anything else. It adds no packet: `welcome` carries the waypoint snapshot, so the map reads
+the same `BridgeState` the route ledger reads.
+
+- `MapViewport` is the whole coordinate contract — five declared survey scales (1, 2, 4, 8, 16 blocks
+  a cell), cell/world projection in both directions, cell panning, and cursor-anchored zoom that
+  recentres so the block under the pointer keeps its pixel. It rejects a NaN or infinite centre, an
+  undeclared scale, and a zero-sized raster.
+- `TerrainSnapshot` carries what the sampler found as run-length rows, and reports the fraction of the
+  frame that is real. `TerrainSample` pairs it with the fact that a column was outside the client
+  cache, so an unmapped cell draws as grid rather than as invented ground.
+- `TerrainSampler` reads the client's own loaded chunks through `getMapColor` and has no unit test,
+  because it needs a live `ClientLevel`. The committed frames are the only evidence it has, and the
+  footer percentage in each one is the claim it makes.
+- `MapMarkers` places the published routes into raster cells and, new in this pass, blanks the labels
+  that would land on a kept one. Ledger order decides who keeps the name, and the ring stays on every
+  marker: a coarse scale costs names, never destinations. The label box is injected as a `LabelBox`
+  because `Typeset.width` needs a running client, the same reason `Clipboard` is an interface.
+- `WorldNames` matches a server-published world against the dimension the player is standing in, so
+  the plane never marks a route belonging to another world.
+- `MapScreen` is the master-detail surface: plane on the left, position and route rail on the right,
+  arrow panning, wheel and `±` zoom, `R` back to the player. Clicking a rail row centres the plane on
+  that route and requests no teleport. A rail too short to list every route now prints `목록 밖 2개`
+  instead of truncating in silence.
+- `MapCanvas` draws the plane and stays shaped for a HUD minimap, which is not in this phase.
+
+### What the captures corrected
+
+Three findings came from the rendered frames rather than from the tests:
+
+- At `칸당 8블록` three route names overprinted into an unreadable smear. Fixed in pure
+  `MapMarkers.declutter`; `MapMarkersTest` covers the blanking order and the empty-label case, and the
+  survey frame shows six rings with four names.
+- The rail listed as many rows as fit and said nothing about the rest while the heading still counted
+  six. It now admits the loss.
+- Light ink on a near-white palace wall was a guess. Each label now draws its own plate at the same box
+  the collision test uses, which is why the committed frames are this phase's third capture pass.
+
+The regression tests for the first two were written with the fixes, not before them; the frames are
+what failed first.
+
+### Gates on the committed tree
+
+```text
+./gradlew -p . test jacocoTestCoverageVerification   → 212 tests, 0 failures, 0 errors, 0 skipped
+node design/verify-tokens.mjs                        → scanned 104 file(s)
+                                                       no colour or motion literals outside the token block
+```
+
+The gated core is 95.78% line and 88.50% branch in aggregate. Every gated map class is at 100% of
+both: `MapViewport` 32/32 lines and 12/12 branches, `MapMarkers` 22/22 and 24/24, `TerrainSnapshot`
+26/26 and 24/24, `TerrainSample` 6/6 and 4/4, `WorldNames` 9/9 and 12/12.
+
+### Executed Paper flow
+
+Two sessions against the local Paper server, one per window size, with the shipped bridge and no
+fixture. The client log records the map's own provenance:
+
+```text
+[17:26:32] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[17:27:28] [Render thread/INFO] (Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+```
+
+against Paper's `[FullmoonBridge] handshake ok: Player280 (client=fullmoon v3.0.0, proto 1) — 6
+waypoint(s)`. The pairing goes further than the count: Paper logged the join at
+`([minecraft:overworld]502.5, 72.0, -16.5)`, the map centres on the player when it opens, and the rail
+reads `503 -17`.
+
+The zoom pair is arithmetic a reader can redo. The pointer sat at GUI (337, 295), which is cell
+(104, 74) of the 226×140 raster; at `칸당 8블록` around centre (499, −20) that cell holds world
+(431, 16); one notch in must therefore centre on 431 − (104 − 112.5) × 4 = 465 and
+16 − (74 − 69.5) × 4 = −2. `p8-map-zoom-960x540.png` reads `465 -2`.
+
+The six frames are committed under `docs/evidence/p8-map-*.png` with the two log extracts and
+`docs/evidence/p8-hallmark-audit.md`. Nothing was installed on the server, so nothing was restored;
+Paper was stopped after the second set.

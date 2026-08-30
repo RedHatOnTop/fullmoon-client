@@ -101,6 +101,18 @@ class BoxTest {
     }
 
     @Test
+    void overlapsOnlyWhereTwoNonEmptyBoxesShareAPixel() {
+        assertTrue(AREA.overlaps(new Box(109, 79, 40, 40)));
+        assertTrue(AREA.overlaps(AREA));
+        assertFalse(AREA.overlaps(new Box(110, 20, 40, 60)));
+        assertFalse(AREA.overlaps(new Box(10, 80, 100, 60)));
+        assertFalse(AREA.overlaps(new Box(-30, 20, 40, 60)));
+        assertFalse(AREA.overlaps(new Box(10, -40, 100, 60)));
+        assertFalse(AREA.overlaps(Box.EMPTY));
+        assertFalse(Box.EMPTY.overlaps(AREA));
+    }
+
+    @Test
     void centredLeavesTheOddPixelOnTheTrailingEdge() {
         assertEquals(new Box(34, 39, 51, 21), AREA.centred(51, 21));
         assertEquals(AREA, AREA.centred(AREA.w(), AREA.h()));

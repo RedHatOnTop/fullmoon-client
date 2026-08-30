@@ -85,6 +85,11 @@ public final class MapScreen extends Screen {
             Math.max(CELL_SIZE, mapSlot.h() / CELL_SIZE * CELL_SIZE));
         rail = columns.rest();
         refreshTerrain();
+        // The map draws no packets of its own, so this line is the only place a capture can be
+        // paired with the server that published the routes it marks.
+        LOG.info("Map open: {}x{} cells at {} blocks per cell, {} published route(s) in {}",
+            terrain.snapshot().width(), terrain.snapshot().height(), viewport.blocksPerCell(),
+            currentRoutes().size(), dimensionName());
     }
 
     @Override
@@ -222,6 +227,12 @@ public final class MapScreen extends Screen {
         if (routes.isEmpty()) {
             Typeset.drawWrapped(painter, Tokens.Type.BODY, tr("routes.empty"), rail.x(), y,
                 rail.w(), 3, Tokens.Color.INK_TERTIARY);
+        } else if (hits.size() < routes.size()) {
+            // A rail too short to list every route still has to admit it. The map keeps marking
+            // the ones the list dropped, so the count is the only place the loss is visible.
+            Typeset.draw(painter, Tokens.Type.LABEL,
+                tr("routes.beyond", routes.size() - hits.size()), rail.x(),
+                y + Tokens.Space.SNUG, Tokens.Color.INK_TERTIARY);
         }
     }
 
@@ -341,6 +352,11 @@ public final class MapScreen extends Screen {
         return FullmoonChannel.waypoints().stream()
             .filter(route -> WorldNames.matches(route.world(), dimension))
             .toList();
+    }
+
+    private static String dimensionName() {
+        Minecraft client = Minecraft.getInstance();
+        return client.level == null ? "no world" : client.level.dimension().identifier().toString();
     }
 
     private static Entity player() {
