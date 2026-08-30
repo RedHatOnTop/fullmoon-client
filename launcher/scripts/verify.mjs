@@ -78,6 +78,13 @@ try {
   // 1. Play Screen (Centered Hero Launchpad)
   await shot(page, "01-play");
 
+  // 1-hover. Play Button Hover (Peeking Moon Rabbit Easter Egg)
+  await page.hover(".massive-play-button");
+  await sleep(600);
+  await shot(page, "01-play-rabbit-hover");
+  await page.mouse.move(100, 100);
+  await sleep(400);
+
   // 1b. Dashboard Screen (Servers Overview)
   await clickNav(page, "대시보드");
   await sleep(1000);

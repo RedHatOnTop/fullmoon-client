@@ -58,22 +58,53 @@ export function PlayScreen() {
 
         {/* Lower Launch Action Group */}
         <div className="play-action-cluster">
-          <button
-            className="massive-play-button"
-            disabled={!installedAny}
-            onClick={() => quickPlay()}
-          >
-            <div className="play-btn-glow" />
-            <div className="play-btn-content">
-              <Icon name="play" size={24} strokeWidth={2.4} />
-              <div className="play-btn-text">
-                <span className="main-word">게임 시작</span>
-                <span className="sub-instance-tag">
-                  {selectedInstance ? selectedInstance.name : `${BRAND.name} 26.1.2`}
-                </span>
-              </div>
+          <div className="play-button-box">
+            {/* Peeking Moon Rabbit Easter Egg */}
+            <div className="play-peeking-rabbit" aria-hidden="true">
+              <svg viewBox="0 0 48 38" className="rabbit-svg">
+                {/* Left Ear */}
+                <rect x="10" y="2" width="7" height="17" rx="3.5" className="rabbit-white" />
+                <rect x="12" y="6" width="3" height="11" rx="1.5" className="rabbit-pink" />
+                {/* Right Ear */}
+                <rect x="31" y="2" width="7" height="17" rx="3.5" className="rabbit-white" />
+                <rect x="33" y="6" width="3" height="11" rx="1.5" className="rabbit-pink" />
+                {/* Head */}
+                <rect x="8" y="14" width="32" height="24" rx="10" className="rabbit-white" />
+                {/* Cheeks */}
+                <circle cx="12" cy="27" r="2.5" className="rabbit-blush" />
+                <circle cx="36" cy="27" r="2.5" className="rabbit-blush" />
+                {/* Left Eye */}
+                <circle cx="17" cy="23" r="2.5" className="rabbit-eye" />
+                <circle cx="16.2" cy="22.2" r="0.8" className="rabbit-sparkle" />
+                {/* Right Eye */}
+                <circle cx="31" cy="23" r="2.5" className="rabbit-eye" />
+                <circle cx="30.2" cy="22.2" r="0.8" className="rabbit-sparkle" />
+                {/* Cute Nose & Mouth */}
+                <polygon points="24,25.5 22.5,24 25.5,24" className="rabbit-pink" />
+                <path d="M22 27 Q24 28.5 26 27" className="rabbit-mouth" />
+                {/* Tiny Paws */}
+                <rect x="11" y="32" width="8" height="5" rx="2.5" className="rabbit-white" />
+                <rect x="29" y="32" width="8" height="5" rx="2.5" className="rabbit-white" />
+              </svg>
             </div>
-          </button>
+
+            <button
+              className="massive-play-button"
+              disabled={!installedAny}
+              onClick={() => quickPlay()}
+            >
+              <div className="play-btn-glow" />
+              <div className="play-btn-content">
+                <Icon name="play" size={24} strokeWidth={2.4} />
+                <div className="play-btn-text">
+                  <span className="main-word">게임 시작</span>
+                  <span className="sub-instance-tag">
+                    {selectedInstance ? selectedInstance.name : `${BRAND.name} 26.1.2`}
+                  </span>
+                </div>
+              </div>
+            </button>
+          </div>
 
           <button
             className="play-quick-config-btn"

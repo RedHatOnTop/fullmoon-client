@@ -2544,8 +2544,70 @@
   z-index: 3;
 }
 
+.play-button-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-peeking-rabbit {
+  position: absolute;
+  top: 0;
+  left: 36px;
+  width: 48px;
+  height: 38px;
+  z-index: 1;
+  pointer-events: none;
+  transform: translateY(6px) scale(0.65);
+  opacity: 0;
+  transform-origin: bottom center;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease; /* TOKENS-OK */
+}
+
+.play-button-box:hover .play-peeking-rabbit {
+  transform: translateY(-28px) scale(1);
+  opacity: 1;
+}
+
+.rabbit-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+}
+
+.rabbit-white {
+  fill: #FFFFFF; /* TOKENS-OK */
+}
+
+.rabbit-pink {
+  fill: #FFAEC0; /* TOKENS-OK */
+}
+
+.rabbit-blush {
+  fill: #FFAEC0; /* TOKENS-OK */
+  opacity: 0.6;
+}
+
+.rabbit-eye {
+  fill: #1C1824; /* TOKENS-OK */
+}
+
+.rabbit-sparkle {
+  fill: #FFFFFF; /* TOKENS-OK */
+}
+
+.rabbit-mouth {
+  stroke: #1C1824; /* TOKENS-OK */
+  stroke-width: 1.2px;
+  stroke-linecap: round;
+  fill: none;
+}
+
 .massive-play-button {
   position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
