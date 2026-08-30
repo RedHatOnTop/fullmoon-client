@@ -2538,7 +2538,7 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-top: -24px;
+  margin-top: 16px;
   z-index: 3;
 }
 
