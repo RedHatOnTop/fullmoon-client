@@ -1,0 +1,4 @@
+[12:44:35] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[12:44:36] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[12:44:37] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 HUD revision 1 (19.749744571037354 TPS, 3.8701057899999998 ms)
+[12:44:46] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 notice p6-roundtrip-dusk

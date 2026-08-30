@@ -35,5 +35,6 @@ public final class HudOverlay {
                 elem.draw(painter, bounds, client, false);
             }
         }
+        ServerNoticeOverlay.draw(painter, System.currentTimeMillis());
     }
 }

@@ -2,6 +2,7 @@ package dev.fullmoon.client;
 
 import java.util.List;
 
+import dev.fullmoon.client.network.FullmoonChannel;
 import dev.fullmoon.client.settings.SettingsScreen;
 import dev.fullmoon.client.text.Typeset;
 import dev.fullmoon.client.ui.DevScreen;
@@ -54,6 +55,7 @@ public final class FullmoonClient implements ClientModInitializer {
         }
         KeyMappingHelper.registerKeyMapping(SETTINGS);
         KeyMappingHelper.registerKeyMapping(HUD_EDITOR);
+        FullmoonChannel.register();
         dev.fullmoon.client.hud.HudOverlay.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

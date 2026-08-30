@@ -492,3 +492,106 @@ Tauri v2 백엔드 상에서 모장 버전 매니페스트 파싱, 자산/라이
   8. `docs/evidence/fullmoon-launcher-08-launch-overlay.png` — 게임 실행 & 실시간 로그 스트리밍 오버레이
 
 
+
+## 2026-08-30 · P6 versioned Paper channel and truthful server HUD
+
+P6 resumes client work without touching the concurrent launcher worktree. It introduces a
+versioned `fullmoon:v1` Fabric custom payload, an immutable bridge state machine, measured Paper
+health in the existing TPS chip, and a restrained server notice overlay.
+
+- `network/BridgeProtocol` defines typed hello, welcome, HUD sync, and notice messages. It accepts
+  the Minecraft byte-array frame or bare fixture JSON, limits the payload to 32,767 bytes, and
+  validates every version, revision, metric, string length, severity, and duration before state
+  can change.
+- `network/BridgeState` owns the five-second handshake fallback, protocol compatibility, monotonic
+  HUD revisions, five-second metric freshness, and expiring notice state through immutable record
+  replacement.
+- `network/FullmoonChannel` registers the Fabric codecs and lifecycle callbacks, sends the actual
+  installed mod version on join, clears state on disconnect, and logs handshake boundaries without
+  logging every steady-state metric at info level.
+- `hud/ServerTickHud` now displays Paper-owned TPS and tick time. It renders `—` when the channel is
+  absent, incompatible, or stale; only the editor retains a labelled demonstration value.
+- `hud/ServerNoticeOverlay` fits two lines into a flat, token-only strip with a two-pixel semantic
+  severity rule. It adds no icon, gradient, motion, sound, or action.
+
+### Test-first evidence
+
+The first targeted test run was red because the production types did not exist. The compiler
+reported, among the expected missing-type errors:
+
+```text
+BridgeStateTest.java:114: error: cannot find symbol
+symbol:   class BridgeState
+BUILD FAILED in 15s
+GRADLE_EXIT=1
+```
+
+After implementation, the protocol and state suites passed. Edge-case tests cover framed and bare
+payloads, malformed JSON, oversized input, fractional and out-of-range numbers, notice bounds,
+protocol mismatch, stale metrics, duplicate revisions, notice expiry, and handshake timeout.
+JaCoCo verification now enforces at least 80% line and branch coverage over `SettingSearch`,
+`BridgeProtocol`, and `BridgeState` rather than reporting coverage without a gate. The final full
+run executed 180 tests with 0 failures, errors, or skips. The gated class set reached 97.99% line
+coverage and 93.63% branch coverage.
+
+### Executed Paper flow
+
+A temporary Paper bridge fixture on local port 25566 sent the server's measured TPS and average tick
+time once per second, then sent notice `p6-roundtrip-dusk`. The client log records:
+
+```text
+[12:44:35] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[12:44:36] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[12:44:37] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 HUD revision 1 (19.749744571037354 TPS, 3.8701057899999998 ms)
+[12:44:46] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 notice p6-roundtrip-dusk
+```
+
+The matching server log records the Fullmoon 3.0.0 hello, HUD revision 1, and the same notice ID.
+`docs/evidence/p6-live-channel-960x540.png` shows the resulting notice and `TPS 20.0 · 2.2 ms` in
+the real client. `p6-live-channel-320x180.png` verifies the compact GUI width. The fixture held the
+overworld at dusk tick 13000 with clear weather during both captures.
+
+A second run used protocol 0 and intentionally sent no welcome. The client remained playable and
+recorded the exact fallback boundary:
+
+```text
+[12:46:40] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[12:46:45] [Render thread/INFO] (Fullmoon/Channel) No fullmoon:v1 welcome within 5 seconds; using vanilla fallback
+```
+
+`docs/evidence/p6-legacy-fallback-960x540.png` shows the user-visible result: no error toast and
+`TPS —`. The installed bridge JAR was restored to its pre-test SHA-256
+`db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, and the local server was
+stopped after capture.
+
+The first ambience fixture incorrectly applied world time to every loaded dimension. Paper rejected
+the clockless dimension with this exact exception:
+
+```text
+java.lang.IllegalArgumentException: Cannot set time in world without world clock
+at org.bukkit.craftbukkit.CraftWorld.setFullTime(CraftWorld.java:813)
+```
+
+That capture was discarded. The fixture was narrowed to the overworld, restarted without the task
+exception, and all three committed frames were captured from the corrected run.
+
+### Runtime noise observed
+
+The offline development client still emitted these unrelated Microsoft/Realms authentication
+failures while loading the local world:
+
+```text
+Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+```
+
+The server also emitted this unrelated lobby-build warning:
+
+```text
+[LobbyMotion] fast-travel pad is not standable: moon_room
+```
+
+Neither error interrupted the local join, protocol exchange, HUD update, notice display, or legacy
+fallback. The full Hallmark audit and contrast evidence are in
+`docs/evidence/p6-hallmark-audit.md`.

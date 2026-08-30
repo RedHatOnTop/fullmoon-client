@@ -158,3 +158,26 @@ One defect this capture caught:
 - `ClockHud`, `CoordinatesHud`, and `FpsHud` measured only their value strings without accounting for the leading key tag ("TIME", "XYZ", "FPS"), causing the right edge of wider numerals to clip against the chip border. Updated `measureWidth` to measure the compound label + value footprint.
 
 
+
+## P6 — versioned Paper channel and legacy fallback
+
+| file | what it settles |
+| --- | --- |
+| `p6-live-channel-960x540.png` | A real protocol-1 Paper session completed hello/welcome, rendered measured `TPS 20.0 · 2.2 ms`, and displayed the Korean two-line server notice over the live world. |
+| `p6-live-channel-320x180.png` | The same event at 320×180 GUI pixels remains within the viewport; title and body retain their hierarchy without an oversized panel. |
+| `p6-legacy-fallback-960x540.png` | A protocol-0 bridge deliberately stayed quiet; after five seconds the mod retained vanilla play, omitted the notice, and rendered unsupported metrics as `TPS —`. |
+| `p6-live-client.log` / `p6-live-server.log` | Matching hello, welcome, first HUD revision, and notice identifiers prove the server-to-client round trip. |
+| `p6-legacy-client.log` / `p6-legacy-server.log` | The server records the version mismatch and the client records its five-second fallback. |
+| `p6-hallmark-audit.md` | The six-axis critique and all 58 Hallmark anti-slop gates, with native-GUI scope called out explicitly. |
+
+The Paper fixture was compiled in a temporary directory and installed only for this run. After the
+captures, the original `FullmoonBridge.jar` was restored byte-for-byte and the local server was
+stopped. The fixture held the overworld at dusk tick 13000 with clear weather for every committed
+P6 frame. These images are direct client captures, not mockups.
+
+Two visual decisions came from the rendered frames:
+
+- The server event is a flat, top-centred strip with one two-pixel severity rule. It uses no icon,
+  gradient, blur bloom, animation, or redundant action. The world remains the visual subject.
+- Missing support never masquerades as healthy data. The legacy frame visibly says `TPS —` rather
+  than keeping the editor's sample or inventing a nominal 20 TPS reading.
