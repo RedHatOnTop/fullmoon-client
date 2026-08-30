@@ -75,6 +75,7 @@ fun verifiedCoreClasses() = files(sourceSets.main.get().output.asFileTree.matchi
         "dev/fullmoon/client/warp/WarpRoutes*",
         "dev/fullmoon/client/map/MapViewport*",
         "dev/fullmoon/client/map/TerrainSnapshot*",
+        "dev/fullmoon/client/map/TerrainSample.class",
         "dev/fullmoon/client/map/WorldNames*",
         "dev/fullmoon/client/map/MapMarkers*",
     )

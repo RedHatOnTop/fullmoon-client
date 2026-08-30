@@ -50,6 +50,10 @@ class MapViewportTest {
         assertThrows(IllegalArgumentException.class,
             () -> new MapViewport(0.0, 0.0, 3));
         assertThrows(IllegalArgumentException.class,
+            () -> new MapViewport(0.0, Double.POSITIVE_INFINITY, 2));
+        assertThrows(IllegalArgumentException.class,
             () -> new MapViewport(0.0, 0.0, 2).worldAt(0, 0, 0, 8));
+        assertThrows(IllegalArgumentException.class,
+            () -> new MapViewport(0.0, 0.0, 2).project(0.0, 0.0, 10, 0));
     }
 }

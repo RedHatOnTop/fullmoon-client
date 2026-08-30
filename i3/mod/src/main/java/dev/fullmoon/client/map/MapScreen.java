@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import dev.fullmoon.client.FullmoonClient;
 import dev.fullmoon.client.design.Tokens;
 import dev.fullmoon.client.layout.Box;
 import dev.fullmoon.client.network.BridgeProtocol;
@@ -118,6 +119,10 @@ public final class MapScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (FullmoonClient.opensMap(event)) {
+            onClose();
+            return true;
+        }
         int key = event.key();
         if (key == InputConstants.KEY_LEFT) {
             pan(-PAN_CELLS, 0);

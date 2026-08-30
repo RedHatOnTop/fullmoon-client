@@ -2,6 +2,7 @@ package dev.fullmoon.client;
 
 import java.util.List;
 
+import dev.fullmoon.client.map.MapScreen;
 import dev.fullmoon.client.network.FullmoonChannel;
 import dev.fullmoon.client.settings.SettingsScreen;
 import dev.fullmoon.client.text.Typeset;
@@ -47,6 +48,7 @@ public final class FullmoonClient implements ClientModInitializer {
 
     private static final KeyMapping SETTINGS = key("settings", InputConstants.KEY_F9);
     private static final KeyMapping HUD_EDITOR = key("hud", InputConstants.KEY_F10);
+    private static final KeyMapping MAP = key("map", InputConstants.KEY_M);
 
     @Override
     public void onInitializeClient() {
@@ -55,6 +57,7 @@ public final class FullmoonClient implements ClientModInitializer {
         }
         KeyMappingHelper.registerKeyMapping(SETTINGS);
         KeyMappingHelper.registerKeyMapping(HUD_EDITOR);
+        KeyMappingHelper.registerKeyMapping(MAP);
         FullmoonChannel.register();
         dev.fullmoon.client.hud.HudOverlay.init();
 
@@ -64,6 +67,13 @@ public final class FullmoonClient implements ClientModInitializer {
             }
             while (HUD_EDITOR.consumeClick()) {
                 client.setScreen(new dev.fullmoon.client.hud.HudEditorScreen(client.screen));
+            }
+            // The map is deliberately absent from the screen route below. Its default key is a
+            // letter, and that route fires after a screen has already taken the key — so on any
+            // surface with a text field, typing the letter would open the map. In play, where a
+            // map is asked for, this queue is the only source of clicks anyway.
+            while (MAP.consumeClick()) {
+                client.setScreen(new MapScreen(client.screen));
             }
             for (Binding binding : BINDINGS) {
                 while (binding.mapping().consumeClick()) {
@@ -116,6 +126,11 @@ public final class FullmoonClient implements ClientModInitializer {
 
     private static KeyMapping key(String name, int code) {
         return new KeyMapping("key.fullmoon." + name, InputConstants.Type.KEYSYM, code, CATEGORY);
+    }
+
+    /** Whether an event is the map binding, so the map can close on the key that opened it. */
+    public static boolean opensMap(KeyEvent event) {
+        return bound(MAP, event);
     }
 
     private static boolean bound(KeyMapping mapping, KeyEvent event) {

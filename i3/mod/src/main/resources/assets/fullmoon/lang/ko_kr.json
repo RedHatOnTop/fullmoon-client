@@ -129,5 +129,18 @@
     "fullmoon.hud.editor.action.reset": "위치 초기화",
     "fullmoon.hud.editor.action.enabled": "사용",
     "fullmoon.hud.editor.grid.snap": "4px 그리드 스냅",
-    "key.fullmoon.hud": "HUD 에디터 열기"
+    "key.fullmoon.hud": "HUD 에디터 열기",
+    "fullmoon.map.title": "Fullmoon 지도",
+    "fullmoon.map.subtitle": "불러온 지형 지도",
+    "fullmoon.map.authority": "클라이언트 지형 · 서버 항로",
+    "fullmoon.map.position": "위치",
+    "fullmoon.map.centre": "중심",
+    "fullmoon.map.scale": "축척",
+    "fullmoon.map.scale.value": "칸당 %s블록",
+    "fullmoon.map.routes": "항로 %s곳",
+    "fullmoon.map.routes.empty": "이 월드에 공개된 항로 없음",
+    "fullmoon.map.footer.keys": "Esc 닫기 · 방향키 이동 · 휠·± 확대 · R 내 위치",
+    "fullmoon.map.status.coverage": "불러온 지형 %s%%",
+    "fullmoon.map.status.failed": "지형을 읽지 못함",
+    "key.fullmoon.map": "지도 열기"
 }
