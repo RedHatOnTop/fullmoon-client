@@ -804,10 +804,13 @@ mod tests {
 
     #[test]
     fn the_branded_client_id_is_a_uuid() {
-        let id = client_id().expect(
+        let id = BRAND_CLIENT_ID.trim();
+        assert!(
+            !id.is_empty(),
             "msClientId must be set in brand.json so a clean install can sign in with Microsoft",
         );
-        uuid::Uuid::parse_str(&id).expect("msClientId must be an Application (client) ID");
+        let parsed = uuid::Uuid::parse_str(id).expect("msClientId must be an Application (client) ID");
+        assert!(!parsed.is_nil(), "msClientId must not be the docs placeholder UUID");
     }
 
     #[tokio::test]
