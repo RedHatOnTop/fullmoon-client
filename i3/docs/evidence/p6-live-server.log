@@ -1,0 +1,4 @@
+[12:43:01 INFO]: [FullmoonBridge] fullmoon-bridge enabled: 6 waypoint(s) on fullmoon:v1 (proto 1)
+[12:44:35 INFO]: [FullmoonBridge] handshake ok: Player223 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[12:44:36 INFO]: [FullmoonBridge] p6 fixture sent hud_sync revision 1 to Player223
+[12:44:45 INFO]: [FullmoonBridge] p6 fixture sent notice p6-roundtrip-dusk to Player223

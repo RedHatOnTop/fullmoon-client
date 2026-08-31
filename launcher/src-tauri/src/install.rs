@@ -262,12 +262,7 @@ pub async fn run(
     emit(app, instance_id, InstallStage::Fabric, 1.0);
     emit(app, instance_id, InstallStage::Mods, 0.0);
     paths::ensure_dir(&paths::instance_minecraft_dir(instance_id)).await?;
-    // the mod reads this on its first frame; ship the default layout with the
-    // install rather than making the user open the editor once to create it
-    let hud_file = paths::instance_hud_file(instance_id);
-    if !hud_file.is_file() {
-        crate::store::write(&hud_file, &crate::catalog::get().default_hud).await?;
-    }
+    crate::hud::seed(instance_id).await?;
     crate::mods::apply(
         client,
         &paths::resources(app),

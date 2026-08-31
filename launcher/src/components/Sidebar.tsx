@@ -8,7 +8,8 @@ const GROUPS: Array<{ labelKey: string; items: Array<{ id: Screen; icon: IconNam
   {
     labelKey: "nav.group1",
     items: [
-      { id: "home", icon: "home" },
+      { id: "play", icon: "play" },
+      { id: "dashboard", icon: "home" },
       { id: "mods", icon: "puzzle" },
     ],
   },
@@ -41,7 +42,7 @@ export function Sidebar() {
           onClick={() => setScreen(item.id)}
         >
           {screen === item.id && <span className="sidebar-pill" aria-hidden />}
-          <Icon name={item.icon} size={17} />
+          <Icon name={item.icon} size={20} />
           <span>{t(`nav.${item.id}`)}</span>
         </button>,
       );
@@ -54,14 +55,14 @@ export function Sidebar() {
 
       <div className="sidebar-bottom">
         <button className="sidebar-item" onClick={() => setScreen("settings")}>
-          <Icon name="gear" size={17} />
+          <Icon name="gear" size={20} />
           <span>{t("nav.settings")}</span>
         </button>
 
         <div className="sidebar-account" onClick={() => setScreen("accounts")} role="button" tabIndex={0}>
           {activeAccount ? (
             <>
-              <SkinFace hue={activeAccount.skinHue} size={30} />
+              <SkinFace hue={activeAccount.skinHue} size={34} />
               <div className="sidebar-account-meta">
                 <strong>{activeAccount.username}</strong>
                 <span>{t(`accounts.source.${activeAccount.source}`)}</span>

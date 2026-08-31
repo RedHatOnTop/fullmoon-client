@@ -8,8 +8,6 @@ import BRAND from "../brand";
 import Skin3D from "../widgets/Skin3D";
 import Moonrise from "../widgets/Moonrise";
 
-/* four tags, four corners of the wheel — a warm accent puts update, dev and
-   cosmetic in the same family unless dev is pushed to the cool side */
 const TAG_TONE: Record<string, "accent" | "ok" | "warn" | "err" | "info" | "dim"> = {
   update: "accent",
   event: "ok",
@@ -17,7 +15,6 @@ const TAG_TONE: Record<string, "accent" | "ok" | "warn" | "err" | "info" | "dim"
   cosmetic: "err",
 };
 
-/** "8/22 20:12" — a wallet row dates itself, it does not narrate */
 function fmtWhen(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -32,6 +29,7 @@ export function HomeScreen() {
   } = useStore();
   const { t } = useT();
   const [draft, setDraft] = useState({ name: "", address: "" });
+  const [activeTab, setActiveTab] = useState<"servers" | "wallet" | "news">("servers");
 
   const target = useMemo(() => versions.find((v) => v.isTarget), [versions]);
   const installedAny = instances.some((i) => i.installed);
@@ -41,6 +39,17 @@ export function HomeScreen() {
     const id = loadout?.cape;
     return id ? cosmetics.find((c) => c.id === id) ?? null : null;
   }, [loadout, cosmetics]);
+
+  // Wallet income/expense analytics computed from real transactions
+  const walletStats = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    for (const tx of walletTxs) {
+      if (tx.delta >= 0) income += tx.delta;
+      else expense += Math.abs(tx.delta);
+    }
+    return { income, expense };
+  }, [walletTxs]);
 
   const quickPlay = (address: string) => {
     const inst =
@@ -52,305 +61,420 @@ export function HomeScreen() {
     void launch(inst.id, address);
   };
 
+  const primaryServer = servers[0] ?? null;
+  const primaryStatus = primaryServer ? serverStatus[primaryServer.address] : null;
+
   return (
-    <div className="home stagger">
-      {/* ── flight-deck hero: the brand voice, not a news slot ── */}
-      <section className="fhero card">
-        <div className="fhero-copy">
-          <div className="fhero-eyebrow">
-            <span className="live-dot" />
-            READY TO LAUNCH
-            {target && <em className="num">{target.id}</em>}
+    <div className="home game-home-layout stagger">
+      {/* ── 1. Grand Cinematic Hero Banner ── */}
+      <section className="game-hero-banner card">
+        <div className="game-hero-vignette" />
+        <div className="game-hero-glow" />
+
+        <div className="game-hero-body">
+          <div className="hero-eyebrow">
+            <span>공식 클라이언트</span>
+            <span className="divider">/</span>
+            <span>FABRIC 26.1.2</span>
           </div>
-          <h2 className="fhero-title">
-            {t("home.heroTitle1")}
-            <br />
-            <strong>{t("home.heroTitle2")}</strong>
-          </h2>
-          <div className="fhero-meta">
-            <span>
+
+          <h1 className="game-hero-headline">
+            백악의 만월궁,<br />
+            <strong>새로운 달빛 모험의 시작.</strong>
+          </h1>
+
+          <p className="game-hero-desc">
+            Fabric 26.1.2 기반의 고성능 최적화 번들과 만월 인게임 HUD, 실시간 재화 연동 시스템이 탑재된 공식 클라이언트입니다.
+          </p>
+
+          <div className="game-hero-actions">
+            {primaryServer ? (
+              <button
+                className="game-launch-btn primary"
+                disabled={!installedAny}
+                onClick={() => quickPlay(primaryServer.address)}
+              >
+                <Icon name="play" size={18} />
+                <span>{primaryServer.name} 즉시 입장</span>
+              </button>
+            ) : (
+              <button
+                className="game-launch-btn primary"
+                disabled={!installedAny || !selectedInstance}
+                onClick={() => selectedInstance && void launch(selectedInstance.id)}
+              >
+                <Icon name="play" size={18} />
+                <span>게임 시작</span>
+              </button>
+            )}
+
+            {servers[1] && (
+              <button
+                className="game-launch-btn secondary"
+                disabled={!installedAny}
+                onClick={() => quickPlay(servers[1].address)}
+              >
+                <Icon name="gamepad" size={16} />
+                <span>{servers[1].name} 접속</span>
+              </button>
+            )}
+          </div>
+
+          <div className="game-hero-specs">
+            <div className="spec-chip">
               <Icon name="shield" size={13} />
-              {t("home.metaVerified")}
-            </span>
+              <span>무결성 SHA1 검증</span>
+            </div>
             {modCatalog && (
-              <span>
+              <div className="spec-chip">
                 <Icon name="puzzle" size={13} />
-                {t("home.metaMods", { n: modCatalog.mods.length })}
-              </span>
+                <span>{modCatalog.mods.length}개 번들 모드 탑재</span>
+              </div>
             )}
             {memGb !== null && (
-              <span>
+              <div className="spec-chip">
                 <Icon name="ram" size={13} />
-                {t("home.metaRam", { gb: memGb })}
-              </span>
+                <span>메모리 {memGb} GB 할당</span>
+              </div>
             )}
           </div>
         </div>
-        <div className="fhero-art" aria-hidden>
-          <Moonrise className="fhero-moonrise" />
-        </div>
-        <div className="fhero-build">
-          <span>{BRAND.name.toUpperCase()} BUILD</span>
-          <b className="num">1.0.0</b>
-          <small className="num">{target ? `${target.id} target` : "…"}</small>
+
+        <div className="game-hero-visual" aria-hidden="true">
+          <Moonrise className="game-hero-moon" />
+          <div className="game-hero-brand-tag">
+            <span>풀문 공식 클라이언트</span>
+            <b className="num">1.0.0</b>
+            <small className="num">{target ? `${target.id} 타겟` : "26.1.2 타겟"}</small>
+          </div>
         </div>
       </section>
 
-      {servers.length > 0 && (
-        <div className="quickbar">
-          <span className="quickbar-label">{t("home.quickJoin")}</span>
-          {servers.slice(0, 4).map((s) => (
-            <button
-              key={s.id}
-              className="quickbar-chip"
-              disabled={!installedAny}
-              onClick={() => quickPlay(s.address)}
-              title={s.address}
-            >
-              <span className="quickbar-swatch" style={{ "--h": s.hue }} />
-              {s.name}
-              <span className="quickbar-ping">
-                {serverStatus[s.address]?.online ? `${serverStatus[s.address].pingMs}ms` : "—"}
-              </span>
-            </button>
-          ))}
+      {/* ── 2. Functional Feature Navigation Tabs ── */}
+      <div className="game-section-nav">
+        <div className="game-nav-buttons">
+          <button
+            className={`game-nav-tab ${activeTab === "servers" ? "active" : ""}`}
+            onClick={() => setActiveTab("servers")}
+          >
+            <Icon name="globe" size={16} />
+            <span>서버 및 월드 접속</span>
+            <span className="tab-count num">{servers.length}</span>
+          </button>
+          <button
+            className={`game-nav-tab ${activeTab === "wallet" ? "active" : ""}`}
+            onClick={() => setActiveTab("wallet")}
+          >
+            <Icon name="star" size={16} />
+            <span>재화 통계 및 내역</span>
+            <span className="tab-badge">{wallet ? `${wallet.balance.toLocaleString("ko-KR")}원` : "모니터링"}</span>
+          </button>
+          <button
+            className={`game-nav-tab ${activeTab === "news" ? "active" : ""}`}
+            onClick={() => setActiveTab("news")}
+          >
+            <Icon name="bell" size={16} />
+            <span>새 소식 및 패치노트</span>
+            <span className="tab-count num">{news.length}</span>
+          </button>
         </div>
-      )}
 
-      <div className="home-grid">
-        {/* ── news list ── */}
-        <section>
-          <div className="section-head">
-            <h3>{t("home.newsTitle")}</h3>
-          </div>
-          <div className="news-list">
-            {news.map((n) => (
-              <article key={n.id} className="news-row card-hover">
-                <span className="news-swatch" style={{ "--h": n.hue }} />
-                <div className="news-meta">
-                  <div className="news-top">
-                    <Badge tone={TAG_TONE[n.tag] ?? "dim"}>{n.tag.toUpperCase()}</Badge>
-                    {n.featured && <Badge tone="dim">{t("home.featured")}</Badge>}
-                    <span className="news-date num">{n.date}</span>
-                  </div>
-                  <h4>{n.title}</h4>
-                  <p>{n.summary}</p>
-                </div>
-                <Icon name="arrowRight" size={15} className="news-arrow" />
-              </article>
-            ))}
-          </div>
-        </section>
+        <div className="game-nav-extra">
+          <button
+            className="game-refresh-btn"
+            onClick={() => void refreshServers()}
+            disabled={pingingServers}
+          >
+            <Icon name="refresh" size={14} className={pingingServers ? "spin" : undefined} />
+            <span>서버 핑 새로고침</span>
+          </button>
+        </div>
+      </div>
 
-        {/* ── right rail: the wallet, the network, then the player ── */}
-        <aside className="home-rail">
-          <section className="wallet-card card" aria-live="polite">
-            <div className="section-head">
-              <h3>{t("home.walletTitle")}</h3>
-              {wallet && <span className="section-sub">{wallet.currency}</span>}
-            </div>
-            {wallet ? (
-              <>
-                <div className="wallet-balance num">
-                  {wallet.balance.toLocaleString("ko-KR")}
-                  <small>{t("home.walletUnit")}</small>
-                </div>
-                <ul className="tx-rows">
-                  {walletTxs.map((tx) => (
-                    <li key={tx.at + tx.reason} className="tx-row">
-                      <div className="tx-meta">
-                        <strong>{tx.label}</strong>
-                        <span className="num">{fmtWhen(tx.at)}</span>
+      {/* ── 3. Main Dynamic Content Grid ── */}
+      <div className="game-main-content">
+        <div className="game-primary-deck">
+          {/* TAB 1: Real Servers Grid with Add/Remove and Live Status */}
+          {activeTab === "servers" && (
+            <div className="servers-management-zone">
+              <div className="realms-grid">
+                {servers.map((s) => {
+                  const st = serverStatus[s.address];
+                  const online = st?.online === true;
+                  const cap = st?.maxPlayers ?? s.maxPlayers;
+                  const curPlayers = st ? st.players : s.players;
+                  const curPing = st ? st.pingMs : s.pingMs;
+
+                  return (
+                    <article key={s.id} className="realm-card card-hover">
+                      <div className="realm-header">
+                        <span className="realm-category" style={{ color: "var(--accent)" }}>
+                          {s.address}
+                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span
+                            className="realm-badge"
+                            style={{
+                              borderColor: online ? "rgba(104, 211, 145, 0.4)" : "rgba(255, 255, 255, 0.15)",
+                              color: online ? "#68D391" : "var(--text-3)",
+                            }}
+                          >
+                            {online ? "온라인" : (st ? "오프라인" : "대기 중")}
+                          </span>
+                          <IconButton
+                            icon="x"
+                            label={t("home.removeServer")}
+                            onClick={() => void removeServer(s.id)}
+                          />
+                        </div>
                       </div>
-                      <span className={`tx-delta num ${tx.delta >= 0 ? "tx-in" : "tx-out"}`}>
-                        {tx.delta >= 0 ? "+" : "−"}{Math.abs(tx.delta).toLocaleString("ko-KR")}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              /* real core without a bridge session yet — say so, don't pretend */
-              <p className="wallet-empty">{t("home.walletEmpty")}</p>
-            )}
-          </section>
 
-          <section className="srv-card card">
-            <div className="section-head">
-              <h3>{t("home.srvTitle")}</h3>
-              <button className="section-act" onClick={() => void refreshServers()} disabled={pingingServers}>
-                <Icon name="refresh" size={13} className={pingingServers ? "spin" : undefined} />
-                {t("home.refreshServers")}
+                      <h3 className="realm-title">{s.name}</h3>
+                      <p className="realm-desc">{st?.motd || s.motd || s.address}</p>
+
+                      <div className="realm-footer">
+                        <div className="realm-metrics">
+                          <span className="realm-players num">
+                            <Icon name="users" size={13} />
+                            <b>{curPlayers}</b> / {cap}
+                          </span>
+                          <span className="realm-ping num">
+                            <Icon name="signal" size={12} />
+                            {online ? `${curPing} ms` : "—"}
+                          </span>
+                        </div>
+
+                        <button
+                          className="realm-join-btn"
+                          disabled={!installedAny || (st && !online)}
+                          onClick={() => quickPlay(s.address)}
+                        >
+                          <Icon name="zap" size={14} />
+                          <span>입장</span>
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              {/* Add Server Form */}
+              <form
+                className="server-add-bar"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!draft.address.trim()) return;
+                  void addServer(draft.name || draft.address, draft.address);
+                  setDraft({ name: "", address: "" });
+                }}
+              >
+                <input
+                  className="game-input"
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  placeholder="서버 이름 (예: 친구 서버)"
+                  spellCheck={false}
+                />
+                <input
+                  className="game-input mono"
+                  value={draft.address}
+                  onChange={(e) => setDraft({ ...draft, address: e.target.value })}
+                  placeholder="서버 주소 (예: play.myserver.net)"
+                  spellCheck={false}
+                />
+                <button className="game-add-btn" type="submit" disabled={!draft.address.trim()}>
+                  <Icon name="plus" size={14} />
+                  <span>서버 등록</span>
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* TAB 2: Real Wallet Statistics & Transaction Ledger */}
+          {activeTab === "wallet" && (
+            <div className="wallet-analytics-panel card">
+              <div className="wallet-stats-overview">
+                <div className="stat-box main-balance">
+                  <span className="stat-label">보유 잔액</span>
+                  <div className="stat-value-hero num">
+                    {wallet ? wallet.balance.toLocaleString("ko-KR") : "0"}<small className="unit-label">{wallet?.currency ?? "원"}</small>
+                  </div>
+                  <small className="stat-sub num">
+                    마지막 갱신: {wallet ? fmtWhen(wallet.updatedAt) : "오프라인"}
+                  </small>
+                </div>
+
+                <div className="stat-box income">
+                  <span className="stat-label">최근 총 획득량</span>
+                  <div className="stat-value num text-ok">
+                    +{walletStats.income.toLocaleString("ko-KR")}원
+                  </div>
+                  <small className="stat-sub">출석, 알바, 이벤트 보상 합산</small>
+                </div>
+
+                <div className="stat-box expense">
+                  <span className="stat-label">최근 총 사용량</span>
+                  <div className="stat-value num text-danger">
+                    −{walletStats.expense.toLocaleString("ko-KR")}원
+                  </div>
+                  <small className="stat-sub">상점 아이템 및 코스메틱 구매</small>
+                </div>
+              </div>
+
+              <div className="wallet-tx-history">
+                <div className="tx-head">
+                  <h4>실시간 거래 및 보상 내역</h4>
+                  <span className="tx-count num">총 {walletTxs.length}건</span>
+                </div>
+
+                <div className="tx-list-table">
+                  {walletTxs.map((tx, idx) => (
+                    <div key={tx.at + tx.reason + idx} className="tx-item-row">
+                      <div className="tx-icon-cell">
+                        <span className={`tx-icon-badge ${tx.delta >= 0 ? "in" : "out"}`}>
+                          {tx.delta >= 0 ? "+" : "−"}
+                        </span>
+                      </div>
+                      <div className="tx-detail-cell">
+                        <strong>{tx.label}</strong>
+                        <span className="tx-reason-code mono">{tx.reason}</span>
+                      </div>
+                      <div className="tx-time-cell num">
+                        {fmtWhen(tx.at)}
+                      </div>
+                      <div className="tx-amount-cell">
+                        <span className={`tx-amount-text num ${tx.delta >= 0 ? "text-ok" : "text-danger"}`}>
+                          {tx.delta >= 0 ? "+" : "−"}{Math.abs(tx.delta).toLocaleString("ko-KR")} {wallet?.currency ?? "원"}
+                        </span>
+                        {tx.balanceAfter !== null && (
+                          <span className="tx-bal-after num">잔액 {tx.balanceAfter.toLocaleString("ko-KR")}원</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: Real News & Announcements Feed */}
+          {activeTab === "news" && (
+            <div className="news-feed-list">
+              {news.map((n) => (
+                <article key={n.id} className="game-news-card card-hover">
+                  <div className="news-thumb-strip" style={{ "--h": n.hue }} />
+                  <div className="news-content-box">
+                    <div className="news-top-bar">
+                      <Badge tone={TAG_TONE[n.tag] ?? "dim"}>{n.tag.toUpperCase()}</Badge>
+                      {n.featured && <span className="featured-chip">주요 공지</span>}
+                      <span className="news-date num">{n.date}</span>
+                    </div>
+                    <h4 className="news-heading">{n.title}</h4>
+                    <p className="news-summary-text">{n.summary}</p>
+                  </div>
+                  <div className="news-action-cell">
+                    <Icon name="arrowRight" size={16} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── 4. Right Side Station: 3D Dressroom + Wallet + Instance Info ── */}
+        <aside className="game-side-station">
+          {/* Real 3D Avatar Stage */}
+          <section className="avatar-stage-card card">
+            <div className="card-top-title">
+              <span className="stage-tag">3D 드레스룸</span>
+              <button className="stage-jump-btn" onClick={() => setScreen("cosmetics")}>
+                <Icon name="feather" size={13} />
+                <span>장착 변경</span>
               </button>
             </div>
-            <ul className="srv-rows">
-              {servers.map((sv) => {
-                const st = serverStatus[sv.address];
-                const online = st?.online === true;
-                return (
-                  <li key={sv.id} className="srv-row">
-                    <span className={`srv-dot ${online ? "is-on" : ""}`} />
-                    <div className="srv-meta">
-                      <strong>{sv.name}</strong>
-                      <span>{st?.motd || sv.motd || sv.address}</span>
-                    </div>
-                    <div className="srv-num num">
-                      {online ? (
-                        <>
-                          <b>{st.players}<em>/{st.maxPlayers}</em></b>
-                          <i>{st.pingMs}ms</i>
-                        </>
-                      ) : (
-                        <b className="dim">{st ? t("home.srvOffline") : "—"}</b>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-            {!isRealCore && <p className="srv-note">{t("home.srvBrowserNote")}</p>}
-          </section>
 
-          <section className="player-card card">
-            <div className="player-stage">
+            <div className="avatar-3d-stage">
               <Skin3D
                 skin={activeAccount?.skinUrl ?? "/skins/blackcow.png"}
                 cape={cape?.capeUrl ?? null}
-                width={276}
-                height={300}
-                zoom={0.92}
+                width={280}
+                height={260}
+                zoom={0.94}
               />
             </div>
-            <div className="player-meta">
-              <div className="player-name">
-                <strong>{activeAccount?.username ?? "—"}</strong>
-                <span>{cape ? t("home.capeOn", { name: cape.name }) : t("home.noCape")}</span>
+
+            <div className="avatar-profile-footer">
+              <div className="avatar-name-box">
+                <strong>{activeAccount?.username ?? "미로그인"}</strong>
+                <span className="player-title">
+                  {activeAccount ? t(`accounts.source.${activeAccount.source}`) : "계정 필요"}
+                </span>
               </div>
-              <IconButton icon="feather" label={t("home.changeLook")} onClick={() => setScreen("cosmetics")} />
+              <div className="avatar-cape-badge">
+                <span className="badge-text">{cape ? cape.name : "망토 미착용"}</span>
+              </div>
             </div>
           </section>
 
+          {/* Real Wallet Summary Card */}
+          <section className="moon-wallet-card card">
+            <div className="card-top-title">
+              <span className="stage-tag">보유 잔액</span>
+              <span className="wallet-currency num">{wallet?.currency ?? "원"}</span>
+            </div>
+
+            <div className="wallet-hero-amount">
+              <span className="amount-val num">{wallet ? wallet.balance.toLocaleString("ko-KR") : "0"}</span>
+              <span className="coin-unit">{wallet?.currency ?? "원"}</span>
+            </div>
+
+            <div className="wallet-quick-actions">
+              <button className="wallet-act-btn" onClick={() => setActiveTab("wallet")}>
+                <Icon name="star" size={13} />
+                <span>거래 통계</span>
+              </button>
+              <button className="wallet-act-btn" onClick={() => setScreen("cosmetics")}>
+                <Icon name="feather" size={13} />
+                <span>코스메틱 상점</span>
+              </button>
+            </div>
+          </section>
+
+          {/* Active Instance Specs Card */}
+          <section className="instance-summary-card card">
+            <div className="card-top-title">
+              <span className="stage-tag">클라이언트 인스턴스</span>
+              <button className="stage-jump-btn" onClick={() => setScreen("settings")}>
+                <Icon name="gear" size={13} />
+                <span>설정</span>
+              </button>
+            </div>
+
+            <div className="instance-info-rows">
+              <div className="inst-row">
+                <span className="inst-label">타겟 버전</span>
+                <span className="inst-val num">{target ? target.id : "26.1.2"} ({selectedInstance?.loader ?? "fabric"})</span>
+              </div>
+              <div className="inst-row">
+                <span className="inst-label">할당 메모리</span>
+                <span className="inst-val num">{memGb ? `${memGb} GB` : "4 GB"}</span>
+              </div>
+              {modCatalog && (
+                <div className="inst-row">
+                  <span className="inst-label">탑재 모드</span>
+                  <span className="inst-val num">{modCatalog.mods.length}개 ({modCatalog.mods.map(m => m.name).join(", ")})</span>
+                </div>
+              )}
+              <div className="inst-row">
+                <span className="inst-label">설치 상태</span>
+                <span className="inst-val text-ok num">
+                  {selectedInstance?.installed ? "정상 설치됨" : "설치 필요"}
+                </span>
+              </div>
+            </div>
+          </section>
         </aside>
       </div>
-
-      {/* ── favorite servers ── */}
-      <section>
-        <div className="section-head">
-          <h3>{t("home.serversTitle")}</h3>
-          <span className="section-sub num">{servers.length}</span>
-          <button className="section-act" onClick={() => void refreshServers()} disabled={pingingServers}>
-            <Icon name="refresh" size={13} className={pingingServers ? "spin" : undefined} />
-            {t("home.refreshServers")}
-          </button>
-        </div>
-
-        <form
-          className="server-add"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!draft.address.trim()) return;
-            void addServer(draft.name, draft.address);
-            setDraft({ name: "", address: "" });
-          }}
-        >
-          <input
-            className="input"
-            value={draft.name}
-            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            placeholder={t("home.serverNamePlaceholder")}
-            spellCheck={false}
-          />
-          <input
-            className="input mono"
-            value={draft.address}
-            onChange={(e) => setDraft({ ...draft, address: e.target.value })}
-            placeholder={t("home.serverAddrPlaceholder")}
-            spellCheck={false}
-          />
-          <button className="server-add-go" type="submit" disabled={!draft.address.trim()}>
-            <Icon name="plus" size={14} />
-            {t("home.addServer")}
-          </button>
-        </form>
-
-        {servers.length === 0 ? (
-          <p className="server-none">{t("home.noServers")}</p>
-        ) : (
-          <div className="server-grid">
-            {servers.map((s) => {
-              /* everything on this card comes from the server's own answer;
-                 before the first probe lands there is nothing to claim */
-              const st = serverStatus[s.address];
-              const cap = st?.maxPlayers ?? 0;
-              return (
-                <article
-                  key={s.id}
-                  className={`server-card card-hover ${st && !st.online ? "server-down" : ""}`}
-                >
-                  <div className="server-head">
-                    <span className="server-orb" style={{ "--h": s.hue }}>
-                      <Icon name="server" size={15} />
-                    </span>
-                    <div className="server-title">
-                      <strong>{s.name}</strong>
-                      <span className="mono">{s.address}</span>
-                    </div>
-                    <IconButton
-                      icon="x"
-                      label={t("home.removeServer")}
-                      onClick={() => void removeServer(s.id)}
-                    />
-                  </div>
-
-                  <p className="server-motd">
-                    {st ? (st.online ? st.motd || st.version : st.error) : t("home.probing")}
-                  </p>
-
-                  <div className="server-stats">
-                    {st?.online ? (
-                      <>
-                        <div className="server-players">
-                          <div className="pbar pbar-sm server-pbar">
-                            <span
-                              className="pbar-fill"
-                              style={{ width: cap > 0 ? `${(st.players / cap) * 100}%` : "0%" }}
-                            />
-                          </div>
-                          <span className="num">
-                            {st.players.toLocaleString()}/{cap.toLocaleString()}
-                          </span>
-                        </div>
-                        <span
-                          className={`server-ping num ${
-                            st.pingMs < 40 ? "ping-good" : st.pingMs < 80 ? "ping-mid" : "ping-bad"
-                          }`}
-                        >
-                          <Icon name="signal" size={12} />
-                          {st.pingMs}ms
-                        </span>
-                      </>
-                    ) : (
-                      <span className="server-offline">
-                        <Icon name="signal" size={12} />
-                        {st ? t("home.offline") : "…"}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    className="server-join"
-                    disabled={!installedAny || (st && !st.online)}
-                    onClick={() => quickPlay(s.address)}
-                  >
-                    <Icon name="zap" size={14} />
-                    <span>{t("home.join")}</span>
-                  </button>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
     </div>
   );
 }

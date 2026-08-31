@@ -38,7 +38,7 @@ import type {
 } from "../core/bindings";
 import { useT } from "../i18n";
 
-export type Screen = "home" | "mods" | "cosmetics" | "accounts" | "settings";
+export type Screen = "play" | "dashboard" | "home" | "mods" | "cosmetics" | "accounts" | "settings";
 export type SettingsTab = "java" | "perf" | "look" | "hud" | "privacy" | "about";
 
 export interface Toast {
@@ -165,7 +165,7 @@ const now = () =>
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { t } = useT();
   const [ready, setReady] = useState(false);
-  const [screen, setScreenState] = useState<Screen>("home");
+  const [screen, setScreenState] = useState<Screen>("play");
   const [settingsTab, setSettingsTab] = useState<SettingsTab | null>(null);
   /** sessionId whose launch overlay the user dismissed — null shows it again */
   const [overlayHiddenFor, setOverlayHiddenFor] = useState<string | null>(null);

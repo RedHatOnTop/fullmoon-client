@@ -155,3 +155,70 @@ pub async fn fetch_all(
 pub fn total_size(items: &[Item]) -> u64 {
     items.iter().map(|i| i.size).sum()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sha1::{Digest, Sha1};
+
+    #[tokio::test]
+    async fn sha1_of_calculates_correct_hash() {
+        let temp_dir = std::env::temp_dir().join("fullmoon_test_sha1");
+        let _ = tokio::fs::create_dir_all(&temp_dir).await;
+        let test_file = temp_dir.join("test_sha1.txt");
+        let content = b"fullmoon client verification test";
+        tokio::fs::write(&test_file, content).await.unwrap();
+
+        let mut hasher = Sha1::new();
+        hasher.update(content);
+        let expected = hex::encode(hasher.finalize());
+
+        let result = sha1_of(&test_file).await;
+        assert_eq!(result, Some(expected));
+
+        let _ = tokio::fs::remove_dir_all(&temp_dir).await;
+    }
+
+    #[tokio::test]
+    async fn already_good_rejects_corrupt_sha1() {
+        let temp_dir = std::env::temp_dir().join("fullmoon_test_corrupt");
+        let _ = tokio::fs::create_dir_all(&temp_dir).await;
+        let test_file = temp_dir.join("corrupt_asset.jar");
+        tokio::fs::write(&test_file, b"corrupted bytes").await.unwrap();
+
+        let item = Item {
+            url: "https://example.com/asset.jar".to_string(),
+            path: test_file.clone(),
+            sha1: Some("0123456789abcdef0123456789abcdef01234567".to_string()),
+            size: 15,
+        };
+
+        assert!(!already_good(&item).await, "corrupted asset with mismatched sha1 must be rejected");
+
+        let _ = tokio::fs::remove_dir_all(&temp_dir).await;
+    }
+
+    #[tokio::test]
+    async fn already_good_accepts_matching_sha1() {
+        let temp_dir = std::env::temp_dir().join("fullmoon_test_valid");
+        let _ = tokio::fs::create_dir_all(&temp_dir).await;
+        let test_file = temp_dir.join("valid_asset.jar");
+        let content = b"valid asset payload";
+        tokio::fs::write(&test_file, content).await.unwrap();
+
+        let mut hasher = Sha1::new();
+        hasher.update(content);
+        let expected_sha1 = hex::encode(hasher.finalize());
+
+        let item = Item {
+            url: "https://example.com/asset.jar".to_string(),
+            path: test_file.clone(),
+            sha1: Some(expected_sha1),
+            size: content.len() as u64,
+        };
+
+        assert!(already_good(&item).await, "valid asset with matching sha1 must be accepted");
+
+        let _ = tokio::fs::remove_dir_all(&temp_dir).await;
+    }
+}

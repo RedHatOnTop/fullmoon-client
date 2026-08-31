@@ -42,12 +42,64 @@ function DockMenu({
 
 export function PlayDock() {
   const {
+    screen,
     accounts, activeAccount, selectAccount,
     selectedInstance,
     installInstance, launch, game, setScreen, setOverlayHidden,
   } = useStore();
   const { t } = useT();
   const [accOpen, setAccOpen] = useState(false);
+
+  // Hidden on Play screen by default, visible on other screens
+  const [visible, setVisible] = useState(() => screen !== "play");
+  const lastScrollTopRef = useRef(0);
+
+  useEffect(() => {
+    if (screen === "play") {
+      setVisible(false);
+    } else {
+      setVisible(true);
+    }
+
+    const contentEl = document.querySelector(".content");
+    if (!contentEl) return;
+
+    lastScrollTopRef.current = contentEl.scrollTop;
+
+    const onScroll = () => {
+      const st = contentEl.scrollTop;
+      const prev = lastScrollTopRef.current;
+      const diff = st - prev;
+
+      if (screen === "play") {
+        if (st < 100) {
+          // At top hero stage of Play screen -> always hide
+          setVisible(false);
+        } else if (diff > 6) {
+          // Scrolling down into dashboard -> show
+          setVisible(true);
+        } else if (diff < -6) {
+          // Scrolling up -> hide
+          setVisible(false);
+        }
+      } else {
+        if (st <= 10) {
+          setVisible(true);
+        } else if (diff > 6) {
+          // Scrolling down -> show
+          setVisible(true);
+        } else if (diff < -6) {
+          // Scrolling up -> hide
+          setVisible(false);
+        }
+      }
+
+      lastScrollTopRef.current = st;
+    };
+
+    contentEl.addEventListener("scroll", onScroll, { passive: true });
+    return () => contentEl.removeEventListener("scroll", onScroll);
+  }, [screen]);
 
   const installing = selectedInstance?.installing ?? null;
   const sessionIsMine = game.sessionId && game.instanceId === selectedInstance?.id;
@@ -109,7 +161,6 @@ export function PlayDock() {
   } else if (running) {
     playContent = (
       <>
-        <span className="live-dot" />
         <span>{t("dock.running")}</span>
         <Icon name="terminal" size={16} />
       </>
@@ -131,7 +182,7 @@ export function PlayDock() {
   }
 
   return (
-    <footer className="dock">
+    <footer className={`dock ${visible ? "" : "hidden"}`}>
       <div className="dock-left">
         <DockMenu
           open={accOpen}

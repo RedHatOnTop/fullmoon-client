@@ -1,0 +1,9 @@
+[15:15:05] [User Authenticator #4/INFO]: UUID of player Player969 is bf5f6cc7-27dd-3f51-bf40-66ad2b54becf
+[15:15:05] [Server thread/INFO]: Player969 joined the game
+[15:15:05] [Server thread/INFO]: Player969[/127.0.0.1:50460] logged in with entity id 851 at ([minecraft:overworld]501.5, 72.0, -16.5)
+[15:15:06] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player969 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[15:15:07] [Server thread/INFO]: [FullmoonBridge] p7 fixture sent screen_open warp to Player969
+[15:15:24] [Server thread/INFO]: [FullmoonBridge] p7 fixture queued tp_request palace_gate for 80 ticks
+[15:15:27] [Server thread/INFO]: [FullmoonBridge] warp Player969 -> palace_gate
+[15:15:30] [Server thread/INFO]: Player969 lost connection: Disconnected
+[15:15:30] [Server thread/INFO]: Player969 left the game

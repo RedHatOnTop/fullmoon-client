@@ -1,10 +1,10 @@
 {
   "mods": [
     {
-      "id": "pinion-hud",
-      "name": "{brand} HUD",
-      "version": "1.0.0",
-      "description": "우리 Fabric 모드. FPS·CPS·키스트로크·좌표·장비·포션·핑 HUD와 인게임 설정 GUI, 줌, 풀브라이트, 코스메틱 렌더.",
+      "id": "fullmoon-client",
+      "name": "{brand} Client",
+      "version": "3.0.0",
+      "description": "우리 Fabric 클라이언트. 좌표·FPS·핑·시계·키스트로크·서버 틱·방어구·상태 효과 HUD와 드래그 편집기, 인게임 설정·키바인드 화면, 서버 경로 원장, 인게임 지도.",
       "kind": "hud",
       "ours": true,
       "compatible": true,
@@ -42,9 +42,9 @@
     }
   ],
   "modSources": {
-    "pinion-hud": {
+    "fullmoon-client": {
       "kind": "bundled",
-      "file": "pinion-hud.jar"
+      "file": "fullmoon-client.jar"
     },
     "fabric-api": {
       "kind": "maven",
@@ -210,65 +210,84 @@
     {
       "id": "n5",
       "tag": "update",
-      "title": "{brand} HUD 프리뷰: 키스트로크 & 포션 타이머",
-      "summary": "인게임 모듈 두 개가 런처 설정과 실시간 미러링된다. hud.json 계약 공개.",
-      "date": "2026-07-06",
+      "title": "{brand} Client 3.0 — 런처와 같은 hud.json",
+      "summary": "런처 HUD 편집기와 인게임 편집기가 config/fullmoon/hud.json 한 파일을 공유한다. 게임이 켜진 채로 배치를 바꿔도 재시작 없이 반영된다.",
+      "date": "2026-08-30",
       "hue": 22,
       "featured": false
     }
   ],
-  "servers": [],
+  "servers": [
+    {
+      "id": "fullmoon-lobby",
+      "name": "로비",
+      "address": "play.fullmoon.ink",
+      "motd": "만월의 정원 — 26.1.2",
+      "players": 0,
+      "maxPlayers": 0,
+      "pingMs": 0,
+      "hue": 45
+    }
+  ],
   "defaultHud": {
-    "modules": [
-      {
-        "id": "fps",
+    "elements": {
+      "coords": {
         "enabled": true,
-        "x": 4,
-        "y": 5,
+        "anchor": "TOP_LEFT",
+        "offsetX": 16,
+        "offsetY": 56,
         "scale": 1
       },
-      {
-        "id": "cps",
+      "fps": {
         "enabled": true,
-        "x": 4,
-        "y": 16,
+        "anchor": "TOP_LEFT",
+        "offsetX": 16,
+        "offsetY": 82,
         "scale": 1
       },
-      {
-        "id": "coords",
+      "ping": {
         "enabled": true,
-        "x": 4,
-        "y": 27,
+        "anchor": "TOP_RIGHT",
+        "offsetX": 16,
+        "offsetY": 56,
         "scale": 1
       },
-      {
-        "id": "ping",
+      "clock": {
         "enabled": true,
-        "x": 93,
-        "y": 6,
+        "anchor": "TOP_RIGHT",
+        "offsetX": 16,
+        "offsetY": 82,
         "scale": 1
       },
-      {
-        "id": "keystrokes",
+      "keystrokes": {
         "enabled": true,
-        "x": 86,
-        "y": 74,
+        "anchor": "BOTTOM_RIGHT",
+        "offsetX": 16,
+        "offsetY": 56,
         "scale": 1
       },
-      {
-        "id": "gear",
-        "enabled": true,
-        "x": 93,
-        "y": 40,
-        "scale": 1
-      },
-      {
-        "id": "potion",
+      "tps": {
         "enabled": false,
-        "x": 93,
-        "y": 24,
+        "anchor": "TOP_RIGHT",
+        "offsetX": 16,
+        "offsetY": 108,
+        "scale": 1
+      },
+      "armor": {
+        "enabled": false,
+        "anchor": "BOTTOM_LEFT",
+        "offsetX": 16,
+        "offsetY": 56,
+        "scale": 1
+      },
+      "effects": {
+        "enabled": false,
+        "anchor": "TOP_RIGHT",
+        "offsetX": 16,
+        "offsetY": 134,
         "scale": 1
       }
-    ]
+    },
+    "gridSnap": 4
   }
 }

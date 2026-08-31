@@ -198,6 +198,9 @@ pub fn plan(
     Ok(Plan { program: PathBuf::from(java), args, cwd: game_dir })
 }
 
+/// Uppercased, because `level_of` matches against an uppercased line.
+const OUR_LOGGER_TAG: &str = "(FULLMOON/";
+
 fn level_of(line: &str) -> &'static str {
     // "[19:57:12] [Render thread/INFO]: …" — the tag is what the game means
     let upper = line.to_ascii_uppercase();
@@ -205,6 +208,10 @@ fn level_of(line: &str) -> &'static str {
         "ERROR"
     } else if upper.contains("/WARN") {
         "WARN"
+    } else if upper.contains(OUR_LOGGER_TAG) {
+        // our own client logs under (Fullmoon/Channel), (Fullmoon/Hud), (Fullmoon/Map) …;
+        // the console gives those the accent so a player can find them in vanilla noise
+        "OURS"
     } else if upper.contains("/DEBUG") {
         "DEBUG"
     } else {
@@ -339,6 +346,7 @@ fn watch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeMap;
 
     #[test]
     fn substitutes_known_keys() {
@@ -357,5 +365,99 @@ mod tests {
         assert_eq!(level_of("[12:00:00] [main/ERROR]: boom"), "ERROR");
         assert_eq!(level_of("[12:00:00] [main/WARN]: hmm"), "WARN");
         assert_eq!(level_of("[12:00:00] [main/INFO]: fine"), "INFO");
+    }
+
+    #[test]
+    fn our_own_clients_lines_are_told_apart_from_the_games() {
+        // verbatim from docs/evidence/p9r-live-client.log — the console's accent level had no
+        // line that could ever reach it before this
+        assert_eq!(
+            level_of("[19:55:07] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)"),
+            "OURS"
+        );
+        assert_eq!(
+            level_of("[19:55:22] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1"),
+            "OURS"
+        );
+        // and a broken one is still an error first: that is what a player has to see
+        assert_eq!(
+            level_of("[19:55:23] [Render thread/ERROR] (Fullmoon/Map) nope"),
+            "ERROR"
+        );
+    }
+
+    #[test]
+    fn plan_composes_jvm_and_game_args_correctly() {
+        use crate::version::Arguments;
+
+        let version = VersionJson {
+            id: "1.21.4".into(),
+            main_class: Some("net.minecraft.client.main.Main".into()),
+            inherits_from: None,
+            asset_index: None,
+            assets: Some("17".into()),
+            downloads: BTreeMap::new(),
+            libraries: vec![],
+            arguments: Some(Arguments {
+                jvm: vec![
+                    Arg::Plain("-Djava.library.path=${natives_directory}".into()),
+                    Arg::Plain("-cp".into()),
+                    Arg::Plain("${classpath}".into()),
+                ],
+                game: vec![
+                    Arg::Plain("--username".into()),
+                    Arg::Plain("${auth_player_name}".into()),
+                    Arg::Plain("--version".into()),
+                    Arg::Plain("${version_name}".into()),
+                    Arg::Plain("--gameDir".into()),
+                    Arg::Plain("${game_directory}".into()),
+                ],
+            }),
+            minecraft_arguments: None,
+            java_version: None,
+        };
+
+        let inst = Instance {
+            id: "test-instance".into(),
+            name: "Test Instance".into(),
+            version_id: "1.21.4".into(),
+            loader: "vanilla".into(),
+            installed: true,
+            installing: None,
+            memory_mb: 4096,
+            icon_hue: 200,
+            created_at: "2026-08-29T00:00:00Z".into(),
+            last_played_at: None,
+            quick_play_server: None,
+        };
+
+        let settings = Settings {
+            java_path: Some("/usr/bin/java".into()),
+            java_args: "-XX:+UseG1GC".into(),
+            memory_mb: 4096,
+            concurrency: 8,
+            theme: "dark".into(),
+            accent: "#F5D06E".into(),
+            language: "ko".into(),
+            telemetry: false,
+        };
+
+        let account = Account {
+            uuid: "00000000-0000-0000-0000-000000000000".into(),
+            username: "Player123".into(),
+            skin_hue: 200,
+            skin_url: None,
+            source: "offline".into(),
+            capes: vec![],
+        };
+
+        let plan = plan(&version, &inst, &settings, &account, None, None).unwrap();
+        assert_eq!(plan.program, PathBuf::from("/usr/bin/java"));
+        assert!(plan.args.contains(&"-Xmx4096M".to_string()));
+        assert!(plan.args.contains(&"-Xms2048M".to_string()));
+        assert!(plan.args.contains(&"-XX:+UseG1GC".to_string()));
+        assert!(plan.args.contains(&"net.minecraft.client.main.Main".to_string()));
+        assert!(plan.args.contains(&"--username".to_string()));
+        assert!(plan.args.contains(&"Player123".to_string()));
     }
 }

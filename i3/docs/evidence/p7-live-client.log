@@ -1,0 +1,5 @@
+[15:15:06] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[15:15:06] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[15:15:07] [Render thread/INFO] (Fullmoon/Channel) Opened fullmoon:v1 warp screen
+[15:15:24] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request palace_gate
+[15:15:28] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result palace_gate (accepted)

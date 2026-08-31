@@ -1,5 +1,7 @@
 /* The wire types. These mirror `launcher/src/core/bindings.ts` field for
    field — that file is the contract, and the UI is written against it. */
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 /// The profile, and only the profile: session tokens live in `auth::Session`
@@ -188,20 +190,31 @@ pub struct Cosmetic {
     pub cape_url: Option<String>,
 }
 
+/// One HUD element as the mod stores it: a nine-way anchor plus a pixel offset from that
+/// anchor. Not a percentage of the screen — a percentage moves every element when the window
+/// resizes, and holding a fixed distance from a corner is the whole point of the anchor.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct HudModule {
-    pub id: String,
+pub struct HudElementState {
     pub enabled: bool,
-    pub x: f32,
-    pub y: f32,
+    pub anchor: String,
+    pub offset_x: i32,
+    pub offset_y: i32,
+    #[serde(default = "unit_scale")]
     pub scale: f32,
 }
 
+fn unit_scale() -> f32 {
+    1.0
+}
+
+/// `config/fullmoon/hud.json`, keyed by the mod's element ids. Both editors write this file;
+/// see `hud.rs` for which one wins what.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HudConfig {
-    pub modules: Vec<HudModule>,
+    pub elements: BTreeMap<String, HudElementState>,
+    pub grid_snap: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

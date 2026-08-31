@@ -116,6 +116,7 @@ export class TauriCore implements PinionCore {
     this.call<void>("cosmetics_equip", { uuid, slot, itemId });
   hud_get = (instanceId: string) => this.call<HudConfig>("hud_get", { instanceId });
   hud_set = (instanceId: string, cfg: HudConfig) => this.call<void>("hud_set", { instanceId, cfg });
+  hud_reset = (instanceId: string) => this.call<HudConfig>("hud_reset", { instanceId });
 
   // settings
   settings_get = () => this.call<Settings>("settings_get");

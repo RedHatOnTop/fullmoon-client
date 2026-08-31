@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "fullmoon",
+  "version": "${version}",
+  "name": "Fullmoon Client",
+  "description": "만월 아래, 모두가 모이는 정원.",
+  "authors": ["Fullmoon"],
+  "contact": {},
+  "license": "ARR",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.fullmoon.client.FullmoonClient"]
+  },
+  "accessWidener": "fullmoon.accesswidener",
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": ">=${fabric_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=25"
+  }
+}

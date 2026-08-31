@@ -1,0 +1,35 @@
+Browser surface: http://127.0.0.1:5921/ (Vite mock core)
+Browser engine: Chromium 1234, headless, deviceScaleFactor 1
+
+1280x820 HUD editor
+heading=설정
+subtitle=Java · 성능 · 외관 · HUD 배치 · 프라이버시
+stage=494x278 CSS px (640x360 GUI plane at 0.77x)
+elementRows=8
+documentScrollWidth=1280
+documentClientWidth=1280
+resetFirstRow=16,56
+resetSelectedRows=0
+resetToasts=0
+keyboardFocus=hud-row-pick
+ArrowRight=16,56 -> 20,56
+selectedBadge=좌상단 · (20, 56)
+tertiaryText=rgb(139, 151, 182)
+consoleMessages=6
+consoleWarnings=0
+consoleErrors=0
+
+1040x680 minimum Tauri window
+editorColumns=510px
+stage=510x287 CSS px
+documentScrollWidth=1040
+documentClientWidth=1040
+contentScrollHeight=1405
+contentClientHeight=551
+
+1920x1080 wide window
+editorColumns=524px 236px
+stage=524x295 CSS px
+documentScrollWidth=1920
+documentClientWidth=1920
+elementRows=8
