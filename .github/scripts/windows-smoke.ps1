@@ -42,6 +42,10 @@ Assert-Equal $launchers.Count 1 "installed launcher count"
 
 $bundledMods = @(Get-ChildItem $installRoot -Filter "fullmoon-client.jar" -Recurse)
 Assert-Equal $bundledMods.Count 1 "bundled mod count"
+$stagedMod = Get-Item "launcher/src-tauri/resources/mods/fullmoon-client.jar"
+$stagedModSha256 = (Get-FileHash $stagedMod.FullName -Algorithm SHA256).Hash.ToLower()
+$bundledModSha256 = (Get-FileHash $bundledMods[0].FullName -Algorithm SHA256).Hash.ToLower()
+Assert-Equal $bundledModSha256 $stagedModSha256 "installed bundled mod hash"
 
 $env:FULLMOON_DATA_ROOT = $dataRoot
 $launcherProcess = $null
@@ -79,7 +83,7 @@ try {
     $result = [ordered]@{
         installer = $installers[0].Name
         installerSha256 = (Get-FileHash $installers[0].FullName -Algorithm SHA256).Hash.ToLower()
-        bundledModSha256 = (Get-FileHash $bundledMods[0].FullName -Algorithm SHA256).Hash.ToLower()
+        bundledModSha256 = $bundledModSha256
         instanceId = $instances[0].id
         versionId = $instances[0].versionId
         quickPlayServer = $instances[0].quickPlayServer

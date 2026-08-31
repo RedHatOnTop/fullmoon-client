@@ -1073,3 +1073,36 @@ P10 does not claim wiring that is absent. Cosmetics remain launcher-only preview
 fullbright do not exist in the mod, CPS exists only inside keystrokes, renderers still ignore
 `scale`, and the shipped bridge does not publish `hud_sync`, so TPS remains unfed. Those limits are
 documented in the plan and README rather than hidden behind a completed phase label.
+
+## 2026-08-31 · First-tester release hardening
+
+A clean real-core profile used to start with no instances while the interface no longer exposed
+instance creation. The launcher now creates one stable `fullmoon-managed` Fabric 26.1.2 instance,
+copies the profile memory setting, assigns `play.fullmoon.ink` for quick play, creates the isolated
+game and mods directories, and persists the instance before the first window is used. Existing
+profiles retain their instances and only discard an interrupted install marker. The bundled real
+catalog now contains the Fullmoon lobby instead of the mock core being the only place where a server
+existed.
+
+The local real binary was built and launched under Xvfb with a new `FULLMOON_DATA_ROOT`. It remained
+alive after startup and wrote this state:
+
+```text
+id=fullmoon-managed
+versionId=26.1.2
+installed=false
+quickPlayServer=play.fullmoon.ink
+directories=instances/fullmoon-managed/minecraft/mods, shared
+```
+
+Pull request CI run `33392965627` built the NSIS package on `windows-latest`, installed it silently
+into an empty directory, launched the installed `fullmoon.exe` with a clean data root, read the same
+managed instance from `instances.json`, checked the production lobby, and confirmed the process was
+still alive. The uploaded `Fullmoon_1.0.0_x64-setup.exe` was 8,973,022 bytes with SHA-256
+`51ea4d8c4d568941ecd59713d28a088ac9e1588f515ffc672ca661235968e64a`; the downloaded artifact's hash
+matched the smoke result. The installed mod hash was
+`32da42163dfd0e5dd3f68b45204b663b5392a56de90209124364fc3f598aa5fa`.
+
+The same clean-install script now gates tag releases before artifact collection. Microsoft OAuth
+application registration and Authenticode signing remain external release configuration; neither is
+claimed by this run.

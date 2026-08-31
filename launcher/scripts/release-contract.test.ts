@@ -26,4 +26,5 @@ test("the Windows smoke uses a clean profile and checks first-run state", () => 
   assert.match(smoke, /instances\.json/);
   assert.match(smoke, /fullmoon-managed/);
   assert.match(smoke, /play\.fullmoon\.ink/);
+  assert.match(smoke, /installed bundled mod hash/);
 });

@@ -41,8 +41,10 @@ cd src-tauri && cargo build --release         # core + bundle (NSIS on Windows)
 cd i3/mod && ./gradlew build                  # build/libs/fullmoon-client-<version>.jar
 ```
 
-Workflows under `.github/workflows/` verify both pieces. A tagged release produces the installer and
-`SHA256SUMS` on GitHub Releases.
+Workflows under `.github/workflows/` verify both pieces. Pull requests also build the Windows NSIS
+package, install it silently into an empty directory, launch it with an empty data profile, and check
+the seeded managed instance and bundled mod. A tagged release runs the same smoke test before it
+publishes the installer and `SHA256SUMS` on GitHub Releases.
 
 ## Trust model
 
