@@ -34,3 +34,17 @@ pub fn get() -> &'static Catalog {
         serde_json::from_str(&raw).expect("bundled catalog.json is malformed")
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_bundled_catalog_starts_with_the_fullmoon_lobby() {
+        let servers = &get().servers;
+
+        assert_eq!(servers.len(), 1);
+        assert_eq!(servers[0].id, "fullmoon-lobby");
+        assert_eq!(servers[0].address, "play.fullmoon.ink");
+    }
+}

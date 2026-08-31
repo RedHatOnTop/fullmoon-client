@@ -66,6 +66,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run bundle -- --bundles nsis
 
+      - name: Smoke-test a clean Windows install
+        shell: pwsh
+        run: ./.github/scripts/windows-smoke.ps1
+
       - name: Collect release artifacts + SHA256SUMS
         shell: pwsh
         run: |

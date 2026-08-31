@@ -217,7 +217,18 @@
       "featured": false
     }
   ],
-  "servers": [],
+  "servers": [
+    {
+      "id": "fullmoon-lobby",
+      "name": "로비",
+      "address": "play.fullmoon.ink",
+      "motd": "만월의 정원 — 26.1.2",
+      "players": 0,
+      "maxPlayers": 0,
+      "pingMs": 0,
+      "hue": 45
+    }
+  ],
   "defaultHud": {
     "elements": {
       "coords": {

@@ -58,3 +58,57 @@ jobs:
           path: |
             i3/mod/build/libs/fullmoon-client-*.jar
             !i3/mod/build/libs/*-sources.jar
+
+  windows-installer:
+    name: Windows clean-install smoke
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the bundled mod
+        run: ./gradlew build
+        working-directory: i3/mod
+
+      - name: Stage the bundled mod
+        shell: pwsh
+        run: |
+          $jar = @(Get-ChildItem i3/mod/build/libs/fullmoon-client-*.jar |
+            Where-Object { $_.Name -notlike '*-sources.jar' })
+          If ($jar.Count -ne 1) { throw "expected one mod jar, got $($jar.Count)" }
+          Copy-Item $jar[0].FullName `
+            launcher/src-tauri/resources/mods/fullmoon-client.jar -Force
+
+      - name: Install launcher dependencies
+        run: npm ci
+        working-directory: launcher
+
+      - name: Bundle the installer
+        run: npm run bundle -- --bundles nsis
+        working-directory: launcher
+
+      - name: Smoke-test a clean Windows install
+        shell: pwsh
+        run: ./.github/scripts/windows-smoke.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fullmoon-windows-smoke
+          path: |
+            launcher/src-tauri/target/release/bundle/nsis/*.exe
+            windows-smoke-result.json
