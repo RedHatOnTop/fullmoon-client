@@ -40,13 +40,20 @@ jobs:
 
       - name: Build the mod and stage it into the bundle resources
         run: ./gradlew build
-        working-directory: pinion-mod
+        working-directory: i3/mod
 
+      # `resources/mods/fullmoon-client.jar` is the name catalog.json's bundled
+      # source declares, so the staged file keeps it whatever the version says.
+      # build/libs also holds the sources jar; copying both onto one path would
+      # ship whichever landed last.
       - name: Copy fresh mod jar over the bundled one
         shell: pwsh
         run: |
-          Copy-Item pinion-mod/build/libs/pinion-hud-*.jar `
-            launcher/src-tauri/resources/mods/pinion-hud.jar -Force
+          $jar = Get-ChildItem i3/mod/build/libs/fullmoon-client-*.jar |
+            Where-Object { $_.Name -notlike '*-sources.jar' }
+          If ($jar.Count -ne 1) { throw "expected one mod jar, got $($jar.Count)" }
+          Copy-Item $jar.FullName `
+            launcher/src-tauri/resources/mods/fullmoon-client.jar -Force
 
       - name: Build the frontend
         run: npm ci && npm run build
@@ -64,7 +71,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
           Copy-Item launcher/src-tauri/target/release/bundle/nsis/*.exe dist/
-          Copy-Item pinion-mod/build/libs/pinion-hud-*.jar dist/
+          Copy-Item (Get-ChildItem i3/mod/build/libs/fullmoon-client-*.jar |
+            Where-Object { $_.Name -notlike '*-sources.jar' }).FullName dist/
           If (Test-Path launcher/src-tauri/target/release/bundle/nsis/*.sig) {
             Copy-Item launcher/src-tauri/target/release/bundle/nsis/*.sig dist/
           }

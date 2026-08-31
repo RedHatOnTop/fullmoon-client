@@ -1,6 +1,6 @@
 # i3 build plan
 
-Ten phases. Each one ends in a commit whose evidence is a capture or a test run, not a
+Eleven phases. Each one ends in a commit whose evidence is a capture or a test run, not a
 description. Captures come off `Xvfb :9` (see `docs/evidence/README.md`); no phase is reported
 done on a plan or a green compile alone.
 
@@ -126,3 +126,50 @@ P9 shipped noting that `MapScreen` itself had no unit test. That is answered aft
 geometry and hit test were extracted into `MapLayout`, gated at 100% of both counters, leaving only
 client runtime outside the gate. Same day, same frames retaken to show behaviour held — see the
 DEVLOG entry and the `p9r-*` evidence.
+
+## P10 — the launcher writes the client's HUD · done
+
+One file, one shape, one owner. The launcher's HUD editor and the in-game editor write and read the
+same `config/fullmoon/hud.json` inside the managed instance, in the client's own anchor-and-offset
+shape, and a running client picks up an edit without a restart: `HudWatch` compares the file's mtime
+every 500 ms, ignores the write the client itself just made, and `applyConfig` adopts the rest. The
+launcher merges per element over the catalogue default, so an id it does not know survives its write,
+and it writes all eight elements whole, so the file never carries half a layout. The percent contract
+P5's front end used — positions as fractions of the frame — is deleted rather than translated: an
+anchor and two integer offsets is what the client draws from, and a second representation of a
+position is a second source of truth.
+
+Two limits are the shape of the thing rather than gaps in it. The editor's stage is one frame,
+640×360 GUI px, while the contract it writes is edge-relative: a layout authored there lands on the
+same edge at any window size, and what the stage cannot show is how far apart two chips anchored to
+opposite edges end up in the player's own window. And neither editor prevents overlap — two elements
+with the same anchor and offsets draw on top of each other, in the stage and in the game.
+
+What does not cross the seam is named here so it is not mistaken for wiring that exists. The
+launcher's cosmetics screen equips capes, wings and trails against the wallet and draws its own
+preview; the client renders none of them, and `cosmetics.rs` says so at the top of the file. Zoom and
+fullbright are in no phase and in no source file of the mod. The standalone CPS module is retired —
+CPS survives only inside the keystrokes element. `scale` round-trips through the file and
+`BaseHudElement` and no renderer reads it. `서버 틱` reads `—` against the shipped bridge, which
+sends `welcome`, `tp_result` and `screen_open` and never the `hud_sync` the client's metrics come
+from, so the element is drawable and unfed. And the release pipeline pointed at `pinion-mod` and
+`pinion-hud-*.jar` — paths from before the mod moved — so the jar it staged into the bundle was never
+the jar it had just built; that is fixed in this phase's commit, along with the guard that keeps the
+sources jar from winning the copy.
+
+This qualifies P5's "the front end on the same tokens". The launcher's palette is the website's
+design system carried to desktop density, with its own vocabulary (`--sky-*`, `--moon-*`), and
+`i3/design/generate.mjs` emits its CSS to `i3/launcher/src/design/tokens.css`, which nothing imports.
+The two halves share one gold by value — the mod's `--color-accent` #f5d06e is the site's
+`--moon-300` — and nothing else. `verify-tokens.mjs` scans `i3/` only, so the gate that forbids a
+colour literal never looked at the launcher.
+
+Evidence: two live sessions on one unbroken dev client each — 640×360 GUI px, the frame the stage
+models, and 960×540, a frame it does not — where the launcher moved a chip and switched an element off
+while the client stood in the world, and the mod's own `Adopted hud.json edited outside the game` line
+lands between two consecutive frames every time. The jar the launcher bundles is byte-identical to the
+jar this tree builds. The editor was also driven in Chromium over Vite's mock core and photographed at
+the Tauri default size; minimum and wide window probes have no horizontal overflow, the selected row
+keeps keyboard focus, and reset changes the visible layout without a redundant success toast. The mock
+core does not prove Tauri IPC, so the real disk write and hot adoption remain the job of the live Fabric
+frames and logs. A fresh 58-gate Hallmark audit answers the DOM gates for that explicit surface.

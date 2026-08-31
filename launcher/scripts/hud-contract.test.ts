@@ -37,6 +37,8 @@ import ko from "../src/i18n/ko.ts";
 
 const HUD_JAVA = new URL("../../i3/mod/src/main/java/dev/fullmoon/client/hud/", import.meta.url);
 const java = (name: string) => readFileSync(new URL(name, HUD_JAVA), "utf8");
+const editor = readFileSync(new URL("../src/widgets/HudEditor.tsx", import.meta.url), "utf8");
+const screens = readFileSync(new URL("../src/styles/screens.css", import.meta.url), "utf8");
 
 test("a corner anchor places at its offset and reads the offset back", () => {
   const b = place("TOP_LEFT", 960, 540, 100, 40, 12, 16);
@@ -238,4 +240,25 @@ test("the Korean element names are the client's own, and every id has an English
     // presence, not wording
     assert.match(en.settings.elements[id as keyof typeof en.settings.elements] ?? "", /\S/, id);
   }
+});
+
+test("the settings heading names the HUD surface available below it", () => {
+  assert.ok(ko.topbar.sub.settings.includes(ko.settings.hudSection));
+  assert.ok(en.topbar.sub.settings.includes(en.settings.hudSection));
+});
+
+test("pointer selection leaves the selected HUD element ready for arrow keys", () => {
+  assert.match(editor, /e\.currentTarget\.focus\(\)/);
+  assert.match(editor, /onKeyDown=\{\(e\) => onKey\(e, id\)\}/);
+});
+
+test("reset does not toast when the restored layout is already visible", () => {
+  assert.doesNotMatch(editor, /toast\("success"/);
+});
+
+test("the HUD editor stacks before its stage becomes too small to read", () => {
+  assert.match(
+    screens,
+    /@media\s*\(max-width:\s*1180px\)[\s\S]*?\.hud-editor\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+  );
 });

@@ -2345,20 +2345,20 @@
 .log-debug .log-text { color: var(--text-3); }
 .log-empty { color: var(--text-3); padding: 16px 0; text-align: center; }
 
+/* Hallmark macrostructure: settings rail + 16:9 HUD plane + element ledger; desktop utility;
+   one gold accent; no hero, card grid, or mobile navigation. */
 /* ═══ HUD editor ═══
    The stage is the game's own frame at the size the client measures in: 640×360 GUI px, which is
    what a 1280×720 window at GUI scale 2 gives it. `.hud-plane` is exactly that many px wide and
    tall and is scaled to fit the panel, so every length below is a length the client itself uses —
    the 20 px chip, the 1 px hairline, the 16 px dot grid of `HudEditorScreen.GRID_STEP`.
 
-   Two consequences worth stating. The palette is the client's, not the launcher's: the custom
-   properties below are `i3/design/tokens.json`'s own oklch triples, scoped to the plane so the
-   launcher's light theme cannot reach inside the game frame and a diff against the client's tokens
-   compares numbers rather than colour spaces. And where the mod calls `painter.border`, this uses
+   Two consequences worth stating. The plane palette comes from the client's own tokens. And where
+   the mod calls `painter.border`, this uses
    an inset ring rather than a border, because the mod draws its hairline inside the box — an inset
    ring keeps every offset in here equal to the mod's own number instead of one more than it. */
 
-.hud-editor { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 18px; align-items: start; }
+.hud-editor { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: var(--space-5); align-items: start; }
 
 .hud-stage {
   position: relative;
@@ -2367,9 +2367,8 @@
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--radius-2);
-  background: oklch(0.145 0.008 89);
-  /* a dark frame inside a light launcher: the seam wants stating, not blending */
-  box-shadow: inset 0 0 0 1px oklch(0.31 0.009 89);
+  background: var(--hud-void);
+  box-shadow: inset 0 0 0 1px var(--hud-hairline);
 }
 
 /* `transform` leaves offsetWidth alone, so a chip measured in here is measured in the client's own
@@ -2381,18 +2380,6 @@
   width: 640px;
   height: 360px;
   transform-origin: top left;
-
-  --hud-void-t: 0.145 0.008 89;
-  --hud-hairline-t: 0.31 0.009 89;
-  --hud-hairline: oklch(0.31 0.009 89);
-  --hud-line-strong: oklch(0.42 0.011 89);
-  --hud-ink-1: oklch(0.945 0.01 89);
-  --hud-ink-2: oklch(0.76 0.009 89);
-  --hud-ink-3: oklch(0.575 0.008 89);
-  --hud-accent: oklch(0.87 0.124 89);
-  --hud-live: oklch(0.78 0.105 168);
-  --hud-danger-t: 0.615 0.155 25;
-  --hud-warn-t: 0.805 0.128 66;
 
   font-family: var(--font-sans);
   /* the in-game editor's own 16 px dot grid, at the alpha it draws it with */
@@ -2493,7 +2480,7 @@
 .hud-armor-pct { position: absolute; left: 0; right: 0; top: 4px; text-align: center; font-size: 8px; line-height: 11px; font-weight: 600; color: var(--hud-ink-1); }
 .hud-armor-bar { position: absolute; left: 2px; bottom: 1px; height: 2px; background: var(--hud-live); }
 
-.hud-keys { position: relative; width: 76px; height: 92px; }
+.hud-keys { display: block; position: relative; width: 76px; height: 92px; }
 .hud-cap, .hud-mouse, .hud-space { position: absolute; border-radius: 3px; background: oklch(var(--hud-void-t) / 0.78); box-shadow: inset 0 0 0 1px var(--hud-hairline); }
 .hud-cap { width: 24px; height: 24px; display: grid; place-items: center; font-size: 9px; line-height: 13px; font-weight: 600; color: var(--hud-ink-1); }
 .hud-mouse { width: 37px; height: 26px; }
@@ -2507,22 +2494,22 @@
 
 /* ── stage foot and rail ──────────────────────────────────────────────────── */
 
-.hud-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.hud-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-3); }
 .hud-dims { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--text-3); font-variant-numeric: tabular-nums; }
-.hud-snap { display: flex; align-items: center; gap: 8px; font-size: var(--text-caption); color: var(--text-3); }
-.hud-note { display: flex; gap: 6px; margin-top: 8px; font-size: var(--text-caption); line-height: 1.55; color: var(--text-3); }
+.hud-snap { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-caption); color: var(--text-3); }
+.hud-note { display: flex; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--text-caption); line-height: 1.55; color: var(--text-3); }
 .hud-note svg { flex: none; margin-top: 2px; }
 
-.hud-rail { display: flex; flex-direction: column; gap: 14px; }
-.hud-list { display: flex; flex-direction: column; gap: 2px; }
-.hud-row { display: flex; align-items: center; gap: 6px; }
+.hud-rail { display: flex; flex-direction: column; gap: var(--space-4); }
+.hud-list { display: flex; flex-direction: column; gap: var(--space-1); }
+.hud-row { display: flex; align-items: center; gap: var(--space-2); }
 .hud-row-pick {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: var(--space-2);
+  padding: var(--space-2);
   border-radius: var(--radius-1);
   text-align: left;
   transition: background var(--dur-fast) var(--ease-standard);
@@ -2534,17 +2521,17 @@
 .hud-row-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--text-small); color: var(--text); }
 .hud-row-at { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--text-3); font-variant-numeric: tabular-nums; }
 
-.hud-inspector { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
-.hud-inspector-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.hud-inspector { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.hud-inspector-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
 .hud-inspector-head strong { font-size: var(--text-small); color: var(--text); }
 .hud-inspector-head span { font-size: var(--text-caption); color: var(--text-3); }
 /* the 3×3 the client's own inspector shows, one cell per anchor */
-.hud-anchor { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.hud-anchor { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); }
 .hud-anchor button {
-  height: 26px;
+  height: 28px;
   display: grid;
   place-items: center;
-  padding: 4px;
+  padding: var(--space-1);
   border: 1px solid var(--line);
   border-radius: 3px;
   transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
@@ -2553,13 +2540,18 @@
 .hud-anchor button:hover { background: var(--sunken); }
 .hud-anchor button.active { border-color: var(--accent); background: var(--accent-soft); }
 .hud-anchor button.active i { background: var(--accent-fill); }
-.hud-nudge { display: flex; align-items: center; gap: 6px; }
+.hud-nudge { display: flex; align-items: center; gap: var(--space-2); }
 .hud-nudge-axis { width: 10px; font-family: var(--font-mono); font-size: var(--text-caption); color: var(--text-3); }
 .hud-nudge-val { flex: 1; text-align: center; font-family: var(--font-mono); font-size: var(--text-small); color: var(--text); font-variant-numeric: tabular-nums; }
 .hud-step { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 3px; color: var(--text-2); }
 .hud-step:hover:not(:disabled) { background: var(--sunken); color: var(--text); }
 .hud-step:disabled { opacity: 0.4; }
 .hud-hint { font-size: var(--text-caption); color: var(--text-3); line-height: 1.5; }
+
+@media (max-width: 1180px) {
+  .hud-editor { grid-template-columns: minmax(0, 1fr); }
+  .hud-stage { max-width: none; }
+}
 
 /* ══════════════════════════════════════════════════════════════════
    PLAY SCREEN — Centered Hero Launchpad (Dawn/Hoyo Inspired)

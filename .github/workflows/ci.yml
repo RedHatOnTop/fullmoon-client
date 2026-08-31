@@ -51,8 +51,10 @@ jobs:
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew build
-        working-directory: pinion-mod
+        working-directory: i3/mod
       - uses: actions/upload-artifact@v4
         with:
-          name: pinion-hud
-          path: pinion-mod/build/libs/*.jar
+          name: fullmoon-client-jar
+          path: |
+            i3/mod/build/libs/fullmoon-client-*.jar
+            !i3/mod/build/libs/*-sources.jar

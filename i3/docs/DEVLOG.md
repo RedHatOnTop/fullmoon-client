@@ -991,3 +991,85 @@ chosen with `중심` unmoved. `p9r-map-compact-640x360.png` is the compact branc
 (`502.5, 72.0, -15.5` and `503.5, 72.0, -16.5`) rather than P9's. Neither session asks for a teleport:
 the extraction moved where a marker is, not what confirming one does, and P9's four warp-state frames
 still carry that half. Nothing was installed on the production Oracle host.
+
+## 2026-08-31 · P10 — the launcher and client write one HUD layout
+
+P10 began as wiring that already existed in two commits and ended as a driven seam. The mod watches
+`config/fullmoon/hud.json` every 500 ms and the launcher reads and writes the same anchor-and-offset
+shape through Rust. The finish work did not add a translator. It removed the old percentage position
+model from the editor, kept unknown element IDs, and made every write a complete immutable
+`HudConfig` so neither side can leave a half-layout behind.
+
+### What the live client did
+
+Two Fabric sessions ran against local Paper, one at 640×360 GUI px and one at 960×540. In each
+session the shared file was edited while the client stayed open. The client recorded four adoptions:
+
+```text
+[23:33:13] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100393325
+[23:33:43] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100423209
+[23:41:48] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100908200
+[23:42:19] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100939219
+```
+
+The 640 set moves coordinates from the top-left to `BOTTOM_LEFT (40,44)`, then moves FPS to
+`TOP_CENTER (31,16)`. The 960 set carries those edge-relative placements into the larger frame,
+switches TPS off and moves the clock to `TOP_RIGHT (63,104)`. The before and after captures visibly
+agree with `p10-final-hud.json`; the log lines prove each change was adopted rather than reconstructed
+after a restart.
+
+The local capture rig uses an offline development identity, so its logs also contain expected
+Microsoft authentication 401 responses. They are unrelated to HUD adoption and are not presented as
+a clean online-auth run.
+
+### What the browser run found
+
+The first screenshot was not valid evidence: only the navigation and controls were readable. The
+fixed `.game-backdrop` had `z-index: 0`, so it painted above ordinary shell copy. A failing source
+contract test required an isolated `.app` stacking context and a negative backdrop layer before the
+CSS was changed. The next real Chromium frame showed the full settings content.
+
+The second defect needed interaction rather than inspection. Clicking the coordinate row left focus
+on that row, but `ArrowRight` did nothing because only the draggable stage node owned `onKeyDown`.
+A failing contract test preceded the fix. The pointer-down path now focuses its node, each ledger row
+dispatches the same keyboard handler, and the browser probe records `(16,56) -> (20,56)` with
+`activeElement.className === "hud-row-pick"`.
+
+The declared Tauri minimum uncovered a third layout failure. At 1040×680 the two-column editor made
+the stage 254×143 and wrapped `640 × 360 GUI px` into a vertical stack. A failing responsive contract
+test preceded the 1180 px breakpoint. The verified minimum now has one 510 px column, a 510×287 stage,
+vertical content scrolling and no horizontal overflow. The default 1280×820 and wide 1920×1080 runs
+also report `documentElement.scrollWidth === clientWidth`.
+
+Two smaller feedback corrections came from the Hallmark pass. Reset no longer raises a redundant
+success toast because the restored layout is already visible. Dark tertiary copy changed from
+`#6B7490` to `#8B97B6`; the new test measures it against both dark grounds and enforces 4.5:1. The HUD
+surface consumes named spacing and client-palette tokens, and the shell keeps one restrained gold
+bloom instead of three competing gold, blue and cyan blooms.
+
+### Gates on the finished tree
+
+```text
+npm test (launcher)                                           → 32 tests, 0 failures
+npm run build (launcher)                                      → TypeScript and Vite pass
+cargo test --manifest-path launcher/src-tauri/Cargo.toml      → 27 tests, 0 failures
+./gradlew -p i3/mod clean test jacocoTestReport
+  jacocoTestCoverageVerification --no-build-cache
+  --rerun-tasks                                               → 247 tests, 0 failures, 0 errors, 0 skipped
+node i3/design/verify-tokens.mjs                              → scanned 110 files
+node i3/design/generate.mjs                                   → all contrast floors met
+```
+
+The mod gate is 96.58% line and 90.09% branch. The freshly built runtime jar and the launcher's
+bundled `launcher/src-tauri/resources/mods/fullmoon-client.jar` are byte-identical at SHA-256
+`d75a577eee556547df932443b738aee317e4405807d79ca8427eb53e68eab3b9`.
+
+The release workflows had retained the pre-move `pinion-mod` directory and an old jar glob. They now
+build `i3/mod`, exclude `*-sources.jar`, and copy the newly built runtime jar into the Tauri resources
+before packaging. This was inspected and YAML-parsed locally; GitHub Actions, PowerShell packaging and
+an installed NSIS artifact were not run on this Linux box.
+
+P10 does not claim wiring that is absent. Cosmetics remain launcher-only previews, zoom and
+fullbright do not exist in the mod, CPS exists only inside keystrokes, renderers still ignore
+`scale`, and the shipped bridge does not publish `hud_sync`, so TPS remains unfed. Those limits are
+documented in the plan and README rather than hidden behind a completed phase label.

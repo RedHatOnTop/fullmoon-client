@@ -141,13 +141,30 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
 
   const stageRef = useRef<HTMLDivElement>(null);
   const nodes = useRef(new Map<string, HTMLDivElement>());
-  const held = useRef<{ id: string; x: number; y: number; from: Placement; moved: boolean } | null>(null);
+  const held = useRef<{
+    id: string;
+    x: number;
+    y: number;
+    from: Placement;
+    moved: boolean;
+    latest: HudConfig | null;
+  } | null>(null);
 
   useEffect(() => {
+    let active = true;
     setCfg(null);
     setSel(null);
-    void core.hud_get(instanceId).then(setCfg);
-  }, [instanceId]);
+    void core.hud_get(instanceId)
+      .then((next) => {
+        if (active) setCfg(next);
+      })
+      .catch(() => {
+        if (active) toast("error", t("settings.hudReadFailed"));
+      });
+    return () => {
+      active = false;
+    };
+  }, [instanceId, t, toast]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -185,14 +202,15 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
     void core.hud_set(instanceId, next).catch(() => toast("error", t("settings.hudWriteFailed")));
   };
 
-  const patch = (id: string, p: Partial<HudElementState>, persist: boolean) => {
-    if (!cfg) return;
+  const patch = (id: string, p: Partial<HudElementState>, persist: boolean): HudConfig | null => {
+    if (!cfg) return null;
     const next: HudConfig = {
       ...cfg,
       elements: { ...cfg.elements, [id]: { ...cfg.elements[id], ...p } },
     };
     if (persist) write(next);
     else setCfg(next);
+    return next;
   };
 
   const sizeOf = (id: string) => FIXED[id] ?? sizes[id] ?? { w: 0, h: 20 };
@@ -200,6 +218,7 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
   const onDown = (e: React.PointerEvent<HTMLDivElement>, id: string) => {
     if (!cfg) return;
     e.preventDefault();
+    e.currentTarget.focus();
     const el = cfg.elements[id];
     held.current = {
       id,
@@ -207,6 +226,7 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
       y: e.clientY,
       from: { anchor: el.anchor, offsetX: el.offsetX, offsetY: el.offsetY },
       moved: false,
+      latest: null,
     };
     setSel(id);
     setHolding(true);
@@ -216,10 +236,9 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
   const onMove = (e: React.PointerEvent) => {
     const h = held.current;
     if (!h || !cfg) return;
-    h.moved = true;
     const size = sizeOf(h.id);
     // the pointer moves in launcher px; the client's arithmetic is in GUI px, hence the divide
-    patch(
+    const latest = patch(
       h.id,
       drag({
         from: h.from,
@@ -233,13 +252,14 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
       }),
       false,
     );
+    held.current = { ...h, moved: true, latest };
   };
 
   const onUp = () => {
     const h = held.current;
     held.current = null;
     setHolding(false);
-    if (h?.moved && cfg) write(cfg);
+    if (h?.moved && h.latest) write(h.latest);
   };
 
   const onKey = (e: React.KeyboardEvent, id: string) => {
@@ -266,9 +286,12 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
   };
 
   const reset = async () => {
-    setCfg(await core.hud_reset(instanceId));
-    setSel(null);
-    toast("success", t("settings.resetDone"));
+    try {
+      setCfg(await core.hud_reset(instanceId));
+      setSel(null);
+    } catch {
+      toast("error", t("settings.hudResetFailed"));
+    }
   };
 
   /** An id from a newer client has no string of ours; show the id rather than a missing key. */
@@ -394,7 +417,11 @@ export function HudEditor({ instanceId }: { instanceId: string }) {
             const el = cfg!.elements[id];
             return (
               <li key={id} className={`hud-row ${sel === id ? "active" : ""} ${el.enabled ? "on" : ""}`}>
-                <button className="hud-row-pick" onClick={() => setSel(id)}>
+                <button
+                  className="hud-row-pick"
+                  onClick={() => setSel(id)}
+                  onKeyDown={(e) => onKey(e, id)}
+                >
                   <span className="hud-row-dot" />
                   <span className="hud-row-name">{label(id)}</span>
                   <span className="hud-row-at">

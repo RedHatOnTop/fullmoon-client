@@ -25,12 +25,8 @@ export function AtmosphericBackdrop() {
 
   return (
     <div className="game-backdrop" aria-hidden="true">
-      {/* 1. Deep Space Atmospheric Nebulae */}
       <div className="nebula-layer nebula-gold" />
-      <div className="nebula-layer nebula-indigo" />
-      <div className="nebula-layer nebula-cyan" />
 
-      {/* 2. Starfield with Twinkle Animation */}
       <div className="starfield">
         {stars.map((s) => (
           <span
@@ -49,7 +45,6 @@ export function AtmosphericBackdrop() {
         ))}
       </div>
 
-      {/* 3. Vignette and Grid Overlay */}
       <div className="backdrop-vignette" />
       <div className="backdrop-grid" />
     </div>

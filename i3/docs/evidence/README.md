@@ -316,3 +316,33 @@ rig's shutter; and the player mark sits where Paper placed this run — `502.5, 
 `503.5, 72.0, -16.5` — not where it placed the P9 runs. The compact frame also has `만월궁 정문`
 chosen where the baseline has `만월궁 대전`: this session clicked rail row 0 and then only hovered
 the 대전 marker, which is the hint-without-choosing half of the contract at the compact size.
+
+## P10 — one HUD layout shared by launcher and client
+
+| file | what it settles |
+| --- | --- |
+| `p10-launcher-hud-editor.png` | The real Chromium-rendered launcher at 1280×820: the HUD tab is discoverable in settings, the 640×360 client plane, all eight element rows, selected coordinate chip, anchor inspector and offset controls are visible together. |
+| `p10-launcher-browser.log` | DOM probes at the Tauri minimum, default and wide window sizes: no horizontal overflow, eight rows, zero console errors, reset with zero toasts, and a focused row moved from `(16,56)` to `(20,56)` by `ArrowRight`. |
+| `p10-hud-boot-640x360.png` | The live Fabric client before an external edit, with the default edge-relative layout over the world. |
+| `p10-hud-xyz-moved-640x360.png` | The same client after the shared file moved coordinates to `BOTTOM_LEFT (40,44)` without a restart. |
+| `p10-hud-fps-moved-640x360.png` | A second external edit in the same session moved FPS to `TOP_CENTER (31,16)`. |
+| `p10-hud-carried-960x540.png` | The edited layout carried to a 960×540 GUI frame; edge anchors, not launcher-stage percentages, determine the new positions. |
+| `p10-hud-tps-off-960x540.png` | The same running client adopted an external `enabled: false` for the server-tick element. |
+| `p10-hud-time-moved-960x540.png` | A further external edit moved the clock to `TOP_RIGHT (63,104)` without relaunching the client. |
+| `p10-live-client-640x360.log` / `p10-live-client-960x540.log` | Four `Adopted hud.json edited outside the game` lines land between the corresponding before and after frames. |
+| `p10-final-hud.json` | The exact complete eight-element file left by the live run, including disabled elements and scale values the renderer currently preserves but does not consume. |
+| `p10-hallmark-audit.md` | The six-axis critique and all 58 Hallmark gates for the HUD editor and the shell visible around it. |
+
+The browser surface uses Vite's mock core, so it settles rendering, focus, responsive layout and
+feedback rather than Tauri IPC. The live Fabric sessions settle the disk seam: the launcher and client
+use one json shape, and the client adopts edits while running. The two evidence sets are intentionally
+separate rather than pretending a mock DOM call proves a native file write.
+
+Three defects were found by driving and looking at the launcher rather than by compiling it:
+
+- The fixed atmospheric backdrop painted above ordinary content, leaving settings copy invisible.
+  The application now establishes an isolated stacking context and places the backdrop behind it.
+- Clicking a ledger row selected the element but left arrow-key nudging unreachable because the key
+  handler lived only on the stage node. Rows now take focus and dispatch the same immutable nudge.
+- At the declared 1040×680 minimum window, the two-column editor crushed the stage to 254×143 and
+  wrapped its dimension label vertically. It now stacks below 1180 px and renders a 510×287 stage.
