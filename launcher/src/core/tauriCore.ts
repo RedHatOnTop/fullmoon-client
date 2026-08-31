@@ -22,6 +22,7 @@ import type {
   Loadout,
   ModCatalog,
   NewsItem,
+  ShaderStatus,
   WalletInfo,
   WalletTx,
   PinionCore,
@@ -99,6 +100,12 @@ export class TauriCore implements PinionCore {
     this.call<void>("mod_toggle", { instanceId, modId, enabled });
   mod_favorite = (instanceId: string, modId: string, favorite: boolean) =>
     this.call<void>("mod_favorite", { instanceId, modId, favorite });
+  shaders_status = (instanceId: string) =>
+    this.call<ShaderStatus>("shaders_status", { instanceId });
+  shaders_install = (instanceId: string) =>
+    this.call<ShaderStatus>("shaders_install", { instanceId });
+  shaders_set_enabled = (instanceId: string, enabled: boolean) =>
+    this.call<ShaderStatus>("shaders_set_enabled", { instanceId, enabled });
 
   // launch
   launch = (instanceId: string, opts?: LaunchOpts) =>
