@@ -92,6 +92,16 @@ export interface Mod {
   ours: boolean;
   compatible: boolean;
   note: string | null;
+  defaultEnabled?: boolean;
+}
+
+export interface ShaderStatus {
+  ready: boolean;
+  enabled: boolean;
+  packFile: string | null;
+  packName: string | null;
+  iris: boolean;
+  sodium: boolean;
 }
 
 export interface ModCatalog {
@@ -291,6 +301,9 @@ export interface PinionCore {
   mods_list(instanceId: string): Promise<InstalledMod[]>;
   mod_toggle(instanceId: string, modId: string, enabled: boolean): Promise<void>;
   mod_favorite(instanceId: string, modId: string, favorite: boolean): Promise<void>;
+  shaders_status(instanceId: string): Promise<ShaderStatus>;
+  shaders_install(instanceId: string): Promise<ShaderStatus>;
+  shaders_set_enabled(instanceId: string, enabled: boolean): Promise<ShaderStatus>;
 
   // launch
   launch(instanceId: string, opts?: LaunchOpts): Promise<string>; // -> sessionId

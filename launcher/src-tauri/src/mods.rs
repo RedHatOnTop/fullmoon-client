@@ -34,10 +34,38 @@ pub struct InstanceModState {
     /// mod id → the jar this launcher put in `mods/` for it.
     #[serde(default)]
     pub managed: BTreeMap<String, String>,
+    /// default-off catalogue entries (Iris) have been copied into `disabled`.
+    /// Without this, every `state()` read would put Iris back after the user
+    /// turned it on but before the jar landed in `managed`.
+    #[serde(default)]
+    pub defaults_seeded: bool,
 }
 
 pub async fn state(instance_id: &str) -> InstanceModState {
-    store::read_or(&paths::instance_state_file(instance_id), InstanceModState::default).await
+    let mut st: InstanceModState =
+        store::read_or(&paths::instance_state_file(instance_id), InstanceModState::default).await;
+    if !st.defaults_seeded {
+        seed_default_off(&mut st);
+        st.defaults_seeded = true;
+        let _ = save_state(instance_id, &st).await;
+    }
+    st
+}
+
+/// Mods that default off (Iris) must sit in `disabled` until the user turns
+/// them on. Otherwise `apply` would treat an empty list as "install everything".
+fn seed_default_off(st: &mut InstanceModState) {
+    for m in &catalog::get().mods {
+        if m.default_enabled {
+            continue;
+        }
+        if st.managed.contains_key(&m.id) {
+            continue;
+        }
+        if !st.disabled.contains(&m.id) {
+            st.disabled.push(m.id.clone());
+        }
+    }
 }
 
 pub async fn save_state(instance_id: &str, st: &InstanceModState) -> Result<()> {
@@ -195,10 +223,29 @@ struct MrHashes {
     sha1: Option<String>,
 }
 
+fn modrinth_loaders_query(loaders: &[&str]) -> String {
+    let inner = loaders
+        .iter()
+        .map(|l| format!("%22{l}%22"))
+        .collect::<Vec<_>>()
+        .join("%2C");
+    format!("%5B{inner}%5D")
+}
+
 async fn modrinth(client: &reqwest::Client, project: &str, game: &str) -> Result<Option<Resolved>> {
+    modrinth_with(client, project, game, &["fabric"]).await
+}
+
+pub(crate) async fn modrinth_with(
+    client: &reqwest::Client,
+    project: &str,
+    game: &str,
+    loaders: &[&str],
+) -> Result<Option<Resolved>> {
     let url = format!(
         "https://api.modrinth.com/v2/project/{project}/version\
-         ?game_versions=%5B%22{game}%22%5D&loaders=%5B%22fabric%22%5D"
+         ?game_versions=%5B%22{game}%22%5D&loaders={}",
+        modrinth_loaders_query(loaders)
     );
     let res = client.get(&url).send().await?;
     if !res.status().is_success() {
@@ -346,4 +393,30 @@ async fn sync(
     }
 
     Ok(next)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fabric_and_iris_loader_queries_match_modrinth() {
+        assert_eq!(modrinth_loaders_query(&["fabric"]), "%5B%22fabric%22%5D");
+        assert_eq!(modrinth_loaders_query(&["iris"]), "%5B%22iris%22%5D");
+    }
+
+    #[test]
+    fn iris_stays_off_until_it_is_managed() {
+        let mut st = InstanceModState::default();
+        seed_default_off(&mut st);
+        st.defaults_seeded = true;
+        assert!(st.disabled.iter().any(|id| id == "iris"));
+        assert!(!st.disabled.iter().any(|id| id == "sodium"));
+        st.disabled.retain(|id| id != "iris");
+        // a later read must not put Iris back after the user turned it on
+        if !st.defaults_seeded {
+            seed_default_off(&mut st);
+        }
+        assert!(!st.disabled.iter().any(|id| id == "iris"));
+    }
 }

@@ -18,6 +18,7 @@ mod mods;
 mod offline;
 mod paths;
 mod ping;
+mod shaders;
 mod state;
 mod store;
 mod version;
@@ -54,6 +55,9 @@ fn main() {
             commands::mods_list,
             commands::mod_toggle,
             commands::mod_favorite,
+            commands::shaders_status,
+            commands::shaders_install,
+            commands::shaders_set_enabled,
             commands::cosmetics_catalog,
             commands::cosmetics_equipped,
             commands::cosmetics_equip,

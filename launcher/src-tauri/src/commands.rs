@@ -11,7 +11,7 @@ use crate::{
     error::{Error, Result},
     hud, install, java, meta,
     model::*,
-    mods, offline, paths, ping,
+    mods, offline, paths, ping, shaders,
     state::AppState,
     store,
 };
@@ -341,6 +341,42 @@ pub async fn mod_favorite(instance_id: String, mod_id: String, favorite: bool) -
         st.favorites.push(mod_id);
     }
     mods::save_state(&instance_id, &st).await
+}
+
+#[tauri::command]
+pub async fn shaders_status(instance_id: String) -> Result<ShaderStatus> {
+    Ok(shaders::status(&instance_id).await)
+}
+
+#[tauri::command]
+pub async fn shaders_install(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> Result<ShaderStatus> {
+    let (game, loader) = {
+        let instances = state.instances.lock().await;
+        let inst = instances
+            .iter()
+            .find(|i| i.id == instance_id)
+            .ok_or_else(|| Error::NotFound(format!("instance {instance_id}")))?;
+        (inst.version_id.clone(), inst.loader.clone())
+    };
+    let concurrency = state.settings.lock().await.concurrency as usize;
+    shaders::install_easy(
+        &state.http,
+        &paths::resources(&app),
+        &instance_id,
+        &game,
+        &loader,
+        concurrency,
+    )
+    .await
+}
+
+#[tauri::command]
+pub async fn shaders_set_enabled(instance_id: String, enabled: bool) -> Result<ShaderStatus> {
+    shaders::set_enabled(&instance_id, enabled).await
 }
 
 // ── cosmetics / hud ───────────────────────────────────────────

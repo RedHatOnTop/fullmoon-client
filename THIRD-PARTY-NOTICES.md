@@ -16,6 +16,8 @@ verifies every download against Mojang's published SHA1 before use.
 | Fabric Loader / Fabric API | fabricmc.net maven (`net.fabricmc.fabric-api:fabric-api`), fetched at install time | Apache-2.0 |
 | Sodium | Modrinth (`project: sodium`), fetched at install time | LGPL-3.0; source at github.com/CaffeineMC/sodium-fabric |
 | Lithium | Modrinth (`project: lithium`), fetched at install time | LGPL-3.0; source at github.com/CaffeineMC/lithium-fabric |
+| Iris | Modrinth (`project: iris`), fetched at install time | LGPL-3.0; source at github.com/IrisShaders/Iris |
+| Complementary Reimagined | Modrinth (`project: complementary-reimagined`), fetched at install time | Complementary License; not redistributed |
 
 ## Fonts
 

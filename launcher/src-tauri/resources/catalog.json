@@ -21,6 +21,17 @@
       "note": null
     },
     {
+      "id": "iris",
+      "name": "Iris",
+      "version": "1.11.3",
+      "description": "Fabric용 쉐이더 로더. Sodium 위에서 동작한다.",
+      "kind": "perf",
+      "ours": false,
+      "compatible": true,
+      "note": null,
+      "defaultEnabled": false
+    },
+    {
       "id": "lithium",
       "name": "Lithium",
       "version": "0.15.1",
@@ -55,11 +66,23 @@
       "kind": "modrinth",
       "project": "sodium"
     },
+    "iris": {
+      "kind": "modrinth",
+      "project": "iris"
+    },
     "lithium": {
       "kind": "modrinth",
       "project": "lithium"
     }
   },
+  "shaderPacks": [
+    {
+      "id": "complementary-reimagined",
+      "name": "Complementary Reimagined",
+      "description": "낮과 밤이 또렷하게 갈리는 기본 쉐이더. 한 번에 설치됩니다.",
+      "project": "complementary-reimagined"
+    }
+  ],
   "cosmetics": [
     {
       "id": "aero-cape",
