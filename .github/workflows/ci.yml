@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+# A new push cancels the previous run on the same ref so stacked PR commits
+# do not stack billable minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend:
@@ -61,6 +68,10 @@ jobs:
 
   windows-installer:
     name: Windows clean-install smoke
+    # Windows minutes bill 2x. PRs already get Linux typecheck; the tagged
+    # Release workflow is what ships an installer. Manual dispatch covers a
+    # one-off smoke without waiting for a tag.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
