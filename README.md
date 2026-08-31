@@ -17,6 +17,7 @@ through native interfaces. Target: Minecraft `26.1.2` with Paper 26.1.2 and Velo
 | Document | Purpose |
 |---|---|
 | [docs/BRIDGE.md](./docs/BRIDGE.md) | Public `fullmoon:v1` server-to-client protocol contract |
+| [docs/MICROSOFT-AUTH.md](./docs/MICROSOFT-AUTH.md) | Microsoft application registration and local test-account setup |
 | [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) | Bundled and runtime third-party components and licenses |
 | [site/](./site/) | GitHub Pages architecture walkthrough |
 

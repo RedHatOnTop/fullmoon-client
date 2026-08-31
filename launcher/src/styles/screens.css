@@ -2069,6 +2069,65 @@
 .acc-uuid { font-size: var(--text-caption); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
 .acc-actions { display: flex; align-items: center; gap: 6px; }
 
+.acc-local-start {
+  min-height: 390px;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 560px);
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  padding: 42px;
+  border-color: var(--accent-line);
+  background: var(--raised);
+}
+.acc-local-identity {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 1px solid var(--line-ink);
+  border-radius: var(--radius-2);
+  background: var(--sunken);
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+.acc-local-name {
+  color: var(--accent);
+  font-size: var(--text-caption);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+}
+.acc-local-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.acc-local-copy h2 {
+  max-width: 520px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.acc-local-copy > p { max-width: 540px; margin: 0; color: var(--text-2); line-height: 1.7; }
+.acc-local-scope { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.acc-local-scope span {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-1);
+  color: var(--text-2);
+  font-size: var(--text-caption);
+}
+.acc-local-scope .acc-local-blocked { color: var(--status-warn); }
+.acc-local-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+
+@media (max-width: 760px) {
+  .acc-local-start { grid-template-columns: 1fr; gap: 24px; padding: 28px; }
+  .acc-local-identity { min-height: 150px; }
+}
+
 .add-options { display: flex; flex-direction: column; gap: 8px; }
 .add-offline {
   margin-top: 18px;

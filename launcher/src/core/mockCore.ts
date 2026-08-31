@@ -592,6 +592,30 @@ export class MockCore implements PinionCore {
     return { ...found };
   }
 
+  async auth_add_offline(username: string): Promise<Account> {
+    await sleep(80);
+    const name = username.trim();
+    if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) {
+      throw new Error("a Minecraft name is 1-16 characters of letters, digits or underscore");
+    }
+    if (this.accounts.some((account) => account.username === name && account.source === "offline")) {
+      throw new Error(`${name} is already added`);
+    }
+
+    const account: Account = {
+      uuid: uid(),
+      username: name,
+      skinHue: 45,
+      skinUrl: null,
+      source: "offline",
+      capes: [],
+    };
+    this.accounts = [...this.accounts, account];
+    this.activeUuid = this.activeUuid ?? account.uuid;
+    this.persist();
+    return { ...account };
+  }
+
   getActiveUuid(): string | null {
     return this.activeUuid;
   }
