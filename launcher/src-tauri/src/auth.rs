@@ -803,6 +803,34 @@ mod tests {
     }
 
     #[test]
+    fn the_branded_client_id_is_a_uuid() {
+        let id = client_id().expect(
+            "msClientId must be set in brand.json so a clean install can sign in with Microsoft",
+        );
+        uuid::Uuid::parse_str(&id).expect("msClientId must be an Application (client) ID");
+    }
+
+    #[tokio::test]
+    #[ignore = "hits login.microsoftonline.com"]
+    async fn microsoft_issues_a_device_code_for_the_branded_app() {
+        let client = reqwest::Client::new();
+        let (prompt, flow) = begin_device_code(&client)
+            .await
+            .expect("Microsoft should accept the branded public client");
+        assert!(
+            !prompt.user_code.is_empty(),
+            "Microsoft returned an empty user code"
+        );
+        assert!(
+            prompt.verification_uri.contains("microsoft.com")
+                || prompt.verification_uri.contains("aka.ms"),
+            "unexpected verification uri {}",
+            prompt.verification_uri
+        );
+        assert!(!flow.device_code.is_empty());
+    }
+
+    #[test]
     fn an_expiry_in_the_past_is_expired_and_zero_never_is() {
         let base = Session {
             uuid: "u".into(),

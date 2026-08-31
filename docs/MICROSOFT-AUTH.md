@@ -18,6 +18,20 @@ does not use or need a client secret.
 6. Add the custom redirect URI `http://localhost`. The launcher listens on a random loopback port;
    Microsoft ignores the port when matching a `localhost` redirect URI.
 7. Under **Advanced settings**, set **Allow public client flows** to **Yes**.
+8. Open **API permissions**. If **Xbox Live → XboxLive.signin** (delegated) is not already listed,
+   add it. The launcher requests that scope; Microsoft will not mint a token Xbox Live accepts
+   without it.
+9. Open **Manifest** and confirm these two values. Entra's Authentication Preview can leave them
+   inconsistent, which then refuses personal Microsoft accounts:
+
+```json
+"signInAudience": "PersonalMicrosoftAccount",
+"api": {
+  "requestedAccessTokenVersion": 2
+}
+```
+
+`requestedAccessTokenVersion` must be the number `2`, not the string `"2"`.
 
 Microsoft's reference procedures are [desktop application configuration](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-desktop-app-configuration),
 [redirect URI restrictions](https://learn.microsoft.com/en-us/entra/identity-platform/reply-url), and
