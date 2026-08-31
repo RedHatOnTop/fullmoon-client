@@ -7,7 +7,8 @@
    5. Settings (General & Java)
    6. Settings HUD editor
    7. Command palette (Ctrl+K)
-   8. Launch overlay */
+   8. Launch overlay
+   9. Clean-profile one-click offline account */
 
 import puppeteer from "puppeteer-core";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -147,6 +148,41 @@ try {
   });
   await sleep(1200);
   await shot(page, "08-launch-overlay");
+
+  const offlinePage = await browser.newPage();
+  await offlinePage.goto(URL, { waitUntil: "networkidle0", timeout: 20000 });
+  await offlinePage.evaluate(() => {
+    localStorage.setItem("pinion.v1.state", JSON.stringify({ accounts: [], activeUuid: null }));
+  });
+  await offlinePage.reload({ waitUntil: "networkidle0", timeout: 20000 });
+  await sleep(800);
+  await clickNav(offlinePage, "계정");
+  await sleep(500);
+  await shot(offlinePage, "09-offline-account-start");
+  await offlinePage.evaluate(() => {
+    const button = [...document.querySelectorAll("button")].find(
+      (candidate) => candidate.textContent?.includes("로컬 테스트 계정 만들기"),
+    );
+    if (!(button instanceof HTMLButtonElement)) {
+      throw new Error("Local test account button not found");
+    }
+    button.click();
+  });
+  await offlinePage.waitForFunction(
+    () => {
+      const state = JSON.parse(localStorage.getItem("pinion.v1.state") ?? "{}");
+      return state.accounts?.length === 1 && state.accounts[0].username === "FullmoonTest";
+    },
+    { timeout: 5000 },
+  );
+  await offlinePage.waitForSelector(".acc-hero", { timeout: 5000 });
+  const localState = await offlinePage.evaluate(() =>
+    JSON.parse(localStorage.getItem("pinion.v1.state") ?? "{}"),
+  );
+  if (localState.accounts?.length !== 1 || localState.accounts[0].username !== "FullmoonTest") {
+    throw new Error(`Unexpected local account state: ${JSON.stringify(localState.accounts)}`);
+  }
+  await shot(offlinePage, "09b-offline-account-created");
 
   console.log("FULLMOON LAUNCHER VERIFICATION COMPLETED SUCCESSFULLY");
 } finally {

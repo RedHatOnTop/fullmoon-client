@@ -15,6 +15,7 @@ mod launch;
 mod meta;
 mod model;
 mod mods;
+mod offline;
 mod paths;
 mod ping;
 mod state;
