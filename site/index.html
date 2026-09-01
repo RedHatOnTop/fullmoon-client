@@ -5,7 +5,7 @@
 <script>document.documentElement.classList.replace('no-js', 'js');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>풀문 클라이언트 — 소스 해설</title>
-<meta name="description" content="풀문 네트워크 전용 마인크래프트 클라이언트의 소스 해설. 런처와 인게임 mod, 두 조각이 어떻게 서버와 대화하는지 코드를 따라 걷는다. GPL-3.0, 전체 소스 공개.">
+<meta name="description" content="풀문 네트워크 전용 마인크래프트 클라이언트의 소스 해설. 런처와 인게임 모드가 서버와 어떻게 이야기하는지, 저장소 파일을 따라 읽어요. GPL-3.0, 전체 소스 공개.">
 <meta name="theme-color" content="#0d1226">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -36,11 +36,11 @@
 <section class="hero">
   <div class="wrap">
     <p class="eyebrow">SOURCE WALKTHROUGH&nbsp;&nbsp;║&nbsp;&nbsp;GPL-3.0</p>
-    <h1>코드를 읽으면<br><span class="accent">믿을 이유</span>가 생긴다</h1>
+    <h1>풀문 클라이언트,<br><span class="accent">소스부터</span> 읽어 보기</h1>
     <p class="lead">
-      풀문 클라이언트는 두 조각이다 — 게임을 깔고 실행하는 런처, 그리고 게임 안에서
-      서버가 보낸 데이터를 그리는 mod. 이 사이트는 실제 소스 파일을 따라 걷는다.
-      파일 이름과 줄 수는 커밋 기준이고, 언제든 직접 열어 대조할 수 있다.
+      풀문 클라이언트는 런처와 인게임 모드 두 조각이에요. 런처는 게임을 설치하고 실행하고,
+      모드는 게임 안에서 서버가 보낸 화면을 그려요. 아래 글은 저장소에 있는 파일을
+      기준으로 썼어요. 궁금한 부분은 GitHub에서 같은 경로를 열면 돼요.
     </p>
     <div class="cta-row">
       <a class="btn btn-primary" href="https://github.com/RedHatOnTop/fullmoon-client" target="_blank" rel="noopener">저장소 열기</a>
@@ -55,7 +55,7 @@
       <p class="eyebrow">STRUCTURE&nbsp;&nbsp;║&nbsp;&nbsp;두 조각, 하나의 계약</p>
       <h2>디렉터리 지도</h2>
       <p class="lead">
-        전체 트리는 짧다. 제품 코드는 런처와 mod, 그리고 둘을 잇는 프로토콜 문서뿐이다.
+        제품 코드는 런처, 인게임 모드, 그리고 둘을 서버와 잇는 프로토콜 문서예요.
       </p>
     </div>
     <div class="tree-grid">
@@ -74,13 +74,13 @@
         <div class="tree-line">└ ci · release · site — 빌드와 배포 전부 자동</div>
       </div>
       <div class="panel">
-        <h3>계약이 먼저다</h3>
+        <h3>화면과 core는 파일 하나로 만나요</h3>
         <p>
-          UI는 Rust core를 모른다. mod는 서버를 모른다. 둘 다 자기 옆 사람과의
-          계약만 안다 — <code>bindings.ts</code>(UI↔core)와
-          <code>fullmoon:v1</code> 채널(mod↔서버). 계약이 안정적이면 안쪽은
-          언제든 갈아끼운다. 실제로 UI는 mock core 위에서 먼저 완성됐고,
-          Rust core가 나중에 같은 계약으로 갈아탔다.
+          UI는 Rust를 직접 부르지 않아요. 모드도 서버 플러그인 내부를 몰라요.
+          UI는 <code>bindings.ts</code>에 적힌 함수만 호출하고, 모드는
+          <code>fullmoon:v1</code> 채널로만 서버와 이야기해요. 그래서 UI를
+          mock core 위에서 먼저 만들고, 나중에 같은 함수 목록으로 실제 Rust core를
+          붙일 수 있었어요.
         </p>
         <h3>숫자로 보는 규모</h3>
         <ul class="facts">
@@ -103,26 +103,26 @@
       <a class="path-card" href="launcher.html">
         <span class="n">01</span>
         <h3>런처</h3>
-        <p>bindings.ts 계약, Rust core의 설치 파이프라인, 계정 흐름. UI가 먼저
-           완성된 희한한 순서의 이야기.</p>
+        <p>bindings.ts, 설치 파이프라인, Microsoft 계정. UI를 먼저 만들고 core를
+           나중에 붙인 이유.</p>
       </a>
       <a class="path-card" href="mod.html">
         <span class="n">02</span>
         <h3>인게임 mod</h3>
-        <p>HUD와 설정 GUI가 런처 디자인 언어를 미러링하는 방식, 워프 스크린이
-           ChestGUI를 대체한 과정.</p>
+        <p>HUD와 설정 화면이 런처와 같은 색을 쓰는 방식, 상자 메뉴 대신 직접 그린
+           워프 화면.</p>
       </a>
       <a class="path-card" href="bridge.html">
         <span class="n">03</span>
         <h3>브리지 프로토콜</h3>
-        <p>한 개의 커스텀 채널로 워프·스크린·텔레포트를 나르는 법. 위조를
-           전제한 설계가 왜 단순해지는지.</p>
+        <p>커스텀 채널 하나로 워프와 텔레포트를 보내는 방법. 클라는 좌표를 보내지
+           않고, 서버가 id를 확인해요.</p>
       </a>
       <a class="path-card" href="trust.html">
         <span class="n">04</span>
         <h3>신뢰와 배포</h3>
-        <p>SHA256SUMS, 태그 빌드, 서명된 OTA. "이 exe가 이 커밋이다"를
-           성립시키는 장치들.</p>
+        <p>SHA256SUMS, 태그 빌드, 서명된 업데이트. 받은 설치 파일이 어느 커밋에서
+           나왔는지 확인하는 방법.</p>
       </a>
     </div>
   </div>
@@ -133,9 +133,9 @@
 <footer>
   <div class="wrap foot-inner">
     <p>
-      풀문 클라이언트는 GPL-3.0으로 공개된다. Minecraft는 Mojang Synergies AB의 상표이며,
-      이 프로젝트는 Mojang과 무관하다. 서드파티 구성요소는 저장소의
-      THIRD-PARTY-NOTICES.md에 정리돼 있다.
+      풀문 클라이언트는 GPL-3.0으로 공개돼요. Minecraft는 Mojang Synergies AB의 상표고,
+      이 프로젝트는 Mojang과 무관해요. 서드파티 구성요소는 저장소의
+      THIRD-PARTY-NOTICES.md에 정리돼 있어요.
     </p>
     <p class="foot-links">
       <a href="https://fullmoon.ink">fullmoon.ink</a> ·
