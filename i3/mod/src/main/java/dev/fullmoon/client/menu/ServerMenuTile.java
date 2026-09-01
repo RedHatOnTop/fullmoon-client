@@ -10,49 +10,77 @@ import dev.fullmoon.client.ui.Voice;
 import dev.fullmoon.client.ui.Widget;
 
 final class ServerMenuTile extends Widget {
-    private static final int PAD = Tokens.Space.SNUG;
+    private static final int ICON_WELL = 28;
 
-    private final MenuProtocol.Item item;
+    private final ServerMenuEntry entry;
     private final Runnable action;
 
     ServerMenuTile(MenuProtocol.Item item, Runnable action) {
-        super(Voice.QUIET, item.label());
-        this.item = item;
+        this(new ServerMenuEntry(item), action);
+    }
+
+    ServerMenuTile(ServerMenuEntry entry, Runnable action) {
+        super(Voice.QUIET, entry.label());
+        this.entry = entry;
         this.action = action;
-        enabled(!item.actions().isEmpty());
     }
 
     MenuProtocol.Item item() {
-        return item;
+        return entry.item();
+    }
+
+    ServerMenuEntry entry() {
+        return entry;
     }
 
     @Override
     public void draw(Painter painter, State state) {
         Box box = bounds();
-        boolean actionable = !item.actions().isEmpty();
-        int ground = actionable ? voice().chrome(state).fill() : Tokens.Color.SURFACE_SUNKEN;
-        int line = actionable ? voice().chrome(state).line() : Tokens.Color.LINE_HAIRLINE;
-        int ink = actionable ? voice().chrome(state).ink() : Tokens.Color.INK_SECONDARY;
+        int ground = switch (state) {
+            case HOVER, FOCUS_VISIBLE -> Tokens.Color.ACCENT_WASH;
+            case ACTIVE -> Tokens.Color.SURFACE_OVERLAY;
+            case LOADING -> Tokens.Color.SURFACE_SUNKEN;
+            default -> Tokens.Color.SURFACE_RAISED;
+        };
+        int line = switch (state) {
+            case HOVER, ACTIVE, FOCUS_VISIBLE -> Tokens.Color.ACCENT;
+            case LOADING -> Tokens.Color.STATUS_WARN;
+            default -> Tokens.Color.LINE_HAIRLINE;
+        };
 
-        painter.fill(box.x(), box.y(), box.w(), box.h(), Tokens.Radius.SM, ground);
-        painter.border(box.x(), box.y(), box.w(), box.h(), Tokens.Radius.SM,
+        painter.fill(box.x(), box.y(), box.w(), box.h(), Tokens.Radius.MD, ground);
+        painter.border(box.x(), box.y(), box.w(), box.h(), Tokens.Radius.MD,
             Tokens.Stroke.HAIR, line);
-        if (actionable) {
-            painter.fill(box.x(), box.y(), Tokens.Stroke.FOCUS, box.h(), Tokens.Color.ACCENT);
-            ring(painter, state, Tokens.Radius.SM);
-        }
+        ring(painter, state, Tokens.Radius.MD);
 
-        int left = box.x() + PAD + (actionable ? Tokens.Stroke.FOCUS : 0);
-        int countSpace = item.count() > 1 && box.w() >= 36 ? 24 : 0;
-        int textWidth = Math.max(0, box.right() - PAD - countSpace - left);
+        int wellX = box.x() + Tokens.Space.COZY;
+        int wellY = box.midY() - ICON_WELL / 2;
+        painter.fill(wellX, wellY, ICON_WELL, ICON_WELL, Tokens.Radius.SM,
+            Tokens.Color.SURFACE_SUNKEN);
+        painter.border(wellX, wellY, ICON_WELL, ICON_WELL, Tokens.Radius.SM,
+            Tokens.Stroke.HAIR, Tokens.Color.LINE_HAIRLINE);
+        entry.drawIcon(painter, wellX + Tokens.Space.BASE, wellY + Tokens.Space.BASE);
+
+        int left = wellX + ICON_WELL + Tokens.Space.COZY;
+        int countSpace = item().count() > 1 ? Tokens.Space.SECTION : 0;
+        int textWidth = Math.max(0, box.right() - Tokens.Space.COZY - countSpace - left);
         painter.pushClip(left, box.y(), textWidth, box.h());
-        Typeset.draw(painter, Tokens.Type.BODY_STRONG, item.label(), left,
-            Typeset.centred(Tokens.Type.BODY_STRONG, box.y(), box.h()), ink);
+        int labelY = entry.details().isEmpty() || box.h() < 42
+            ? Typeset.centred(Tokens.Type.BODY_STRONG, box.y(), box.h())
+            : box.midY() - Tokens.Type.BODY_STRONG.leading();
+        Typeset.draw(painter, Tokens.Type.BODY_STRONG, entry.label(), left, labelY,
+            Tokens.Color.INK_PRIMARY);
+        if (!entry.details().isEmpty() && box.h() >= 42) {
+            Typeset.draw(painter, Tokens.Type.LABEL, entry.details().getFirst(), left,
+                labelY + Tokens.Type.BODY_STRONG.leading() + Tokens.Space.TIGHT,
+                Tokens.Color.INK_TERTIARY);
+        }
         painter.popClip();
 
-        if (item.count() > 1 && box.w() >= 36) {
-            Typeset.tabularRight(painter, Tokens.Type.LABEL, Integer.toString(item.count()),
-                box.right() - PAD, box.bottom() - Tokens.Type.LABEL.leading() - PAD,
+        if (item().count() > 1) {
+            Typeset.tabularRight(painter, Tokens.Type.LABEL, Integer.toString(item().count()),
+                box.right() - Tokens.Space.COZY,
+                box.bottom() - Tokens.Type.LABEL.leading() - Tokens.Space.SNUG,
                 Tokens.Color.INK_TERTIARY);
         }
     }

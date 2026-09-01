@@ -9,29 +9,44 @@ import org.junit.jupiter.api.Test;
 
 final class ServerMenuLayoutTest {
     @Test
-    void slotsKeepTheNineColumnServerGeometry() {
-        ServerMenuLayout layout = ServerMenuLayout.fit(new Box(40, 70, 630, 252), 6);
+    void casinoActionsFormACompactTwoColumnDeck() {
+        Box viewport = new Box(0, 0, 960, 540);
+        ServerMenuLayout layout = ServerMenuLayout.fit(viewport, 6);
 
-        Box first = layout.slot(0);
-        Box nextColumn = layout.slot(1);
-        Box nextRow = layout.slot(9);
-
-        assertEquals(first.y(), nextColumn.y());
-        assertTrue(nextColumn.x() > first.x());
-        assertEquals(first.x(), nextRow.x());
-        assertTrue(nextRow.y() > first.y());
-        assertTrue(layout.slot(53).bottom() <= 322);
+        assertEquals(2, layout.columns());
+        assertEquals(layout.action(0).y(), layout.action(1).y());
+        assertEquals(layout.action(0).x(), layout.action(2).x());
+        assertTrue(layout.action(0).w() >= 150);
+        assertTrue(layout.action(0).h() >= 48);
+        assertTrue(layout.frame().w() < viewport.w());
+        assertTrue(layout.frame().h() < viewport.h());
+        assertEquals(viewport.x() + (viewport.w() - layout.frame().w()) / 2,
+            layout.frame().x());
+        assertEquals(viewport.y() + (viewport.h() - layout.frame().h()) / 2,
+            layout.frame().y());
     }
 
     @Test
-    void smallerMenusUseTheAvailableAreaWithoutChangingSlotIdentity() {
-        ServerMenuLayout layout = ServerMenuLayout.fit(new Box(10, 20, 450, 120), 3);
+    void denseMenusUseFourColumnsWithoutEscapingThePanel() {
+        ServerMenuLayout layout = ServerMenuLayout.fit(new Box(0, 0, 960, 540), 28);
 
-        assertEquals(9, layout.columns());
-        assertEquals(3, layout.rows());
-        assertEquals(layout.slot(0).w(), layout.slot(26).w());
-        assertEquals(layout.slot(0).h(), layout.slot(26).h());
-        assertTrue(layout.slot(26).right() <= 460);
-        assertTrue(layout.slot(26).bottom() <= 140);
+        assertEquals(4, layout.columns());
+        for (int index = 0; index < 28; index++) {
+            Box card = layout.action(index);
+            assertTrue(card.x() >= layout.actions().x());
+            assertTrue(card.y() >= layout.actions().y());
+            assertTrue(card.right() <= layout.actions().right());
+            assertTrue(card.bottom() <= layout.actions().bottom());
+        }
+    }
+
+    @Test
+    void smallViewportsKeepAllRegionsInsideTheFrame() {
+        ServerMenuLayout layout = ServerMenuLayout.fit(new Box(0, 0, 640, 360), 12);
+
+        assertTrue(layout.header().bottom() <= layout.actions().y());
+        assertTrue(layout.actions().right() < layout.context().x());
+        assertTrue(layout.context().right() <= layout.frame().right());
+        assertTrue(layout.footer().bottom() <= layout.frame().bottom());
     }
 }

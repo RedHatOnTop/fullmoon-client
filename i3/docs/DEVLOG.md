@@ -1106,3 +1106,28 @@ matched the smoke result. The installed mod hash was
 The same clean-install script now gates tag releases before artifact collection. Microsoft OAuth
 application registration and Authenticode signing remain external release configuration; neither is
 claimed by this run.
+
+## 2026-09-01 · P11 — server-owned native menus
+
+The ChestGUI is the server's default UI; this phase gives the Fullmoon client its own surface for
+the same menus. `ServerMenuScreen` now renders a `menu_open` snapshot as a framed panel — brand
+eyebrow and serif title over a two-column action deck, a context rail that reads the hovered item
+and the server's facts, and a keyboard footer — while items without actions become facts rather
+than dead buttons, and the ChestGUI decoration characters are stripped from labels by
+`ServerMenuCopy`. The layout arithmetic moved into a pure `ServerMenuLayout` gated by tests at two
+column counts, three and four, plus the small-viewport containment case.
+
+The redesign was captured before it was correct, and the captures are why it is correct now. The
+first live session showed the display title overprinting the brand eyebrow — the P0 class of bug,
+a 22 px face drawing above its origin — and a clip on the context rail that began at the icon top
+while the chosen item's title carries its cap band three pixels higher, slicing the glyph tops
+into a strikethrough. The title now centres in the band below the eyebrow via `Typeset.centred`,
+the clip starts at `Typeset.capTop` of the title, and the committed frames are the second session.
+
+Evidence: five frames off one unbroken live Paper session at 960×540 GUI px plus one at 640×360,
+the menu opened by coin-bridge's `NativeMenuBridge` through the real channel, one click answered
+by the server's revision 1 snapshot, and `menu_close` returning to the world; the client log pairs
+with the server's join and handshake lines. A fresh 58-gate Hallmark audit answers the native
+surface. The only fixture was a 30-line plugin that runs `/casino` once after each join so the
+production menu path opens without a hand; Paper was stopped over RCON afterwards and nothing was
+installed on the production Oracle host.

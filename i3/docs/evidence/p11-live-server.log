@@ -1,0 +1,40 @@
+[22:23:27] [Server thread/INFO]: [coin-bridge] Registered Vault Economy provider via Vault.
+[22:23:27] [Server thread/WARN]: [coin-bridge] Could not save casino.yml to plugins/coin-bridge/casino.yml because casino.yml already exists.
+[22:23:27] [Server thread/INFO]: [coin-bridge] Casino loaded: coinflip, dice, roulette, slots, jackpot, moonfall=true (Jackpot(burnRate=0.05, ticketCost=100.0, maxTicketsPerAccount=50, drawIntervalMinutes=60)). Limits=Limits(minBet=10.0, maxBet=1000.0, dailyLossCap=5000.0, dailyWinCap=4000.0, cooldownSeconds=3). VIP tiers=5.
+[22:23:27] [Server thread/WARN]: [coin-bridge] Could not save arena.yml to plugins/coin-bridge/arena.yml because arena.yml already exists.
+[22:23:27] [Server thread/INFO]: [coin-bridge] Arena world 'arena' is not loaded — creating it.
+[22:23:29] [Server thread/INFO]: [coin-bridge] Arena world 'arena' ready (NORMAL, pvp=true).
+[22:23:29] [Server thread/INFO]: [coin-bridge] Arena (결투) enabled in world 'arena': 3 map(s), 3 kit(s), 5s countdown, 300s limit.
+[22:23:29] [Server thread/WARN]: [coin-bridge] Could not save training.yml to plugins/coin-bridge/training.yml because training.yml already exists.
+[22:23:29] [Server thread/INFO]: [coin-bridge] Training tower '초승' raised on plot 0 (287 pads).
+[22:23:29] [Server thread/INFO]: [coin-bridge] Training tower '상현' raised on plot 1 (283 pads).
+[22:23:29] [Server thread/INFO]: [coin-bridge] Training (훈련) enabled in world 'arena': 2 tower(s), active=상현.
+[22:23:29] [Server thread/WARN]: [coin-bridge] Could not save tutorial.yml to plugins/coin-bridge/tutorial.yml because tutorial.yml already exists.
+[22:23:29] [Server thread/WARN]: [coin-bridge] Tutorial config 'lobby-world' is blank; using 'world'.
+[22:23:29] [Server thread/WARN]: [coin-bridge] Lobby feature failed to enable (continuing without it)
+	at coin-bridge.jar//dev.personnya.coinbridge.tutorial.TutorialConfig$Companion.loadPracticeKit(TutorialConfig.kt:52) ~[?:?]
+	at coin-bridge.jar//dev.personnya.coinbridge.tutorial.TutorialConfig$Companion.load(TutorialConfig.kt:39) ~[?:?]
+	at coin-bridge.jar//dev.personnya.coinbridge.tutorial.TutorialConfig$Companion.load$default(TutorialConfig.kt:23) ~[?:?]
+	at coin-bridge.jar//dev.personnya.coinbridge.tutorial.TutorialFeature.enable(TutorialFeature.kt:15) ~[?:?]
+	at coin-bridge.jar//dev.personnya.coinbridge.CoinBridgePlugin.onEnable(CoinBridgePlugin.kt:360) ~[?:?]
+[22:23:29] [Server thread/WARN]: [coin-bridge] Could not save hub.yml to plugins/coin-bridge/hub.yml because hub.yml already exists.
+[22:23:29] [Server thread/INFO]: [coin-bridge] Economy hub enabled: 9 NPC(s) wired to commands.
+[22:23:29] [Server thread/INFO]: [coin-bridge] Mailbox enabled: /보관함 (role=LOBBY, claim=야생 only — lobby is view-only).
+[22:23:29] [Server thread/WARN]: [coin-bridge] Could not save sentinel.yml to plugins/coin-bridge/sentinel.yml because sentinel.yml already exists.
+[22:23:29] [Server thread/INFO]: [coin-bridge] Sentinel (파수) is off — sentinel.yml enabled: false.
+[22:23:29] [Server thread/INFO]: [coin-bridge] Hid 5 unreleased command(s) not loaded on this role: /길드, /레이드, /잠재, /제작, /직업
+[22:23:29] [Server thread/INFO]: [coin-bridge] Event scheduler starting (poll every 30s); live multipliers will be cached from DB.
+[22:23:29] [Server thread/INFO]: [NativeMenuAudit] Enabling NativeMenuAudit v1.0.0
+[22:23:29] [Server thread/INFO]: [LobbyMotion] Lobby spawn set to 500.5 72.0 -25.5 (join teleport=true)
+[22:23:30] [Server thread/INFO]: Done (13.526s)! For help, type "help"
+[22:24:04] [Server thread/INFO]: Player161 joined the game
+[22:24:05] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player161 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[22:26:17] [Server thread/INFO]: Player659 joined the game
+[22:26:17] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player659 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[22:27:38] [Server thread/INFO]: Player313 joined the game
+[22:27:42] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player313 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[22:28:55] [Server thread/INFO]: [NativeMenuAudit] Disabling NativeMenuAudit v1.0.0
+[22:28:55] [Server thread/INFO]: [coin-bridge] Disabling coin-bridge v0.1.0
+[22:28:55] [Server thread/INFO]: [dev.personnya.coinbridge.hikari.HikariDataSource] coin-bridge-pool - Shutdown initiated...
+[22:28:55] [Server thread/INFO]: [dev.personnya.coinbridge.hikari.HikariDataSource] coin-bridge-pool - Shutdown completed.
+[22:28:55] [Server thread/INFO]: [FullmoonBridge] Disabling FullmoonBridge v0.1.0

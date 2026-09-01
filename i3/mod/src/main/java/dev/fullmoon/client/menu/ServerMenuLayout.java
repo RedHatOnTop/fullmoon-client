@@ -1,42 +1,102 @@
 package dev.fullmoon.client.menu;
 
+import dev.fullmoon.client.design.Tokens;
 import dev.fullmoon.client.layout.Box;
 
-public record ServerMenuLayout(Box body, int rows, int gap, int cellWidth, int cellHeight) {
-    private static final int COLUMNS = 9;
-    private static final int PREFERRED_GAP = 4;
+public record ServerMenuLayout(
+        Box frame,
+        Box header,
+        Box actions,
+        Box context,
+        Box footer,
+        int columns,
+        int rows,
+        int gap,
+        int actionCount) {
+    private static final int MAX_FRAME_WIDTH = 680;
+    private static final int MAX_FRAME_HEIGHT = 440;
+    private static final int HEADER_HEIGHT = 48;
+    private static final int FOOTER_HEIGHT = 18;
+    private static final int SECTION_HEAD_HEIGHT = 18;
+    private static final int CONTEXT_MAX_WIDTH = 192;
+    private static final int CONTEXT_MIN_WIDTH = 150;
 
     public ServerMenuLayout {
-        if (rows < 1 || rows > 6) {
-            throw new IllegalArgumentException("rows must be between 1 and 6");
+        if (columns < 1 || rows < 1) {
+            throw new IllegalArgumentException("menu grid must have positive dimensions");
+        }
+        if (actionCount < 0) {
+            throw new IllegalArgumentException("action count must be non-negative");
         }
     }
 
-    public static ServerMenuLayout fit(Box body, int rows) {
-        if (body.w() <= 0 || body.h() <= 0) {
-            throw new IllegalArgumentException("body must have positive dimensions");
+    public static ServerMenuLayout fit(Box viewport, int actionCount) {
+        if (viewport.w() <= 0 || viewport.h() <= 0) {
+            throw new IllegalArgumentException("viewport must have positive dimensions");
         }
-        int gap = Math.min(PREFERRED_GAP,
-            Math.min(body.w() / (COLUMNS * 2), body.h() / (rows * 2)));
-        int cellWidth = Math.max(1, (body.w() - gap * (COLUMNS - 1)) / COLUMNS);
-        int cellHeight = Math.max(1, (body.h() - gap * (rows - 1)) / rows);
-        return new ServerMenuLayout(body, rows, gap, cellWidth, cellHeight);
+        if (actionCount < 0) {
+            throw new IllegalArgumentException("action count must be non-negative");
+        }
+
+        int edge = viewport.h() < 400 ? Tokens.Space.LOOSE : Tokens.Space.SECTION;
+        int columns = columns(actionCount);
+        int rows = Math.max(1, (actionCount + columns - 1) / columns);
+        int gap = actionCount > 18 ? Tokens.Space.BASE : Tokens.Space.COZY;
+        int cardHeight = cardHeight(actionCount);
+        int deckHeight = rows * cardHeight + (rows - 1) * gap;
+        int bodyHeight = SECTION_HEAD_HEIGHT + deckHeight;
+        int frameHeight = Math.min(MAX_FRAME_HEIGHT, Math.min(viewport.h() - edge * 2,
+            Tokens.Space.GUTTER * 2 + HEADER_HEIGHT + Tokens.Space.LOOSE
+                + bodyHeight + Tokens.Space.LOOSE + FOOTER_HEIGHT));
+        int frameWidth = Math.min(MAX_FRAME_WIDTH, viewport.w() - edge * 2);
+        Box frame = viewport.centred(frameWidth, frameHeight);
+        Box inner = frame.inset(Tokens.Space.GUTTER);
+        Box header = new Box(inner.x(), inner.y(), inner.w(), HEADER_HEIGHT);
+        Box footer = new Box(inner.x(), inner.bottom() - FOOTER_HEIGHT,
+            inner.w(), FOOTER_HEIGHT);
+        Box body = Box.between(inner.x(), header.bottom() + Tokens.Space.LOOSE,
+            inner.right(), footer.y() - Tokens.Space.LOOSE);
+
+        int contextWidth = Math.min(CONTEXT_MAX_WIDTH,
+            Math.max(CONTEXT_MIN_WIDTH, body.w() / 3));
+        int contextX = body.right() - contextWidth;
+        Box context = Box.between(contextX, body.y(), body.right(), body.bottom());
+        Box actions = Box.between(body.x(), body.y() + SECTION_HEAD_HEIGHT,
+            context.x() - Tokens.Space.GUTTER, body.bottom());
+        return new ServerMenuLayout(frame, header, actions, context, footer,
+            columns, rows, gap, actionCount);
     }
 
-    public int columns() {
-        return COLUMNS;
+    public Box action(int index) {
+        if (index < 0 || index >= actionCount) {
+            throw new IllegalArgumentException("action index is outside the menu");
+        }
+        int column = index % columns;
+        int row = index / columns;
+        return actions.col(column, columns, gap).row(row, rows, gap);
     }
 
-    public Box slot(int slot) {
-        if (slot < 0 || slot >= rows * COLUMNS) {
-            throw new IllegalArgumentException("slot is outside the menu");
+    public int sectionHeadY() {
+        return actions.y() - SECTION_HEAD_HEIGHT;
+    }
+
+    private static int columns(int actionCount) {
+        if (actionCount <= 8) {
+            return 2;
         }
-        int column = slot % COLUMNS;
-        int row = slot / COLUMNS;
-        return new Box(
-            body.x() + column * (cellWidth + gap),
-            body.y() + row * (cellHeight + gap),
-            cellWidth,
-            cellHeight);
+        if (actionCount <= 18) {
+            return 3;
+        }
+        return 4;
+    }
+
+    private static int cardHeight(int actionCount) {
+        if (actionCount <= 8) {
+            return 56;
+        }
+        if (actionCount <= 18) {
+            return 44;
+        }
+        return 36;
     }
 }
