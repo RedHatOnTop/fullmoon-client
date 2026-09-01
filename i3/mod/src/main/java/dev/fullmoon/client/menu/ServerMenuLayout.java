@@ -58,11 +58,18 @@ public record ServerMenuLayout(
             inner.right(), footer.y() - Tokens.Space.LOOSE);
 
         int contextWidth = Math.min(CONTEXT_MAX_WIDTH,
-            Math.max(CONTEXT_MIN_WIDTH, body.w() / 3));
+            Math.max(Math.min(CONTEXT_MIN_WIDTH, body.w() / 2), body.w() / 3));
+        contextWidth = Math.min(contextWidth,
+            Math.max(0, body.w() - Tokens.Space.GUTTER - 8));
         int contextX = body.right() - contextWidth;
         Box context = Box.between(contextX, body.y(), body.right(), body.bottom());
         Box actions = Box.between(body.x(), body.y() + SECTION_HEAD_HEIGHT,
             context.x() - Tokens.Space.GUTTER, body.bottom());
+        // A capped frame can leave the deck shorter than its ideal; shrink the
+        // gap instead of letting cells collapse to zero or escape the deck.
+        gap = Math.min(gap, Math.max(0, Math.min(
+            (actions.h() - rows) / Math.max(1, rows - 1),
+            (actions.w() - columns) / Math.max(1, columns - 1))));
         return new ServerMenuLayout(frame, header, actions, context, footer,
             columns, rows, gap, actionCount);
     }

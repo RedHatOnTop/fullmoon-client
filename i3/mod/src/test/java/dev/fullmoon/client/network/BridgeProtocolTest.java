@@ -175,7 +175,8 @@ final class BridgeProtocolTest {
                  "title":"Casino","rows":6,"items":[
                    {"slot":22,"label":"Spin","material":"minecraft:clock","count":1,
                     "details":["Bet 100 won","Win rate 48%"],
-                    "actions":["left","shift_left"]}
+                    "actions":["left","shift_left"],
+                    "icon":"fullmoon.casino.slots"}
                  ]}
                 """)).message().orElseThrow());
 
@@ -190,6 +191,7 @@ final class BridgeProtocolTest {
         assertEquals(List.of("Bet 100 won", "Win rate 48%"), item.details());
         assertEquals(List.of(MenuProtocol.Click.LEFT, MenuProtocol.Click.SHIFT_LEFT),
             item.actions());
+        assertEquals("fullmoon.casino.slots", item.icon());
         assertThrows(UnsupportedOperationException.class, () -> open.items().clear());
         assertThrows(UnsupportedOperationException.class, () -> item.details().clear());
         assertThrows(UnsupportedOperationException.class, () -> item.actions().clear());
@@ -236,6 +238,23 @@ final class BridgeProtocolTest {
              "items":[{"slot":1.5,"label":"Buy","material":"minecraft:stone","count":1,
              "details":[],"actions":["left"]}]}
             """));
+        assertEquals("menu item 0 icon is invalid", decodeError("""
+            {"type":"menu_open","proto":1,"id":"m","revision":1,"title":"Shop","rows":1,
+             "items":[{"slot":1,"label":"Buy","material":"minecraft:stone","count":1,
+             "details":[],"actions":["left"],"icon":"Not An Icon!"}]}
+            """));
+    }
+
+    @Test
+    void menuItemsWithoutAnIconDefaultToTheItemRender() {
+        MenuProtocol.Open open = assertInstanceOf(
+            MenuProtocol.Open.class, BridgeProtocol.decode(json("""
+                {"type":"menu_open","proto":1,"id":"m","revision":1,"title":"Shop","rows":1,
+                 "items":[{"slot":1,"label":"Buy","material":"minecraft:stone","count":1,
+                 "details":[],"actions":["left"]}]}
+                """)).message().orElseThrow());
+
+        assertEquals("", open.items().getFirst().icon());
     }
 
     @Test

@@ -39,9 +39,12 @@ final class ServerMenuEntry {
         return details;
     }
 
-    void drawIcon(Painter painter, int x, int y) {
-        if (!icon.isEmpty()) {
-            painter.gfx().item(icon, x, y);
+    void drawIcon(Painter painter, int x, int y, int well) {
+        if (MenuIcons.draw(painter, item.icon(), x + well / 2f, y + well / 2f, well)) {
+            return;
+        }
+        if (well >= 24 && !icon.isEmpty()) {
+            painter.gfx().item(icon, x + (well - 16) / 2, y + (well - 16) / 2);
         }
     }
 

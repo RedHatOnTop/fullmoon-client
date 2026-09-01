@@ -1131,3 +1131,14 @@ with the server's join and handshake lines. A fresh 58-gate Hallmark audit answe
 surface. The only fixture was a 30-line plugin that runs `/casino` once after each join so the
 production menu path opens without a hand; Paper was stopped over RCON afterwards and nothing was
 installed on the production Oracle host.
+
+The first frames carried the server's block sprites as icons, and a gold cube does not say
+"coinflip" any more than a red cube says "roulette" — the native surface existed to read like the
+games it plays, so the snapshot now carries an optional `icon` id and the client draws each casino
+game as a bespoke vector mark off the same SDF primitives as the rest of the chrome: a milled
+coin, a die showing three, a pocketed wheel, three reels on a payline, the moon with light
+falling past it, a jackpot burst. Unknown ids and icon-less items keep the item render, and the
+field is declared presentation-only in `docs/BRIDGE.md`. The same review that caught the two
+render defects above also probed the layout arithmetic past the captured sizes: the icon well now
+scales with its card, and a capped frame shrinks the deck gap instead of collapsing cards to
+zero, so a 54-slot menu at 320×240 stays clickable — both guarded by layout tests.

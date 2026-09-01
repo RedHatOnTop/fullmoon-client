@@ -83,11 +83,17 @@ screen.
       "material": "minecraft:gold_nugget",
       "count": 1,
       "details": ["Choose heads or tails", "Server-verified result"],
-      "actions": ["left", "shift_left"]
+      "actions": ["left", "shift_left"],
+      "icon": "fullmoon.casino.coinflip"
     }
   ]
 }
 ```
+
+`icon` is optional. It names a bespoke client-side mark (the casino lobby ships
+`fullmoon.casino.{coinflip,dice,roulette,slots,moonfall,jackpot}`); an item without one — or a
+client that does not know the name — renders the `material` item instead. Presentation only:
+the icon never carries authority, exactly like `label` and `details`.
 
 The client sends only the opaque session ID, revision, selected slot, and an advertised click:
 

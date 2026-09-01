@@ -8,8 +8,9 @@ only what the server's `menu_open` snapshot carries — items, actions, facts an
 answers every click by asking the server again; hierarchy is 5 because header, action deck,
 context rail and footer read as four distinct planes at a glance; execution is 5 because the
 committed frames come from one live Paper session over the real `fullmoon:v1` channel at two
-GUI resolutions; specificity is 5 because the icons are the server's own item materials rendered
-by the game and the copy is the server's menu text with only its ChestGUI decoration stripped;
+GUI resolutions; specificity is 5 because each casino game wears a bespoke vector mark named by
+the server's icon id — a coin, a die, a wheel — and the copy is the server's menu text with only
+its ChestGUI decoration stripped;
 restraint is 5 because the surface adds no animation, gradient, toast or optimistic copy — the
 footer says `서버 승인 후 반영` and means it; variety is 4 because it deliberately reuses the
 established `SurfaceScreen` chrome and token set rather than inventing a second design language.
@@ -23,7 +24,7 @@ page-structure gate is N/A. Every applicable answer is **No**.
 | --- | --- | --- |
 | 1 | No | Pretendard and Noto Serif CJK are self-hosted as `fullmoon:*` font providers; no vanilla bitmap UI text on the surface. |
 | 2 | No | No gradient text and no indigo-violet wash; the panel is warm near-black with one gold accent. |
-| 3 | No | The action deck is a server-driven grid whose tiles carry distinct item icons and server copy; the context rail beside it breaks any card-grid symmetry. |
+| 3 | No | The action deck is a server-driven grid whose tiles carry distinct bespoke marks and server copy; the context rail beside it breaks any card-grid symmetry. |
 | 4 | No | One panel with a hairline border and a sunken context well; no card nested inside a card. |
 | 5 | No | Hover and focus use an accent border plus wash on the tile ground; no coloured side-stripe. |
 | 6 | N/A | The surface has no hero. |
@@ -50,7 +51,7 @@ page-structure gate is N/A. Every applicable answer is **No**.
 | 27 | N/A | The surface has no motion to reduce. |
 | 28 | N/A | There is no video. |
 | 29 | N/A | The blurred stratum is Minecraft's own background blur over the live world; no aurora or mesh gradient. |
-| 30 | No | Icons are real item renders resolved from the server's material ids; no emoji. |
+| 30 | No | The six casino games draw as bespoke vector marks — coin, die, wheel, reels, falling moon, burst — named by the server's optional icon id; unknown ids fall back to real item renders. No emoji. |
 | 31 | N/A | No generated illustration or Lottie asset. |
 | 32 | No | An immutable, revision-stamped server snapshot rendered as a native screen is specific to this product's bridge contract. |
 | 33 | N/A | No decorative SVG figure. |
@@ -103,7 +104,10 @@ eyebrow and the display title were drawn into the same band — the P0 class of 
 face draws above its origin — so the title's capitals overprinted the eyebrow; the title now sits
 centred in the band below the eyebrow line via `Typeset.centred`. And the context rail's clip began
 at the icon top while the title's cap band begins three pixels above it, slicing the tops of the
-glyphs into a strikethrough; the clip now starts at `Typeset.capTop` of the title. Both fixes are
-visible when the committed frames are diffed against the pre-fix session in `/tmp`.
+glyphs into a strikethrough; the clip now starts at `Typeset.capTop` of the title. A review of the
+finished tree added two more guards the frames could not show: the icon well scales with its card
+so a dense deck never overprints its neighbours, and `ServerMenuLayout` shrinks the deck gap —
+clamped at zero — whenever a capped frame leaves the deck shorter than its ideal, so every card
+keeps at least one clickable pixel; both are gated by `ServerMenuLayoutTest`.
 
 Result: **PASS — 58 gates answered; no applicable gate answered Yes.**

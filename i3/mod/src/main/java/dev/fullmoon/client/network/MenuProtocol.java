@@ -23,10 +23,13 @@ public final class MenuProtocol {
     private static final int MAX_DETAIL_LENGTH = 160;
     private static final int MAX_DETAILS = 8;
     private static final int MAX_ITEMS = 54;
+    private static final int MAX_ICON_LENGTH = 64;
     private static final Pattern MENU_ID =
         Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,63}");
     private static final Pattern MATERIAL_ID =
         Pattern.compile("[a-z0-9._-]+:[a-z0-9/._-]+");
+    private static final Pattern ICON_ID =
+        Pattern.compile("[a-z0-9][a-z0-9._-]{0,63}");
 
     private MenuProtocol() {}
 
@@ -56,12 +59,14 @@ public final class MenuProtocol {
             String material,
             int count,
             List<String> details,
-            List<Click> actions) {
+            List<Click> actions,
+            String icon) {
         public Item {
             Objects.requireNonNull(label, "label");
             Objects.requireNonNull(material, "material");
             details = List.copyOf(Objects.requireNonNull(details, "details"));
             actions = List.copyOf(Objects.requireNonNull(actions, "actions"));
+            Objects.requireNonNull(icon, "icon");
         }
     }
 
@@ -223,8 +228,12 @@ public final class MenuProtocol {
         if (!actions.error().isEmpty()) {
             return ItemEntry.failure(actions.error());
         }
+        String icon = string(json, "icon");
+        if (!icon.isEmpty() && !ICON_ID.matcher(icon).matches()) {
+            return ItemEntry.failure("menu item " + index + " icon is invalid");
+        }
         return ItemEntry.success(new Item(
-            slot, label, material, count, details.values(), actions.values()));
+            slot, label, material, count, details.values(), actions.values(), icon));
     }
 
     private static TextList decodeTextList(JsonObject json, int index) {

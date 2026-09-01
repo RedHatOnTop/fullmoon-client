@@ -49,4 +49,28 @@ final class ServerMenuLayoutTest {
         assertTrue(layout.context().right() <= layout.frame().right());
         assertTrue(layout.footer().bottom() <= layout.frame().bottom());
     }
+
+    @Test
+    void doubleChestMenusKeepEveryCardClickableAtSmallViewports() {
+        ServerMenuLayout layout = ServerMenuLayout.fit(new Box(0, 0, 320, 240), 54);
+
+        for (int index = 0; index < 54; index++) {
+            Box card = layout.action(index);
+            assertTrue(card.w() >= 1, "card " + index + " must stay clickable");
+            assertTrue(card.h() >= 1, "card " + index + " must stay clickable");
+            assertTrue(card.x() >= layout.actions().x());
+            assertTrue(card.y() >= layout.actions().y());
+            assertTrue(card.right() <= layout.actions().right());
+            assertTrue(card.bottom() <= layout.actions().bottom());
+        }
+    }
+
+    @Test
+    void narrowViewportsKeepTheRailInsideTheFrame() {
+        ServerMenuLayout layout = ServerMenuLayout.fit(new Box(0, 0, 220, 200), 6);
+
+        assertTrue(layout.actions().w() >= 8);
+        assertTrue(layout.actions().right() < layout.context().x());
+        assertTrue(layout.context().right() <= layout.frame().right());
+    }
 }

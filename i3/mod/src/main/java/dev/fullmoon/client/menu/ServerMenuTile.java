@@ -54,14 +54,19 @@ final class ServerMenuTile extends Widget {
         ring(painter, state, Tokens.Radius.MD);
 
         int wellX = box.x() + Tokens.Space.COZY;
-        int wellY = box.midY() - ICON_WELL / 2;
-        painter.fill(wellX, wellY, ICON_WELL, ICON_WELL, Tokens.Radius.SM,
-            Tokens.Color.SURFACE_SUNKEN);
-        painter.border(wellX, wellY, ICON_WELL, ICON_WELL, Tokens.Radius.SM,
-            Tokens.Stroke.HAIR, Tokens.Color.LINE_HAIRLINE);
-        entry.drawIcon(painter, wellX + Tokens.Space.BASE, wellY + Tokens.Space.BASE);
-
-        int left = wellX + ICON_WELL + Tokens.Space.COZY;
+        int well = Math.min(ICON_WELL, box.h() - Tokens.Space.TIGHT);
+        int left;
+        if (well >= 12) {
+            int wellY = box.midY() - well / 2;
+            painter.fill(wellX, wellY, well, well, Tokens.Radius.SM,
+                Tokens.Color.SURFACE_SUNKEN);
+            painter.border(wellX, wellY, well, well, Tokens.Radius.SM,
+                Tokens.Stroke.HAIR, Tokens.Color.LINE_HAIRLINE);
+            entry.drawIcon(painter, wellX, wellY, well);
+            left = wellX + well + Tokens.Space.COZY;
+        } else {
+            left = wellX;
+        }
         int countSpace = item().count() > 1 ? Tokens.Space.SECTION : 0;
         int textWidth = Math.max(0, box.right() - Tokens.Space.COZY - countSpace - left);
         painter.pushClip(left, box.y(), textWidth, box.h());
