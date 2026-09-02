@@ -351,7 +351,7 @@ Three defects were found by driving and looking at the launcher rather than by c
 
 | file | what it settles |
 | --- | --- |
-| `p11-menu-open-960x540.png` | A live coin-bridge session opened the casino menu over `fullmoon:v1`: brand eyebrow above the serif title, a two-column action deck where each game wears its own bespoke mark — coin, die, wheel, reels, falling moon, jackpot burst — the context rail naming the first actionable item, and the keyboard footer. No ChestGUI and no raw block sprite anywhere in the frame. |
+| `p11-menu-open-960x540.png` | A live coin-bridge session opened the casino menu over `fullmoon:v1`: brand eyebrow above the serif title, a two-column action deck where each game wears its own hand-drawn pixel mark — stamped coin, five-pip die, pocketed wheel, triple seven, the moon with falling light, a four-point sparkle — the context rail naming the first actionable item, and the keyboard footer. No ChestGUI and no raw block sprite anywhere in the frame. |
 | `p11-menu-hover-960x540.png` | The pointer on `동전`: accent border and wash on the tile, and the context rail follows the hover — reading, not choosing. |
 | `p11-menu-refreshed-960x540.png` | One click later the client's `menu_action` slot 19 met the server's revision 1 snapshot: `동전` now chosen, `승률 · 50.0%` and `배당 · 1.98x` in the rail. The refresh is the server's answer, not a client prediction. |
 | `p11-menu-closed-960x540.png` | `menu_close` returns the player to the live world; the surface leaves nothing on screen. |
@@ -369,9 +369,9 @@ after the captures; nothing was installed on the production Oracle host.
 The marks are not the server's block sprites. A raw item render says "block", not "game", so the
 snapshot carries an optional `icon` id — the casino lobby names
 `fullmoon.casino.{coinflip,dice,roulette,slots,moonfall,jackpot}` — and the client draws each as
-a bespoke vector mark off the same SDF primitives as the rest of the chrome, falling back to the
-item render for any id it does not know. The field is presentation only; the protocol rules in
-`docs/BRIDGE.md` say so.
+a hand-drawn 14×14 pixel mark in the vanilla HUD's own idiom, falling back to the item render for
+any id it does not know. The field is presentation only; the protocol rules in `docs/BRIDGE.md`
+say so.
 
 Two defects were found only in the rendered frames of the first redesign session and corrected
 before these frames were taken: the display title overprinted the brand eyebrow (the P0 class of

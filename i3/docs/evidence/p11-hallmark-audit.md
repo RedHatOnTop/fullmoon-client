@@ -8,9 +8,9 @@ only what the server's `menu_open` snapshot carries — items, actions, facts an
 answers every click by asking the server again; hierarchy is 5 because header, action deck,
 context rail and footer read as four distinct planes at a glance; execution is 5 because the
 committed frames come from one live Paper session over the real `fullmoon:v1` channel at two
-GUI resolutions; specificity is 5 because each casino game wears a bespoke vector mark named by
-the server's icon id — a coin, a die, a wheel — and the copy is the server's menu text with only
-its ChestGUI decoration stripped;
+GUI resolutions; specificity is 5 because each casino game wears a hand-drawn pixel mark named by
+the server's icon id — a stamped coin, a die, a wheel — and the copy is the server's menu text
+with only its ChestGUI decoration stripped;
 restraint is 5 because the surface adds no animation, gradient, toast or optimistic copy — the
 footer says `서버 승인 후 반영` and means it; variety is 4 because it deliberately reuses the
 established `SurfaceScreen` chrome and token set rather than inventing a second design language.
@@ -51,7 +51,7 @@ page-structure gate is N/A. Every applicable answer is **No**.
 | 27 | N/A | The surface has no motion to reduce. |
 | 28 | N/A | There is no video. |
 | 29 | N/A | The blurred stratum is Minecraft's own background blur over the live world; no aurora or mesh gradient. |
-| 30 | No | The six casino games draw as bespoke vector marks — coin, die, wheel, reels, falling moon, burst — named by the server's optional icon id; unknown ids fall back to real item renders. No emoji. |
+| 30 | No | The six casino games draw as hand-drawn 14×14 pixel marks — a stamped coin, a five-pip die, a pocketed wheel, triple seven, the moon with falling light, a four-point sparkle — named by the server's optional icon id; unknown ids fall back to real item renders. No emoji. |
 | 31 | N/A | No generated illustration or Lottie asset. |
 | 32 | No | An immutable, revision-stamped server snapshot rendered as a native screen is specific to this product's bridge contract. |
 | 33 | N/A | No decorative SVG figure. |

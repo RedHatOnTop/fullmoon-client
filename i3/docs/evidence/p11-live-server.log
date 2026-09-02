@@ -1,22 +1,14 @@
-]633;E;2026-09-01 23:05:47  cd /home/person/Projects/minecraft-server-project/fullmoon-client-client-worktree/i3/docs/evidence && cp /tmp/p11-icons/open.png p11-menu-open-960x540.png && cp /tmp/p11-icons/hover.png p11-menu-hover-960x540.png && cp /tmp/p11-icons/refreshed.png p11-menu-refreshed-960x540.png && cp /tmp/p11-icons-compact/open.png p11-menu-compact-640x360.png && cp /tmp/p11-icons/run.log p11-live-client.log && grep -E "Fullmoon|coin-bridge|NativeMenu|Done|joined|handshake" /home/person/mc-local/logs/latest.log | tail -30 > p11-live-server.log && echo swapped;8b66f5c6-d0f0-4664-8e11-665b9521621a]633;C[23:02:01] [Server thread/INFO]: [NativeMenuAudit] Enabling NativeMenuAudit v1.0.0
-[23:02:02] [Server thread/INFO]: Done (10.251s)! For help, type "help"
-[23:02:34] [Server thread/INFO]: Player245 joined the game
-[23:02:35] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player245 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
-[23:03:40] [Server thread/INFO]: [LobbyMotion] Disabling LobbyMotion v1.0.0
-[23:03:40] [Server thread/INFO]: [WorldEdit] Disabling WorldEdit v7.4.5+7590-b8dc4c1
-[23:03:40] [Server thread/INFO]: [MoonPortals] Disabling MoonPortals v1.0.0
-[23:03:40] [Server thread/INFO]: [NativeMenuAudit] Disabling NativeMenuAudit v1.0.0
-[23:03:40] [Server thread/INFO]: [coin-bridge] Disabling coin-bridge v0.1.0
-[23:03:40] [Server thread/INFO]: [FullmoonBridge] Disabling FullmoonBridge v0.1.0
-[23:03:40] [Server thread/INFO]: [Vault] Disabling Vault v2.20.2
 [23:04:24] [Server thread/INFO]: [NativeMenuAudit] Enabling NativeMenuAudit v1.0.0
 [23:04:24] [Server thread/INFO]: Done (9.357s)! For help, type "help"
 [23:05:06] [Server thread/INFO]: Player890 joined the game
 [23:05:07] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player890 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
-[23:05:47] [Server thread/INFO]: [LobbyMotion] Disabling LobbyMotion v1.0.0
-[23:05:47] [Server thread/INFO]: [WorldEdit] Disabling WorldEdit v7.4.5+7590-b8dc4c1
-[23:05:47] [Server thread/INFO]: [MoonPortals] Disabling MoonPortals v1.0.0
-[23:05:47] [Server thread/INFO]: [NativeMenuAudit] Disabling NativeMenuAudit v1.0.0
-[23:05:47] [Server thread/INFO]: [coin-bridge] Disabling coin-bridge v0.1.0
-[23:05:47] [Server thread/INFO]: [FullmoonBridge] Disabling FullmoonBridge v0.1.0
-[23:05:47] [Server thread/INFO]: [Vault] Disabling Vault v2.20.2
+[17:58:03] [Server thread/INFO]: [NativeMenuAudit] Enabling NativeMenuAudit v1.0.0
+[17:58:04] [Server thread/INFO]: Done (12.515s)! For help, type "help"
+[17:58:51] [Server thread/INFO]: Player763 joined the game
+[17:58:52] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player763 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[18:00:54] [Server thread/INFO]: Player337 joined the game
+[18:00:55] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player337 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[18:01:51] [Server thread/INFO]: Player825 joined the game
+[18:01:51] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player825 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[18:02:35] [Server thread/INFO]: Player86 joined the game
+[18:02:36] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player86 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
