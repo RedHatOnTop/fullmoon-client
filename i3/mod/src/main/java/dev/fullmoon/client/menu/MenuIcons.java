@@ -6,65 +6,66 @@ import dev.fullmoon.client.render.Painter;
 /**
  * Hand-drawn 14×14 pixel marks for the casino's six games — the same idiom as
  * the vanilla HUD's own sprites, so they read as the game's craft rather than
- * chrome drawn on top of it. A raw item sprite says "block", not "game". The
- * server names the mark through the menu item's icon id; anything it does not
- * name falls back to the item render in {@link ServerMenuEntry}.
+ * chrome drawn on top of it. Every silhouette carries a dark outline and a
+ * shaded edge the way the game's item art does; a flat blob is not a sprite.
+ * The server names the mark through the menu item's icon id; anything it does
+ * not name falls back to the item render in {@link ServerMenuEntry}.
  */
 final class MenuIcons {
-    private static final float CELL_INSET = 0.86f;
+    private static final float CELL_INSET = 0.92f;
 
-    /** A gold coin with a milled rim and a crescent stamped in the middle. */
+    /** A gold coin: milled rim, top-left shine, crescent stamped in the face. */
     private static final String[] COIN = {
         "..............",
-        "....GGGGGG....",
-        "..GGWWGGGGGg..",
-        ".GWWWGGGGGGgg.",
-        ".GWGGGGddddgg.",
-        ".GWGGddGGGGgg.",
-        ".GWGGdGGGGGgg.",
-        ".GWGGdGGGGGgg.",
-        ".GWGGddGGGGgg.",
-        ".GWGGGGddddgg.",
-        "..GWGGGGGGGg..",
-        "..GWGGGGGGGg..",
-        "...GWGGGGgg...",
-        "....Gggggg....",
+        ".....kkkk.....",
+        "...kGGGGGGk...",
+        "..kGWWGGGGgk..",
+        ".kGWGGGddddgk.",
+        ".kGWGGGddGGgk.",
+        ".kGWGGGdGGGgk.",
+        ".kGWGGGdGGGgk.",
+        ".kGWGGGddGGgk.",
+        ".kGWGGGddddgk.",
+        "..kGGGGGGggk..",
+        "...kGGGGggk...",
+        ".....kkkk.....",
+        "..............",
     };
 
-    /** An ivory die showing five, shaded at its lower right. */
+    /** An ivory die showing five, shaded along its lower right. */
     private static final String[] DICE = {
         "..............",
         "..............",
-        "...WWWWWWWW...",
-        "..WWWWWWWWWWw.",
-        "..WddWWWWddWw.",
-        "..WddWWWWddWw.",
-        "..WWWWWddWWWw.",
-        "..WWWWWddWWWw.",
-        "..WddWWWWddWw.",
-        "..WddWWWWddWw.",
-        "..WWWWWWWWWWw.",
-        "...wwwwwwww...",
+        "..kkkkkkkkkk..",
+        "..kWWWWWWWWk..",
+        "..kWddWWddwk..",
+        "..kWddWWddwk..",
+        "..kWWWWddWwk..",
+        "..kWWWWddWwk..",
+        "..kWddWWddwk..",
+        "..kWddWWddwk..",
+        "..kwwwwwwwwk..",
+        "..kkkkkkkkkk..",
         "..............",
         "..............",
     };
 
-    /** A roulette wheel: gold rim, red cardinal and dark diagonal pockets, ivory hub. */
+    /** A roulette wheel: gold rim, red and dark pockets, ivory hub, white ball. */
     private static final String[] ROULETTE = {
         "..............",
-        "....GGGGGG....",
-        "..GGdRRRRdGG..",
-        ".GGdRRRRRRdGG.",
-        ".GGdRRGGGGdGG.",
-        ".GGRGWWWWWGRG.",
-        ".GRGGWWGWWGRG.",
-        ".GRGGWWGWWGRG.",
-        ".GRGGWWGWWGRG.",
-        ".GGRGWWWWWGRG.",
-        ".GGdRRGGGGdGG.",
-        ".GGdRRRRRRdGG.",
-        "..GGdRRRRdGG..",
-        "....GGGGGG....",
+        ".....kkkk.....",
+        "...kGGGGGGk...",
+        "..kGdRWWRRdGk.",
+        ".kGdRRGGRRdGk.",
+        ".kGRGWWWWGRGk.",
+        ".kRGGWGWWGGRk.",
+        ".kRGGWGWWGGRk.",
+        ".kRGGWGWWGGRk.",
+        ".kGRGWWWWGRGk.",
+        ".kGdRRGGRRdGk.",
+        "..kGdRRRRdGk..",
+        "...kGGGGGGk...",
+        ".....kkkk.....",
     };
 
     /** Triple seven across the payline. */
@@ -85,40 +86,40 @@ final class MenuIcons {
         "..............",
     };
 
-    /** The ivory moon with gold light streaking down past it. */
+    /** The moon with wagered coins streaking down past it. */
     private static final String[] MOONFALL = {
         "..............",
-        "...WWWW.......",
-        ".WWWWWW...G...",
-        "WWWWWW....G...",
-        "WWWWW.........",
-        "WWWW....G.....",
-        "WWWW.....G....",
-        "WWWWW.........",
-        "WWWWWW....G...",
-        ".WWWWWW....G..",
-        "...WWWW.......",
+        "...kkkk.......",
+        "..kWWWWk..GG..",
+        ".kWWWWWk..GG..",
+        ".kWWWWk.......",
+        "kWWWWk...GG...",
+        "kWWWwk...GG...",
+        "kWWWWk........",
+        ".kWWWWk.GG....",
+        ".kWWWWWkGG....",
+        "...kkkk.......",
         "..............",
         "..............",
         "..............",
     };
 
-    /** A four-point jackpot sparkle with a lit core and four sparks. */
+    /** A jackpot: three stacked chips under a spark. */
     private static final String[] JACKPOT = {
+        ".......G......",
+        "......GGG.....",
+        "..kRRRRRRRRk..",
+        "..kWRRRRRRWk..",
+        "..kRRRRRRRRk..",
+        "..kGGGGGGGGk..",
+        "..kdGGGGGGdk..",
+        "..kGGGGGGGGk..",
+        "..kWWWWWWWWk..",
+        "..kdWWWWWWdk..",
+        "..kWWWWWWWWk..",
+        "...kkkkkkkk...",
         "..............",
-        ".......G......",
-        "..w....G....w.",
-        ".......G......",
-        "......GGG.....",
-        ".....GGGGG....",
-        "....GGGGGGG...",
-        "GGGGGGGWGGGGGG",
-        "....GGGGGGG...",
-        ".....GGGGG....",
-        "......GGG.....",
-        "..w....G....w.",
-        ".......G......",
-        ".......G......",
+        "..............",
     };
 
     private MenuIcons() {}
@@ -160,6 +161,7 @@ final class MenuIcons {
             case 'w' -> Tokens.Color.INK_SECONDARY;
             case 'd' -> Tokens.Color.INK_ON_ACCENT;
             case 'R' -> Tokens.Color.STATUS_DANGER;
+            case 'k' -> Tokens.Color.SURFACE_VOID;
             default -> 0;
         };
     }

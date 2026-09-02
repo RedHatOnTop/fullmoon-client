@@ -1144,3 +1144,10 @@ field is declared presentation-only in `docs/BRIDGE.md`. The same review that ca
 render defects above also probed the layout arithmetic past the captured sizes: the icon well now
 scales with its card, and a capped frame shrinks the deck gap instead of collapsing cards to
 zero, so a 54-slot menu at 320×240 stays clickable — both guarded by layout tests.
+
+The sprites took three passes to earn their place. The first flat pixel maps read as blobs at
+arm's length — a sprite without an outline and a shaded edge is not the game's item art — so every
+silhouette gained a dark outline and a lit/shaded side, and the square wells became chip discs so
+the deck reads as a table rather than a list of buttons. A slot-machine sprite was drawn and
+discarded when the frames showed it reading as a face; triple seven says the game without the
+lever. The committed frames are the fourth capture of the surface.

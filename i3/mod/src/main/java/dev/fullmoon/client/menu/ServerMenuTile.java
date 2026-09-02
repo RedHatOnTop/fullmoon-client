@@ -57,12 +57,13 @@ final class ServerMenuTile extends Widget {
         int well = Math.min(ICON_WELL, box.h() - Tokens.Space.TIGHT);
         int left;
         if (well >= 12) {
-            int wellY = box.midY() - well / 2;
-            painter.fill(wellX, wellY, well, well, Tokens.Radius.SM,
-                Tokens.Color.SURFACE_SUNKEN);
-            painter.border(wellX, wellY, well, well, Tokens.Radius.SM,
+            // A chip disc, not a square well: the mark sits on the table.
+            float cx = wellX + well / 2f;
+            float cy = box.midY();
+            painter.dot(cx, cy, well / 2f, Tokens.Color.SURFACE_SUNKEN);
+            painter.ring(cx, cy, well / 2f - Tokens.Stroke.HAIR / 2f,
                 Tokens.Stroke.HAIR, Tokens.Color.LINE_HAIRLINE);
-            entry.drawIcon(painter, wellX, wellY, well);
+            entry.drawIcon(painter, wellX, (int) (cy - well / 2f), well);
             left = wellX + well + Tokens.Space.COZY;
         } else {
             left = wellX;

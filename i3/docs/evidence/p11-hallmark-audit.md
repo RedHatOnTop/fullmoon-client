@@ -51,7 +51,7 @@ page-structure gate is N/A. Every applicable answer is **No**.
 | 27 | N/A | The surface has no motion to reduce. |
 | 28 | N/A | There is no video. |
 | 29 | N/A | The blurred stratum is Minecraft's own background blur over the live world; no aurora or mesh gradient. |
-| 30 | No | The six casino games draw as hand-drawn 14×14 pixel marks — a stamped coin, a five-pip die, a pocketed wheel, triple seven, the moon with falling light, a four-point sparkle — named by the server's optional icon id; unknown ids fall back to real item renders. No emoji. |
+| 30 | No | The six casino games draw as hand-drawn 14×14 pixel sprites — outlined and shaded the way the game's own item art is — each seated on a chip disc: a stamped coin, a five-pip die, a pocketed wheel, triple seven, the moon with coins streaking past, a stack of three chips. Named by the server's optional icon id; unknown ids fall back to real item renders. No emoji. |
 | 31 | N/A | No generated illustration or Lottie asset. |
 | 32 | No | An immutable, revision-stamped server snapshot rendered as a native screen is specific to this product's bridge contract. |
 | 33 | N/A | No decorative SVG figure. |

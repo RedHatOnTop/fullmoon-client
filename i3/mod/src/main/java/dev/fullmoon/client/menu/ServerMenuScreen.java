@@ -166,7 +166,9 @@ public final class ServerMenuScreen extends SurfaceScreen {
             return;
         }
 
-        painter.fill(left, y, 28, 28, Tokens.Radius.SM, Tokens.Color.SURFACE_RAISED);
+        painter.dot(left + 14f, y + 14f, 14f, Tokens.Color.SURFACE_RAISED);
+        painter.ring(left + 14f, y + 14f, 14f - Tokens.Stroke.HAIR / 2f,
+            Tokens.Stroke.HAIR, Tokens.Color.LINE_HAIRLINE);
         entry.drawIcon(painter, left, y, 28);
         int copyX = left + 28 + Tokens.Space.COZY;
         int clipTop = Typeset.capTop(Tokens.Type.TITLE, y);
