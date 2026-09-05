@@ -12,6 +12,8 @@ import brand from "../brand";
 declare const __APP_VERSION__: string;
 const APP_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
 
+/* the accent picker's swatches are data, not design: each value is stored
+   verbatim in settings.accent and re-lit per theme by the store effect */
 const ACCENTS = ["#F5D06E", "#5EE6D0", "#8B9DFF", "#FF8FA3", "#FF9D5C"];
 
 /* Mirrors java.rs `major_of` — Java 8 reports itself as 1.8.0_x. The floor is
@@ -42,7 +44,7 @@ function JavaSection() {
   return (
     <section className="set-section" id="set-java">
       <div className="set-section-head">
-        <h3>{t("settings.java")}</h3>
+        <h2>{t("settings.java")}</h2>
         <Button size="sm" variant="outline" icon="refresh" loading={scanning} onClick={() => void scan()}>
           {t("settings.rescan")}
         </Button>
@@ -99,7 +101,7 @@ function JavaSection() {
 }
 
 export function SettingsScreen() {
-  const { settings, patchSettings, selectedInstance, toast, settingsTab, versions, systemMemoryMb } =
+  const { settings, patchSettings, selectedInstance, settingsTab, versions, systemMemoryMb } =
     useStore();
   const target = versions.find((v) => v.isTarget);
   const { t, setLang } = useT();
@@ -139,7 +141,7 @@ export function SettingsScreen() {
           {tab === "perf" && (
             <section className="set-section">
               <div className="set-section-head">
-                <h3>{t("settings.perf")}</h3>
+                <h2>{t("settings.perf")}</h2>
               </div>
               <div className="field">
                 <label className="field-label">
@@ -185,7 +187,7 @@ export function SettingsScreen() {
           {tab === "look" && (
             <section className="set-section">
               <div className="set-section-head">
-                <h3>{t("settings.appearance")}</h3>
+                <h2>{t("settings.appearance")}</h2>
               </div>
               <div className="field">
                 <label className="field-label">{t("settings.theme")}</label>
@@ -233,7 +235,7 @@ export function SettingsScreen() {
           {tab === "hud" && (
             <section className="set-section">
               <div className="set-section-head">
-                <h3>{t("settings.hudSection")}</h3>
+                <h2>{t("settings.hudSection")}</h2>
                 {selectedInstance && <Badge tone="accent">{selectedInstance.name}</Badge>}
               </div>
               <p className="set-hint" style={{ marginBottom: 14 }}>{t("settings.hudDesc")}</p>
@@ -248,7 +250,7 @@ export function SettingsScreen() {
           {tab === "privacy" && (
             <section className="set-section">
               <div className="set-section-head">
-                <h3>{t("settings.privacy")}</h3>
+                <h2>{t("settings.privacy")}</h2>
               </div>
 
               {/* the pledge — every competitor broke one of these lines */}
@@ -269,12 +271,10 @@ export function SettingsScreen() {
                   <strong>{t("settings.telemetry")}</strong>
                   <p className="set-hint">{t("settings.telemetryDesc")}</p>
                 </div>
+                {/* silent success — the switch itself shows the new state */}
                 <Toggle
                   checked={settings.telemetry}
-                  onChange={(v) => {
-                    void patchSettings({ telemetry: v });
-                    toast("info", t("settings.saved"));
-                  }}
+                  onChange={(v) => void patchSettings({ telemetry: v })}
                 />
               </div>
 
@@ -287,15 +287,11 @@ export function SettingsScreen() {
           {tab === "about" && (
             <section className="set-section about">
               <div className="about-mark">
-                <span className="logo-tile" style={{
-                  width: 64, height: 64, borderRadius: 8, display: "grid", placeItems: "center",
-                  background: "var(--accent-fill)",
-                  color: "var(--on-accent)",
-                }}>
+                <span className="about-tile">
                   <Icon name="gamepad" size={30} />
                 </span>
               </div>
-              <h3 className="about-name">{brand.name.toUpperCase()}</h3>
+              <h2 className="about-name">{brand.name.toUpperCase()}</h2>
               <p className="about-tagline">{brand.tagline}</p>
               <div className="about-rows">
                 <div><span>{t("settings.version")}</span><b className="num">{APP_VERSION}</b></div>
@@ -303,7 +299,7 @@ export function SettingsScreen() {
                   <span>{t("settings.build")}</span>
                   <b className="mono">{isRealCore ? "rust core / tauri" : "ui-standalone / vite"}</b>
                 </div>
-                <div><span>마인크래프트</span><b className="num">{target?.id ?? "…"}</b></div>
+                <div><span>{t("settings.mcVersion")}</span><b className="num">{target?.id ?? "…"}</b></div>
               </div>
               {/* the shell decides which core answers, so this line has to ask
                   rather than assert — it claimed mock while the rust core was live */}

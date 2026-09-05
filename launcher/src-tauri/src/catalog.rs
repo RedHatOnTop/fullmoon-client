@@ -7,7 +7,7 @@ use std::{collections::BTreeMap, sync::OnceLock};
 use serde::Deserialize;
 
 use crate::{
-    model::{Cosmetic, HudConfig, Mod, NewsItem, ServerEntry},
+    model::{Cosmetic, HudConfig, Mod, NewsItem, ServerEntry, ShaderPack},
     mods::ModSource,
     paths,
 };
@@ -19,6 +19,8 @@ pub struct Catalog {
     /// Where each listed mod actually comes from. Not part of the wire
     /// contract — the UI has no business knowing a maven coordinate.
     pub mod_sources: BTreeMap<String, ModSource>,
+    #[serde(default)]
+    pub shader_packs: Vec<ShaderPack>,
     pub cosmetics: Vec<Cosmetic>,
     pub news: Vec<NewsItem>,
     pub servers: Vec<ServerEntry>,

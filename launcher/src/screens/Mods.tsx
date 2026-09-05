@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, Button, Empty, Toggle } from "../components/ui";
-import { core } from "../core/client";
-import type { InstalledMod } from "../core/bindings";
+import { core, errText } from "../core/client";
+import type { InstalledMod, ShaderStatus } from "../core/bindings";
 import { useStore } from "../state/store";
 import { useT } from "../i18n";
 
@@ -15,11 +15,104 @@ const KIND_BADGE: Record<string, { tone: "accent" | "ok" | "warn" | "dim"; label
 const GLYPH_HUE: Record<string, number> = {
   "pinion-hud": 216,
   sodium: 152,
+  iris: 188,
   lithium: 268,
   "fabric-api": 26,
 };
 
 type Filter = "all" | "fav" | "hud" | "perf" | "lib";
+
+function ShaderEasy({
+  instanceId,
+  vanilla,
+  onChanged,
+}: {
+  instanceId: string;
+  vanilla: boolean;
+  onChanged: () => void;
+}) {
+  const { toast } = useStore();
+  const { t } = useT();
+  const [status, setStatus] = useState<ShaderStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    setStatus(null);
+    setBusy(false);
+    void core
+      .shaders_status(instanceId)
+      .then((s) => {
+        if (live) setStatus(s);
+      })
+      .catch((e) => {
+        if (live) toast("error", errText(e));
+      });
+    return () => {
+      live = false;
+    };
+  }, [instanceId, toast]);
+
+  const run = async (action: "install" | "on" | "off") => {
+    setBusy(true);
+    try {
+      const next =
+        action === "install"
+          ? await core.shaders_install(instanceId)
+          : await core.shaders_set_enabled(instanceId, action === "on");
+      setStatus(next);
+      onChanged();
+      toast(
+        "success",
+        t(action === "install" ? "mods.shaderInstalled" : action === "on" ? "mods.shaderEnabled" : "mods.shaderDisabled"),
+      );
+    } catch (e) {
+      toast("error", errText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const titleId = "shader-easy-title";
+
+  return (
+    <section className="shader-easy" aria-labelledby={titleId}>
+      <span className="shader-easy-icon" aria-hidden="true">
+        <Icon name="sun" size={20} />
+      </span>
+      <div className="shader-easy-copy">
+        <span className="shader-easy-kicker">{t("mods.shaderKicker")}</span>
+        <h2 id={titleId}>{t("mods.shaderTitle")}</h2>
+        <p>{t("mods.shaderDesc")}</p>
+        {status?.ready && status.packName && (
+          <span className="shader-easy-ready">{t("mods.shaderReady", { name: status.packName })}</span>
+        )}
+      </div>
+      <div className="shader-easy-actions">
+        {vanilla ? (
+          <p className="shader-easy-hint">{t("mods.shaderNeedFabric")}</p>
+        ) : !status ? (
+          <Button variant="primary" loading disabled>
+            {t("mods.shaderInstall")}
+          </Button>
+        ) : status.ready ? (
+          <Button
+            variant={status.enabled ? "outline" : "primary"}
+            loading={busy}
+            aria-pressed={status.enabled}
+            onClick={() => void run(status.enabled ? "off" : "on")}
+          >
+            {status.enabled ? t("mods.shaderOff") : t("mods.shaderOn")}
+          </Button>
+        ) : (
+          <Button variant="primary" icon="download" loading={busy} onClick={() => void run("install")}>
+            {t("mods.shaderInstall")}
+          </Button>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export function ModsScreen() {
   const { instances, selectedInstanceId, selectedInstance, selectInstance, toast, setScreen } = useStore();
@@ -28,15 +121,27 @@ export function ModsScreen() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [shaderTick, setShaderTick] = useState(0);
 
   useEffect(() => {
     if (!selectedInstanceId) return;
+    let live = true;
     setLoading(true);
     core
       .mods_list(selectedInstanceId)
-      .then(setMods)
-      .finally(() => setLoading(false));
-  }, [selectedInstanceId]);
+      .then((list) => {
+        if (live) setMods(list);
+      })
+      .catch((e) => {
+        if (live) toast("error", errText(e));
+      })
+      .finally(() => {
+        if (live) setLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [selectedInstanceId, shaderTick, toast]);
 
   const toggle = async (modId: string, enabled: boolean, name: string) => {
     if (!selectedInstanceId) return;
@@ -104,6 +209,15 @@ export function ModsScreen() {
                 <span>{t("mods.vanillaHint")}</span>
               </div>
             </div>
+          )}
+
+          {selectedInstanceId && (
+            <ShaderEasy
+              key={selectedInstanceId}
+              instanceId={selectedInstanceId}
+              vanilla={vanilla}
+              onChanged={() => setShaderTick((n) => n + 1)}
+            />
           )}
 
           <div className="mod-bar">
@@ -199,7 +313,7 @@ export function ModsScreen() {
             </div>
 
             <aside className="mod-side">
-              <h3 className="mod-side-title">{t("mods.sideTitle")}</h3>
+              <h2 className="mod-side-title">{t("mods.sideTitle")}</h2>
 
               <div className="mod-side-block">
                 <div className="mod-mix" role="img" aria-label={t("mods.sideMix")}>

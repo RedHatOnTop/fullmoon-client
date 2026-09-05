@@ -18,7 +18,9 @@
     color var(--dur-fast) var(--ease-standard);
 }
 .btn:active { transform: translateY(1px); }
-.btn:disabled { opacity: 0.45; pointer-events: none; }
+/* disabled is three channels: dimmed, the forbidden cursor, and the native
+   attribute — pointer-events must survive or the cursor never shows */
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btn-primary { background: var(--accent-fill); color: var(--on-accent); }
 .btn-primary:hover { background: var(--accent-hover); }
@@ -33,7 +35,7 @@
 .btn-ghost { background: none; color: var(--text-2); }
 .btn-ghost:hover { background: var(--sunken); color: var(--text); }
 
-.btn-danger { background: var(--danger-fill); color: #fff; }
+.btn-danger { background: var(--danger-fill); color: var(--fill-ink); }
 .btn-danger:hover { background: var(--danger-fill-hover); }
 
 .btn-success { background: var(--surface); border-color: var(--success-line); color: var(--success); }
@@ -67,7 +69,7 @@
   transition: background var(--dur-base) var(--ease-standard);
 }
 .toggle.on { background: var(--accent-fill); }
-.toggle:disabled { opacity: 0.45; }
+.toggle:disabled { opacity: 0.55; cursor: not-allowed; }
 .toggle-knob {
   position: absolute;
   top: 2px;
@@ -75,7 +77,7 @@
   width: 16px;
   height: 16px;
   border-radius: var(--radius-round);
-  background: #fff;
+  background: var(--fill-ink);
   box-shadow: var(--shadow-1);
   transition: transform var(--dur-base) var(--ease-out);
 }
@@ -198,7 +200,7 @@
   border-top-color: var(--text);
   animation: spin 0.8s linear infinite;
 }
-.spinner-light { border-color: rgb(255 255 255 / 0.35); border-top-color: #fff; }
+.spinner-light { border-color: color-mix(in srgb, var(--fill-ink) 35%, transparent); border-top-color: var(--fill-ink); }
 
 /* ── Modal — E3 over scrim ── */
 .modal-backdrop {
@@ -224,7 +226,7 @@
   justify-content: space-between;
   padding: 18px 20px 0;
 }
-.modal-head h3 {
+.modal-head h2 {
   font-family: var(--font-display);
   font-size: var(--text-title);
   font-weight: 500;
@@ -277,6 +279,8 @@
   color: var(--text);
   transition: border-color var(--dur-fast) var(--ease-standard);
 }
+/* state changes never move border-width — the ring is an outline, so the
+   field's geometry holds still between rest and focus */
 .input:hover { border-color: var(--text-3); }
-.input:focus { outline: none; border-color: var(--line-ink); box-shadow: 0 0 0 2px var(--accent-soft); }
+.input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .input::placeholder { color: var(--text-3); }

@@ -58,6 +58,15 @@ const clickNav = async (page, text) => {
   }, text);
 };
 
+/* click within a specific selector group (tabs share words with nav) */
+const clickIn = async (page, sel, text) => {
+  await page.evaluate((s, t) => {
+    const el = [...document.querySelectorAll(s)].find((e) => e.textContent && e.textContent.trim().includes(t));
+    if (el) el.click();
+    else throw new Error(`not found: ${s} "${t}"`);
+  }, sel, text);
+};
+
 const browser = await puppeteer.launch({
   executablePath: BROWSER_PATH,
   headless: "new",
@@ -75,11 +84,11 @@ try {
   await page.goto(URL, { waitUntil: "networkidle0", timeout: 20000 });
   await sleep(1500);
 
-  // 1. Play Screen (Centered Hero Launchpad)
+  // 1. Play Screen (asymmetric launch stage)
   await shot(page, "01-play");
 
   // 1-hover. Play Button Hover (Peeking Moon Rabbit Easter Egg)
-  await page.hover(".massive-play-button");
+  await page.hover(".play-btn");
   await sleep(600);
   await shot(page, "01-play-rabbit-hover");
   await page.mouse.move(100, 100);
@@ -91,12 +100,12 @@ try {
   await shot(page, "01b-dashboard-servers");
 
   // 1c. Dashboard Screen (Wallet Analytics)
-  await clickNav(page, "재화 통계 및 내역");
+  await clickIn(page, ".dash-tab", "재화");
   await sleep(600);
   await shot(page, "01c-dashboard-wallet");
 
   // 1d. Dashboard Screen (News Feed)
-  await clickNav(page, "새 소식 및 패치노트");
+  await clickIn(page, ".dash-tab", "소식");
   await sleep(600);
   await shot(page, "01d-dashboard-news");
 
@@ -145,11 +154,8 @@ try {
   await sleep(600);
   await page.evaluate(() => {
     const playBtn =
-      document.querySelector(".massive-play-button") ||
-      document.querySelector(".playbtn-go") ||
-      [...document.querySelectorAll("button")].find(
-        (b) => b.textContent && (b.textContent.includes("PLAY NOW") || b.textContent.includes("플레이")),
-      );
+      document.querySelector(".play-btn") ||
+      document.querySelector(".playbtn-go");
     if (playBtn) playBtn.click();
   });
   await sleep(1200);

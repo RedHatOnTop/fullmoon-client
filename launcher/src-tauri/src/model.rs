@@ -116,6 +116,10 @@ where
     Deserialize::deserialize(de).map(Some)
 }
 
+fn serde_true() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Mod {
@@ -127,6 +131,10 @@ pub struct Mod {
     pub ours: bool,
     pub compatible: bool,
     pub note: Option<String>,
+    /// Catalogue mods default on, so a first install is the product. Iris is
+    /// the exception: it stays off until the one-click shader path turns it on.
+    #[serde(default = "serde_true")]
+    pub default_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -145,6 +153,26 @@ pub struct InstalledMod {
     /// the jar is in the instance's mods dir right now
     pub installed: bool,
     pub file: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShaderPack {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub project: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShaderStatus {
+    pub ready: bool,
+    pub enabled: bool,
+    pub pack_file: Option<String>,
+    pub pack_name: Option<String>,
+    pub iris: bool,
+    pub sodium: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -265,6 +293,10 @@ pub struct NewsItem {
     pub date: String,
     pub hue: u16,
     pub featured: bool,
+    /// the source post (Discord message) when this item came off the feed —
+    /// a bundled item has none and the UI treats the row as plain text
+    #[serde(default)]
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -278,4 +310,22 @@ pub struct ServerEntry {
     pub max_players: u32,
     pub ping_ms: u32,
     pub hue: u16,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WalletInfo {
+    pub currency: String,
+    pub balance: f64,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WalletTx {
+    pub delta: f64,
+    pub reason: String,
+    pub label: String,
+    pub balance_after: Option<f64>,
+    pub at: String,
 }

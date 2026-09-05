@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Empty, Segmented } from "../components/ui";
-import Skin3D from "../widgets/Skin3D";
+import Skin2D from "../widgets/Skin2D";
 import type { Cosmetic, CosmeticSlot } from "../core/bindings";
 import { useStore } from "../state/store";
 import { useT } from "../i18n";
@@ -19,7 +19,6 @@ export function CosmeticsScreen() {
   const { activeAccount, cosmetics, loadout, equip, toast } = useStore();
   const { t } = useT();
   const [slotFilter, setSlotFilter] = useState<CosmeticSlot>("cape");
-  const [walk, setWalk] = useState(false);
 
   const filtered = useMemo(() => cosmetics.filter((c) => c.slot === slotFilter), [cosmetics, slotFilter]);
   const equippedCape = useMemo(
@@ -52,71 +51,57 @@ export function CosmeticsScreen() {
       <div className="cos-layout">
         {/* loadout column */}
         <section className="cos-slots">
-          <h3 className="cos-col-title">{t("cosmetics.loadout")}</h3>
+          <h2 className="cos-col-title">{t("cosmetics.loadout")}</h2>
           {slots.map((slot) => {
             const item = cosmetics.find((c) => c.id === loadout?.[slot]) ?? null;
             return (
-              <button
+              /* the slot is a group of two real buttons — selecting the slot and
+                 unequipping the item are different acts and get different targets */
+              <div
                 key={slot}
                 className={`cos-slot card ${slotFilter === slot ? "active" : ""} ${item ? rarityClass(item.rarity) : ""}`}
-                onClick={() => setSlotFilter(slot)}
               >
-                <span className="cos-slot-icon" style={item ? { "--h": item.hue } : undefined}>
-                  <Icon name={slot === "cape" ? "layers" : slot === "wings" ? "feather" : "zap"} size={17} />
-                </span>
-                <span className="cos-slot-meta">
-                  <em>{t(`cosmetics.${slot}`)}</em>
-                  <strong className={RENDERS[slot] ? "" : "cos-slot-soon"}>
-                    {RENDERS[slot] ? (item ? item.name : t("cosmetics.empty")) : t("cosmetics.notYet")}
-                  </strong>
-                </span>
+                <button
+                  className="cos-slot-main"
+                  onClick={() => setSlotFilter(slot)}
+                  aria-pressed={slotFilter === slot}
+                >
+                  <span className="cos-slot-icon" style={item ? { "--h": item.hue } : undefined}>
+                    <Icon name={slot === "cape" ? "layers" : slot === "wings" ? "feather" : "zap"} size={17} />
+                  </span>
+                  <span className="cos-slot-meta">
+                    <em>{t(`cosmetics.${slot}`)}</em>
+                    <strong className={RENDERS[slot] ? "" : "cos-slot-soon"}>
+                      {RENDERS[slot] ? (item ? item.name : t("cosmetics.empty")) : t("cosmetics.notYet")}
+                    </strong>
+                  </span>
+                </button>
                 {item && (
-                  <span
+                  <button
                     className="cos-unequip"
-                    role="button"
-                    tabIndex={0}
                     title={t("cosmetics.unequip")}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void equip(slot, null);
-                    }}
-                    onKeyDown={(e) => e.key === "Enter" && void equip(slot, null)}
+                    aria-label={t("cosmetics.unequip")}
+                    onClick={() => void equip(slot, null)}
                   >
                     <Icon name="x" size={13} />
-                  </span>
+                  </button>
                 )}
-              </button>
+              </div>
             );
           })}
 
-          {/* preview stage — the real skinview3d viewer, same one the HUD ships */}
+          {/* preview stage — the cape side: the one view where an equipped
+              cape is actually visible */}
           <div className="cos-stage card">
             <div className="cos-figure">
-              {/* three-quarters from behind: a cape stage that spins the cape
-                  out of view half the time is a stage that shows nothing */}
-              <Skin3D
+              <Skin2D
                 skin={activeAccount.skinUrl ?? "/skins/blackcow.png"}
                 cape={equippedCape?.capeUrl ?? null}
-                walk={walk}
-                rotate={false}
-                angle={Math.PI * 0.86}
-                width={246}
-                height={344}
-                zoom={0.95}
+                view="back"
+                scale={10}
+                label={activeAccount.username}
               />
             </div>
-            <div className="cos-stage-anim">
-              <Segmented
-                options={[
-                  { value: "idle", label: t("cosmetics.idle") },
-                  { value: "walk", label: t("cosmetics.walk") },
-                ]}
-                value={walk ? "walk" : "idle"}
-                onChange={(v) => setWalk(v === "walk")}
-              />
-            </div>
-            <span className="cos-stage-drag mono">{t("cosmetics.dragHint")}</span>
-            <span className="cos-stage-label mono">클라이언트 실시간 렌더링</span>
           </div>
         </section>
 

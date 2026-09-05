@@ -158,3 +158,36 @@ One defect this capture caught:
 - `ClockHud`, `CoordinatesHud`, and `FpsHud` measured only their value strings without accounting for the leading key tag ("TIME", "XYZ", "FPS"), causing the right edge of wider numerals to clip against the chip border. Updated `measureWidth` to measure the compound label + value footprint.
 
 
+
+## P5-R — launcher UI overhaul (Hallmark anti-slop pass)
+
+| file | what it settles |
+| --- | --- |
+| `fullmoon-launcher-01-play.png` | The launch stage rebuilt asymmetric: eyebrow/headline/sub/CTA on the left axis, the skin figure on its moonlit dais right, worlds + featured news in the deck. |
+| `fullmoon-launcher-01-play-rabbit-hover.png` | The moon rabbit appears on launch intent only (hover/focus-within), `--ease-out`, tokens for every fill. |
+| `fullmoon-launcher-01b-dashboard-servers.png` | The dashboard as instrument panel: status band (network/players/balance/instance), underline tab rail, server cards with live badges, dashed add-form. |
+| `fullmoon-launcher-01c-dashboard-wallet.png` | Wallet: the one shouting number in accent, income/expense in function colours, transactions as hairline ledger rows. |
+| `fullmoon-launcher-01d-dashboard-news.png` | News as an editorial ledger — hue swatch, badge, title, summary, date; no fake click affordance. |
+| `fullmoon-launcher-10-light-play.png` / `10-light-play-dash.png` | The light theme holds the same system: paper sky, hairline cards, the single gold button. |
+| `fullmoon-launcher-11-en-play.png` / `11-en-play-dash.png` | English locale renders fully — Home/Play no longer bypass `t()`. |
+| `fullmoon-launcher-20-fold-1280.png` / `21-fold-1280-dash.png` | At 1280×800 the CTA and the deck sit inside the fold (gate 44). |
+| `fullmoon-launcher-22-narrow-1100.png` / `23-narrow-1100-dash.png` | At 1100px the grids collapse cleanly; the h-scroll probe prints `no-h-scroll` at every width (gate 34). |
+
+The 58-gate answer sheet for this pass is `p5r-hallmark-audit.md`, including the stacking
+defect the old captures hid: the fixed backdrop painted over every non-positioned element,
+which is why the settings body, the mods toolbar and the topbar heading were invisible until
+`.shell` became a stacking layer.
+
+## P5-R2 — review fixes + the masthead titlebar
+
+| file | what it settles |
+| --- | --- |
+| `evidence-titlebar-idle.png` | The rebuilt titlebar at rest: feather mark + FULLMOON wordmark + version sitting on the sidebar's column with no rule between them (the masthead reads as one surface with the sidebar), hairline only under the drag sky and the 46px window controls. |
+| `evidence-titlebar-session.png` | The one live element the sky allows: a session chip (state dot — amber while starting, green while running — state word, mono uptime, console glyph). Clicking it reopens the launch overlay; when the overlay is hidden this line is the only place still saying the game is running. |
+| `fullmoon-launcher-03-cosmetics.png` | The slot column after un-nesting: selecting a slot and unequipping an item are two real buttons (`aria-pressed` select, `aria-label` unequip) instead of a button containing a fake one. |
+
+Review fixes shipped in the same pass: heading order (h1 topbar → h2 sections; the play
+display headline is a `p`, the featured title inside its button is a `span`), the wallet
+stats and ledger reading the same 30-entry window with an honest "last N of M" count line
+(`home.txWindow`), and `Skin3D` gaining a `label` prop so every skin canvas carries the
+player's name (`role="img"`).

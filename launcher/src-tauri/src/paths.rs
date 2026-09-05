@@ -87,7 +87,15 @@ pub fn instance_mods_dir(id: &str) -> PathBuf {
     instance_minecraft_dir(id).join("mods")
 }
 
-/// Written by the launcher, read by the Pinion mod at runtime.
+pub fn instance_shaderpacks_dir(id: &str) -> PathBuf {
+    instance_minecraft_dir(id).join("shaderpacks")
+}
+
+pub fn instance_iris_properties(id: &str) -> PathBuf {
+    instance_minecraft_dir(id).join("config").join("iris.properties")
+}
+
+/// Written by the launcher's HUD editor and by the in-game one, read by the mod on a poll.
 pub fn instance_hud_file(id: &str) -> PathBuf {
     instance_minecraft_dir(id).join("pinion").join("hud.json")
 }

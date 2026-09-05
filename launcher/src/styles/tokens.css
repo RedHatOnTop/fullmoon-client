@@ -125,6 +125,17 @@
   --selection-bg:   var(--moon-100);
   --selection-text: var(--sky-900);
 
+  /* ink on strong chromatic fills (danger), the toggle knob — the neutral
+     ramp's own top step, named so call sites never spell a raw white */
+  --fill-ink: var(--sky-0);
+
+  /* the HUD editor's rehearsal sky — the gradient the in-game HUD sits on,
+     so module placement is rehearsed against the real horizon */
+  --hud-sim-sky:    #1B222B;
+  --hud-sim-mid:    #28313B;
+  --hud-sim-field:  #22291F;
+  --hud-sim-ground: #1A1F18;
+
   /* ---------- Typography ----------
      The site's whole voice is Pretendard; weight (400/600/800) does the
      hierarchy, not a second family. Self-hosted above. Data = JetBrains
@@ -172,12 +183,35 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   /* ---------- Density: compact (desktop software) ---------- */
+  --titlebar-h: 44px;
   --control-h: 32px;
   --control-h-lg: 40px;
   --sidebar-w: 216px;
   /* wider than an article column: this is a desktop client, and at 1600 the
      module and cosmetic grids need the fourth column to stop looking sparse */
   --content-max: 1440px;
+
+  /* ---------- Spacing scale — 4px base, the only permitted values ---------- */
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ---------- Elevation layers — one z-index vocabulary ---------- */
+  --z-backdrop: 0;
+  --z-shell: 1;
+  --z-dock: 40;
+  --z-progress: 45;
+  --z-menu: 60;
+  --z-toasts: 70;
+  --z-overlay: 80;
+  --z-modal: 90;
+  --z-grain: 999;
 }
 
 /* ---------- Dark theme: "밤하늘" — canonical, like the site ----------
@@ -187,8 +221,8 @@
    needs them to be. */
 [data-theme="dark"] {
   --bg:        #0B101F;
-  --surface:   #151B2E;
-  --sunken:    #0F1526;
+  --surface:   #161C30;
+  --sunken:    #0E1425;
   --overlay:   #1B2340;
   --scrim:     rgb(7 11 26 / 0.72);
 

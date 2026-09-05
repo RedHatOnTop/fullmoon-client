@@ -3,54 +3,51 @@
 .app {
   position: relative;
   display: grid;
-  grid-template-rows: 40px 1fr;
+  grid-template-rows: var(--titlebar-h) 1fr;
   height: 100vh;
   animation: fade-in var(--dur-slow) var(--ease-standard);
   background: transparent;
 }
 
-/* ── Atmospheric Backdrop ── */
+/* ── Atmospheric Backdrop — the night sky the brand is named for.
+   One navy depth, one moonlit bloom, stars that hold still. The sky is
+   weather, not a screensaver: nothing here moves, nothing here competes
+   with the accent, and every colour is a token. */
 .game-backdrop {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: var(--z-backdrop);
   overflow: hidden;
-  background: radial-gradient(circle at 50% 0%, #0F172A 0%, #060913 100%);
+  /* own compositor layer: scrolling content must never repaint the sky */
+  transform: translateZ(0);
+  background: linear-gradient(180deg, var(--sky-900) 0%, var(--sky-950) 78%);
 }
 
+/* the moon's own bloom — the single warm breath on the canvas, top-right
+   where the titlebar is quietest. Atmospheric, capped well under a fifth
+   of the viewport. */
 .nebula-layer {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.22;
-  mix-blend-mode: screen;
+  pointer-events: none;
 }
 
 .nebula-gold {
-  top: -10%;
-  right: 12%;
-  width: 650px;
-  height: 550px;
-  background: radial-gradient(circle, #F5D06E 0%, rgba(245, 208, 110, 0) 70%);
+  top: -16%;
+  right: -6%;
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(circle, var(--accent-wash) 0%, transparent 68%);
 }
 
-.nebula-indigo {
-  bottom: 5%;
-  left: 5%;
-  width: 750px;
-  height: 550px;
-  background: radial-gradient(circle, #3B82F6 0%, rgba(59, 130, 246, 0) 70%);
-  opacity: 0.15;
-}
-
-.nebula-cyan {
-  top: 30%;
-  left: 20%;
-  width: 500px;
-  height: 400px;
-  background: radial-gradient(circle, #06B6D4 0%, rgba(6, 182, 212, 0) 70%);
-  opacity: 0.10;
+/* a second, cooler breath low-left so the sky has depth, not a lamp */
+.nebula-sky {
+  bottom: -22%;
+  left: -8%;
+  width: 640px;
+  height: 640px;
+  background: radial-gradient(circle, rgb(139 157 255 / 0.05) 0%, transparent 66%);
 }
 
 .starfield {
@@ -58,34 +55,31 @@
   inset: 0;
 }
 
+/* stars are set in stone — attention on this shell is earned by content,
+   and motion in the wallpaper taxes every glance at the foreground */
 .twinkle-star {
   position: absolute;
-  background: #FFFFFF;
+  background: var(--sky-25);
   border-radius: 50%;
-  box-shadow: 0 0 4px #FFFFFF;
-  animation: twinkle ease-in-out infinite alternate;
-}
-
-@keyframes twinkle {
-  0% { transform: scale(0.8); opacity: 0.2; }
-  100% { transform: scale(1.3); opacity: 0.9; }
 }
 
 .backdrop-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 45%, rgba(3, 5, 10, 0.75) 100%);
+  background: radial-gradient(circle at center, transparent 52%, rgb(3 5 10 / 0.55) 100%);
 }
 
-.backdrop-grid {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
-  background-size: 32px 32px;
+/* light theme keeps a quiet paper sky: no bloom theatre, just air */
+[data-theme="light"] .game-backdrop {
+  background: linear-gradient(180deg, var(--sky-25) 0%, var(--sky-50) 100%);
 }
+[data-theme="light"] .nebula-sky { background: radial-gradient(circle, var(--accent-wash) 0%, transparent 66%); }
+[data-theme="light"] .twinkle-star { background: var(--sky-200); }
+[data-theme="light"] .backdrop-vignette { background: none; }
 
 .shell {
+  position: relative;
+  z-index: var(--z-shell);
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   min-height: 0;
@@ -96,7 +90,7 @@
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 28px 120px;
+  padding: 0 var(--space-xl) 120px;
 }
 .content-inner { max-width: var(--content-max); margin: 0 auto; }
 .screen-enter { animation: fade-up var(--dur-slow) var(--ease-out); }
@@ -109,33 +103,100 @@
   background: var(--bg);
 }
 
-/* ── titlebar — window chrome takes --bg, hairline below ── */
+/* ── titlebar — the masthead. The brand sits on the sidebar's column with
+   no rule between them, so the chrome reads as one building. The sky to the
+   right is pure drag, and the only thing allowed to live there is a live
+   session: when the overlay is hidden, this chip is the one place that
+   still says the game is running and hands you back its console. ── */
 .titlebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-left: 14px;
-  border-bottom: 1px solid var(--line);
+  /* above the backdrop: the fixed sky paints over every non-positioned
+     element — the masthead must hold its own layer (see P5-R stacking fix) */
+  position: relative;
+  z-index: var(--z-shell);
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr auto;
+  height: var(--titlebar-h);
   background: var(--bg);
   -webkit-app-region: drag;
   user-select: none;
 }
-.titlebar-left { display: flex; align-items: center; gap: 12px; }
-.titlebar-tag {
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  color: var(--text-3);
+.titlebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 0 var(--space-sm) 0 14px;
 }
-.titlebar-controls { display: flex; height: 100%; -webkit-app-region: no-drag; }
+.titlebar-mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-1);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+.titlebar-word {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.titlebar-ver {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+/* the rule under the chrome starts where the brand column ends — above the
+   sidebar the two surfaces are one */
+.titlebar-sky,
+.titlebar-controls { border-bottom: 1px solid var(--line); }
+.titlebar-sky {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  padding: 0 10px;
+}
+.titlebar-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-1);
+  background: var(--surface);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+  /* arriving is a moment worth 200ms, not a slide show */
+  animation: scale-in var(--dur-base) var(--ease-out);
+  transition: border-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+.titlebar-session:hover { border-color: var(--line-strong); color: var(--text); }
+.titlebar-session svg { color: var(--text-3); }
+.titlebar-session:hover svg { color: var(--accent); }
+.titlebar-session-state { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.titlebar-session-uptime { font-family: var(--font-mono); font-size: 10px; font-weight: 400; color: var(--text-3); }
+.titlebar-controls { display: flex; -webkit-app-region: no-drag; }
 .winbtn {
-  width: 44px;
+  width: 46px;
   display: grid;
   place-items: center;
   color: var(--text-3);
   transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
 .winbtn:hover { background: var(--sunken); color: var(--text); }
-.winbtn-close:hover { background: var(--danger-fill); color: #fff; }
+.winbtn-close:hover { background: var(--danger-fill); color: var(--fill-ink); }
 
 /* ── sidebar ── */
 .sidebar {
@@ -212,33 +273,47 @@
 .account-strip-face:hover { opacity: 1; }
 .account-strip-face.active { opacity: 1; outline-color: var(--accent); }
 
-/* status dot — static; attention is earned by color, not motion */
+/* status dot — static; attention is earned by color, not motion.
+   Amber while a session is still starting. */
 .live-dot {
   width: 5px;
   height: 5px;
   flex: none;
   background: var(--success);
 }
+.live-dot.pending { background: var(--warning); }
 
 /* ── topbar ── */
 .topbar {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
-  padding: 22px 28px 14px;
+  gap: var(--space-md);
+  padding: 20px var(--space-xl) var(--space-sm);
   border-bottom: 1px solid var(--line);
-  background: var(--bg);
 }
+.topbar-heading { min-width: 0; }
+/* the title changes with the screen — a quiet fade beats a hard swap.
+   key={screen} in TopBar remounts this node, which replays the fade. */
+.topbar-heading { animation: fade-in var(--dur-base) var(--ease-standard); }
 .topbar-heading h1 {
   font-family: var(--font-display);
   font-size: var(--text-title);
   font-weight: 500;
   letter-spacing: var(--ls-snug);
   line-height: var(--leading-title);
+  white-space: nowrap;
 }
-.topbar-heading p { margin-top: 2px; font-size: var(--text-small); color: var(--text-2); }
-.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.topbar-heading p {
+  margin-top: 2px;
+  font-size: var(--text-small);
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-actions { display: flex; align-items: center; gap: var(--space-xs); flex: none; }
 .topbar-divider { width: 1px; height: 20px; background: var(--line); }
 
 .searchbtn {
@@ -278,6 +353,7 @@
   transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
 .bellbtn:hover { background: var(--sunken); color: var(--text); }
+/* the bell-dot is a square, like every status mark in the system */
 .bell-dot {
   position: absolute;
   top: 7px;
@@ -286,6 +362,13 @@
   height: 5px;
   background: var(--accent);
 }
+
+/* the topbar reads over the open sky, so it takes the page colour to stay
+   legible — the heading and the search field were painting under the
+   backdrop before the shell became a stacking context */
+.topbar { background: var(--bg); }
+
+.topmenu-swatch { width: 3px; align-self: stretch; flex: none; background: hsl(var(--h, 45) 62% 55%); }
 
 .acctchip {
   display: flex;
@@ -309,7 +392,7 @@
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  z-index: 60;
+  z-index: var(--z-menu);
   min-width: 240px;
   background: var(--overlay);
   border: 1px solid var(--line);
@@ -449,7 +532,7 @@
   left: calc(50% + var(--sidebar-w) / 2);
   bottom: 20px;
   transform: translateX(-50%);
-  z-index: 40;
+  z-index: var(--z-dock);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -559,7 +642,7 @@
 .dockmenu-panel {
   position: absolute;
   bottom: calc(100% + 8px);
-  z-index: 61;
+  z-index: var(--z-menu);
   min-width: 230px;
   background: var(--overlay);
   border: 1px solid var(--line);
@@ -593,7 +676,7 @@
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 45;
+  z-index: var(--z-progress);
   width: 300px;
   display: flex;
   flex-direction: column;
@@ -632,7 +715,7 @@
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 70;
+  z-index: var(--z-toasts);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -660,7 +743,7 @@
 .lov-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: var(--z-overlay);
   background: var(--scrim);
   display: grid;
   place-items: center;

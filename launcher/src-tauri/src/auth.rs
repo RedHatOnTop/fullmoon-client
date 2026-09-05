@@ -358,6 +358,7 @@ pub async fn login_authcode(client: &reqwest::Client) -> Result<Account> {
         percent(&redirect),
         percent(SCOPE)
     );
+    eprintln!("[auth] opening the browser for sign-in (redirect http://localhost:{port}/)");
     tauri_plugin_opener::open_url(&url, None::<&str>)
         .map_err(|e| Error::Invalid(format!("could not open the browser: {e}")))?;
 
@@ -372,6 +373,7 @@ pub async fn login_authcode(client: &reqwest::Client) -> Result<Account> {
 
             if let Some(err) = q.get("error") {
                 let msg = q.get("error_description").cloned().unwrap_or_else(|| err.clone());
+                eprintln!("[auth] sign-in error from browser: {msg}");
                 let _ = sock
                     .write_all(done_page("Sign-in failed", &msg).as_bytes())
                     .await;
@@ -402,6 +404,7 @@ pub async fn login_authcode(client: &reqwest::Client) -> Result<Account> {
                 )
                 .await;
             let _ = sock.shutdown().await;
+            eprintln!("[auth] authorization code received");
             return Ok(got.clone());
         }
     })
@@ -420,10 +423,15 @@ pub async fn login_authcode(client: &reqwest::Client) -> Result<Account> {
         .send()
         .await?;
     match read_token(res).await? {
-        Ok(token) => finish(client, token, "microsoft").await,
-        Err(e) => Err(Error::Invalid(
-            e.error_description.unwrap_or_else(|| e.error.clone()),
-        )),
+        Ok(token) => {
+            eprintln!("[auth] msa token ok — running the xbox/minecraft chain");
+            finish(client, token, "microsoft").await
+        }
+        Err(e) => {
+            let msg = e.error_description.unwrap_or_else(|| e.error.clone());
+            eprintln!("[auth] token exchange failed: {msg}");
+            Err(Error::Invalid(msg))
+        }
     }
 }
 
@@ -546,8 +554,33 @@ async fn minecraft_token(client: &reqwest::Client, uhs: &str, xsts: &str) -> Res
         .await?;
     if !res.status().is_success() {
         let status = res.status();
+        // Mojang states why in the body (banned, no entitlement, child account
+        // rules) — hiding it turns a diagnosable refusal into a dead end.
+        let body = res.text().await.unwrap_or_default();
+        let parsed = serde_json::from_str::<serde_json::Value>(&body).ok();
+        let detail = parsed
+            .as_ref()
+            .and_then(|v| {
+                v.get("errorMessage")
+                    .or_else(|| v.get("error"))
+                    .and_then(|s| s.as_str().map(str::to_string))
+            })
+            .unwrap_or(body);
+        // the #1 registration mistake: a consumers-only app. But even a
+        // correctly-configured app is refused until Mojang allowlists the
+        // client id — new apps must apply via the form linked from
+        // aka.ms/AppRegInfo (docs/patchnotes-feed.md의 인증 문서 아님 —
+        // Mojang Enforcement가 이메일로 승인한다).
+        let hint = if detail.contains("Invalid app registration") {
+            " — this client id is not on Mojang's allowlist yet. Submit it via \
+               the application form linked at https://aka.ms/AppRegInfo \
+               (Mojang reviews and approves by email)."
+                .to_string()
+        } else {
+            String::new()
+        };
         return Err(Error::Invalid(format!(
-            "Minecraft services refused the Xbox token ({status})"
+            "Minecraft services refused the Xbox token ({status}): {detail}{hint}"
         )));
     }
     Ok(res.json().await?)
@@ -575,6 +608,7 @@ async fn minecraft_profile(client: &reqwest::Client, token: &str) -> Result<McPr
 /// account a user ends up with never depends on which button they pressed.
 async fn finish(client: &reqwest::Client, msa: MsaToken, source: &str) -> Result<Account> {
     let xbl = xbox_live(client, &msa.access_token).await?;
+    eprintln!("[auth] xbox live ok");
     let uhs = xbl
         .display_claims
         .xui
@@ -582,9 +616,15 @@ async fn finish(client: &reqwest::Client, msa: MsaToken, source: &str) -> Result
         .and_then(|c| c.uhs.clone())
         .ok_or_else(|| Error::Invalid("Xbox Live returned no user hash".into()))?;
     let xsts = xsts(client, &xbl.token).await?;
+    eprintln!("[auth] xsts ok");
     let xuid = xsts.display_claims.xui.first().and_then(|c| c.xid.clone());
-    let mc = minecraft_token(client, &uhs, &xsts.token).await?;
+    let mc = minecraft_token(client, &uhs, &xsts.token).await.map_err(|e| {
+        eprintln!("[auth] {e}");
+        e
+    })?;
+    eprintln!("[auth] minecraft token ok");
     let profile = minecraft_profile(client, &mc.access_token).await?;
+    eprintln!("[auth] profile ok: {}", profile.name);
 
     let account = account_from(&profile, source);
     put_session(Session {
