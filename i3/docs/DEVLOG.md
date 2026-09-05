@@ -689,3 +689,53 @@ package.json test 스크립트, paths.rs 헬퍼 블록)을 수동 해결했다.
 - **검증**: `cargo check` 경고 0 · `npm test`(shaders-contract) 2/2 · `tsc` 통과 ·
   `npm run build` 통과 · `verify.mjs` 통과 — `fullmoon-launcher-02-mods.png`에서
   "한 번에 설치" 배너 + Iris 카드(미설치·off) 확인.
+
+## 2026-09-05 · P5-R7 사이트 인터랙션 레이어 + 3D 잔재 철거
+
+P5-R…R6이 디스크에만 있던 상태를 정리하는 세션. 88개 dirty 엔트리와 `git apply --3way`가
+남긴 `UU` 3건(`package.json`·`paths.rs`·`commands.rs`)을 읽고 해결해 `6e63136`으로 먼저
+체크포인트했고, 그 위에 사이트 슬라이스와 승인 대기 항목을 얹었다.
+
+- **`site/assets/site.js` 신설(192줄)**: 다섯 페이지가 공유하는 단일 스크립트 —
+  읽기 진행 바, 스태거 reveal, 같은 페이지 앵커 scrollspy, 코드 블록 복사 버튼,
+  커서 스포트라이트, 별밭+히어로 달무리. 전부 `html.js` 게이트 뒤이고
+  `prefers-reduced-motion`에서 모션 채널 둘 다 off. reveal은 `transitionend`에서
+  자기 클래스(`reveal`/`in`)와 인라인 `transition-delay`를 스스로 제거한다 —
+  안 그러면 이후 hover 트랜지션을 하이재크한다(900ms 폴백은 탭 전환 누락 대비).
+- **`launcher/scripts/_sitejs.mjs` 신설**: 5페이지 × 1440/768/320px 실측. 스크린샷이
+  못 잡는 두 결함을 노린다 — (1) reveal이 안 돌면 DOM은 완벽한데 화면이 `opacity: 0`,
+  (2) `html`/`body`의 `overflow-x: clip`이 `scrollWidth`를 눌러서 자식이 뷰포트 밖에
+  걸려도 h-scroll 프로브는 깨끗하게 읽는다. 그래서 요소별 `getBoundingClientRect`로
+  재고, **조상 중 스크롤 가능한 게 없을 때만** 결함으로 센다(그 walk이 없으면 모바일
+  nav 스크롤러와 `<pre>` 안의 하이라이트 span까지 6건 오보한다).
+- **결함 1건 실측 후 수정**: `.file-ref`가 320px에서 잘렸다 — 60자 Java 경로를
+  줄바꿈 규칙 없는 `inline-block`에 넣어서, clip이 자르고 스크롤로 닿을 방법도 없다.
+  `max-width: 100%` + `overflow-wrap: anywhere`(이 파일의 제목 규칙과 같은 관용구).
+  달무리는 wrap 밖으로 삐져나오는 게 의도이므로 `data-bleed`로 명시.
+- **카피를 트리에 맞춤**(마지막으로 센 시점이 아니라): `commands.rs` 선언·등록
+  모두 43개(37 아님) · `src-tauri` 22모듈 5,283줄(19/4,500 아님) · 계약은
+  `PinionCore` 41개 메서드이고 `bindings.ts` 스니펫의 시그니처 4개가 전부 틀려서
+  파일의 실제 다섯 줄로 교체 · "0개 외부 에셋 다운로드, Mojang 원본만"은 처음부터
+  거짓이었고 이 브랜치가 더 키웠다(모드는 Modrinth·Fabric maven, 셰이더는 Iris와
+  재배포 금지 팩) → 런처가 설치하는 범위를 규정하는 카탈로그 5개로 교체하고,
+  `trust.html`의 설치 후 다운로드 목록을 3종 → 4종으로 고쳐 Iris와 셰이더 팩을 명시.
+- **`Skin3D.tsx`/`PlayerRender.tsx` 삭제 + `npm uninstall three skinview3d @types/three`**:
+  P5-R5의 승인 대기 항목. 두 파일을 import하는 곳 0건, `three`/`skinview3d`를
+  import하는 곳 0건을 먼저 확인했다. `node_modules` 207M → 138M. 번들은 그대로다 —
+  청크에서 빠진 건 P5-R5의 import 제거 시점이고(780.75 → 274.78 kB), 이번엔
+  설치 용량과 신뢰해야 할 의존성 3개가 줄었다. `docs/evidence/README.md`의
+  P5-R2 항목이 가리키던 `Skin3D`의 `label` prop은 `Skin2D`가 그대로 들고 있어
+  참조만 고쳤다.
+
+### 증거
+
+- `node scripts/_sitejs.mjs` → `site interaction layer: all clean`, 15/15 조합
+  (수정 전 3건 BAD: 768/320px `div.moonglow`, 320px `mod` `span.file-ref` ×4).
+- 320px `mod.html` 캡처 — 경로 칩이 컬럼 안에서 3줄로 감기고 우측 끝 296 ≤ 320.
+- 카피 수정의 근거를 트리에서 확인: `Ui.MOON`=0xFFF5D06E ↔ `tokens.css --moon-300`
+  =#F5D06E, `Ui.INK`=0xFF0B101F ↔ `--bg`=#0B101F(mod.html의 단일 팔레트 주장 성립) ·
+  `WarpScreen`이 선택 행에 `Ui.MOON` 2px 규칙을 채우고 푸터가 "서버 응답 대기…" ·
+  `BRIDGE.md`에 welcome timeout 5s와 쿨다운 4000ms · `FullmoonBridge`의 페이로드는
+  `writeByteArray` 한 번(varint 길이 + JSON 객체 하나).
+- 철거 후 게이트: `npx tsc --noEmit` exit 0 · `npm run build` exit 0(index 청크
+  279.11 kB) · `shaders-contract` 2/2 · `verify-tokens.mjs` 82파일 리터럴 0.

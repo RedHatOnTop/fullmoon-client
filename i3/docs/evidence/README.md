@@ -189,5 +189,5 @@ which is why the settings body, the mods toolbar and the topbar heading were inv
 Review fixes shipped in the same pass: heading order (h1 topbar → h2 sections; the play
 display headline is a `p`, the featured title inside its button is a `span`), the wallet
 stats and ledger reading the same 30-entry window with an honest "last N of M" count line
-(`home.txWindow`), and `Skin3D` gaining a `label` prop so every skin canvas carries the
+(`home.txWindow`), and `Skin2D` gaining a `label` prop so every skin canvas carries the
 player's name (`role="img"`).
