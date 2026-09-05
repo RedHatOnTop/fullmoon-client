@@ -27,6 +27,7 @@ import type {
   LogLevel,
   ModCatalog,
   NewsItem,
+  ShaderStatus,
   WalletInfo,
   WalletTx,
   PinionCore,
@@ -133,6 +134,17 @@ const MOD_CATALOG: ModCatalog = {
       note: null,
     },
     {
+      id: "iris",
+      name: "Iris",
+      version: "1.11.3",
+      description: "Fabric용 쉐이더 로더. Sodium 위에서 동작한다.",
+      kind: "perf",
+      ours: false,
+      compatible: true,
+      note: null,
+      defaultEnabled: false,
+    },
+    {
       id: "lithium",
       name: "Lithium",
       version: "0.15.1",
@@ -179,6 +191,7 @@ const NEWS: NewsItem[] = [
     date: "2026-07-20",
     hue: 45,
     featured: true,
+    url: null,
   },
   {
     id: "n2",
@@ -188,6 +201,7 @@ const NEWS: NewsItem[] = [
     date: "2026-07-17",
     hue: 258,
     featured: false,
+    url: null,
   },
   {
     id: "n3",
@@ -197,6 +211,7 @@ const NEWS: NewsItem[] = [
     date: "2026-07-14",
     hue: 170,
     featured: false,
+    url: "https://discord.gg/C5CnftJhcs",
   },
   {
     id: "n4",
@@ -206,6 +221,7 @@ const NEWS: NewsItem[] = [
     date: "2026-07-10",
     hue: 45,
     featured: false,
+    url: null,
   },
   {
     id: "n5",
@@ -215,6 +231,7 @@ const NEWS: NewsItem[] = [
     date: "2026-07-06",
     hue: 22,
     featured: false,
+    url: null,
   },
 ];
 
@@ -725,7 +742,9 @@ export class MockCore implements PinionCore {
         current.installed = true;
         current.installing = null;
         // freshly installed instances get the full bundle enabled
-        this.modEnabled[id] = Object.fromEntries(MOD_CATALOG.mods.map((m) => [m.id, true]));
+        this.modEnabled[id] = Object.fromEntries(
+          MOD_CATALOG.mods.map((m) => [m.id, m.defaultEnabled !== false]),
+        );
         this.emit("install://stage", { instanceId: id, stage: "done", pct: 100 });
         this.persist();
       }
@@ -746,14 +765,17 @@ export class MockCore implements PinionCore {
     const enabledMap = this.modEnabled[instanceId] ?? {};
     const favMap = this.modFavorite[instanceId] ?? {};
     const modded = this.instances.find((i) => i.id === instanceId)?.loader === "fabric";
-    return MOD_CATALOG.mods.map((m) => ({
-      ...m,
-      compatible: m.compatible && modded,
-      enabled: modded && (enabledMap[m.id] ?? true),
-      favorite: favMap[m.id] ?? false,
-      installed: modded && (enabledMap[m.id] ?? true),
-      file: modded ? `${m.id}-${m.version}.jar` : undefined,
-    }));
+    return MOD_CATALOG.mods.map((m) => {
+      const on = enabledMap[m.id] ?? m.defaultEnabled !== false;
+      return {
+        ...m,
+        compatible: m.compatible && modded,
+        enabled: modded && on,
+        favorite: favMap[m.id] ?? false,
+        installed: modded && on,
+        file: modded && on ? `${m.id}-${m.version}.jar` : undefined,
+      };
+    });
   }
 
   async mod_toggle(instanceId: string, modId: string, enabled: boolean): Promise<void> {
@@ -768,6 +790,53 @@ export class MockCore implements PinionCore {
     if (!this.modFavorite[instanceId]) this.modFavorite[instanceId] = {};
     this.modFavorite[instanceId][modId] = favorite;
     this.persist();
+  }
+
+  private shaderReady: Record<string, boolean> = {};
+  private shaderOn: Record<string, boolean> = {};
+
+  private shaderStatusOf(instanceId: string): ShaderStatus {
+    const enabledMap = this.modEnabled[instanceId] ?? {};
+    const irisOn = enabledMap.iris === true;
+    const sodiumOn = enabledMap.sodium !== false;
+    const pack = this.shaderReady[instanceId] ?? false;
+    const ready = irisOn && sodiumOn && pack;
+    const enabled = ready && (this.shaderOn[instanceId] ?? false);
+    return {
+      ready,
+      enabled,
+      packFile: pack ? "ComplementaryReimagined_r5.8.1.zip" : null,
+      packName: pack ? "Complementary Reimagined" : null,
+      iris: irisOn,
+      sodium: sodiumOn,
+    };
+  }
+
+  async shaders_status(instanceId: string): Promise<ShaderStatus> {
+    await sleep(40);
+    return this.shaderStatusOf(instanceId);
+  }
+
+  async shaders_install(instanceId: string): Promise<ShaderStatus> {
+    await sleep(180);
+    const inst = this.instances.find((i) => i.id === instanceId);
+    if (!inst) throw new Error(`instance ${instanceId} not found`);
+    if (inst.loader !== "fabric") throw new Error("shaders need a Fabric instance — pick or create one first");
+    this.shaderReady[instanceId] = true;
+    this.shaderOn[instanceId] = true;
+    if (!this.modEnabled[instanceId]) this.modEnabled[instanceId] = {};
+    this.modEnabled[instanceId].iris = true;
+    this.modEnabled[instanceId].sodium = true;
+    this.persist();
+    return this.shaderStatusOf(instanceId);
+  }
+
+  async shaders_set_enabled(instanceId: string, enabled: boolean): Promise<ShaderStatus> {
+    await sleep(60);
+    if (!this.shaderReady[instanceId]) throw new Error("no shader pack is installed — install shaders first");
+    this.shaderOn[instanceId] = enabled;
+    this.persist();
+    return this.shaderStatusOf(instanceId);
   }
 
   /* ── launch ── */

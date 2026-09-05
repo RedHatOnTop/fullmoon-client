@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { SkinFace } from "./ui";
 import { useStore } from "../state/store";
+import { openExternal } from "../core/client";
 import { useT } from "../i18n";
 
 /* downward-opening chrome menu, same dismissal contract as DockMenu */
@@ -52,7 +53,7 @@ export function TopBar({ onPalette }: { onPalette: () => void }) {
 
   return (
     <header className="topbar">
-      <div className="topbar-heading">
+      <div className="topbar-heading" key={screen}>
         <h1>{t(`nav.${screen}`)}</h1>
         <p>{t(`topbar.sub.${screen}`)}</p>
       </div>
@@ -84,13 +85,16 @@ export function TopBar({ onPalette }: { onPalette: () => void }) {
                 className="topmenu-item"
                 onClick={() => {
                   setBellOpen(false);
-                  setScreen("home");
+                  /* a feed item points at its source post; a bundled one
+                     lands on the dashboard where the ledger lives */
+                  if (n.url) void openExternal(n.url);
+                  else setScreen("home");
                 }}
               >
                 <span className="topmenu-swatch" style={{ "--h": n.hue }} />
                 <span className="topmenu-item-text">
                   <strong>{n.title}</strong>
-                  <em>{n.date}</em>
+                  <em>{n.url ? "DISCORD" : n.date}</em>
                 </span>
               </button>
             ))

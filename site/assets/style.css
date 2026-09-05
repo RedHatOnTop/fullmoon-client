@@ -1,5 +1,12 @@
 /* Fullmoon client — source walkthrough site.
    Tokens mirror fullmoon.ink (cardTheme.js "달빛 밤하늘") 1:1. */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4
+   Hallmark · macrostructure: walkthrough-atmosphere (유지 — 이번 델타는 인터랙션 레이어만)
+   · nav: N1 변형 dark-glass · footer: Ft 단일 노트 · slop: pass (42–45)
+   · contrast: pass (40–41) · tokens: pass (48) · responsive: pass (34, 49) · mobile: pass (50–57)
+   모션 채널: reveal(1) + 브랜드 고정 앰비언트(달빛 밤하늘) — reduced-motion에서 둘 다 off.
+   증거: launcher/scripts/_sitejs.mjs — 5개 페이지 × 1440/768/320px, html.js 게이트·reveal
+   반환·복사 버튼·요소별 넘침을 실측한다 (all clean, 2026-09-05). */
 
 @font-face {
   font-family: 'Pretendard';
@@ -36,21 +43,35 @@
   --r-sm: 14px;
   --max: 1080px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --moon-rgb: 255, 233, 176;
+  --teal-rgb: 94, 230, 208;
+  --star: #e8ecff;
+  --moon-wash: rgba(var(--moon-rgb), 0.07);
+  --focus-instant: none;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+html { scroll-behavior: smooth; scroll-padding-top: 92px; overflow-x: clip; }
+body { overflow-x: clip; }
 body {
   font-family: var(--sans);
   color: var(--text);
-  background:
-    radial-gradient(1000px 700px at 85% -10%, rgba(130, 107, 194, 0.13), transparent 60%),
-    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-top) 34%, var(--bg-bottom) 100%);
-  background-attachment: fixed;
+  background: var(--bg-deep);
   min-height: 100vh;
   line-height: 1.65;
 }
-.wrap { max-width: var(--max); margin: 0 auto; padding: 0 clamp(20px, 4vw, 44px); }
+/* fixed-gradient layer instead of background-attachment:fixed —
+   the latter janks on scroll and breaks on mobile Safari. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(1000px 700px at 85% -10%, rgba(130, 107, 194, 0.13), transparent 60%),
+    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-top) 34%, var(--bg-bottom) 100%);
+}
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 clamp(24px, 5vw, 48px); }
 a { color: inherit; text-decoration: none; }
 code {
   font-family: var(--mono);
@@ -82,7 +103,7 @@ pre .st { color: var(--gold); }
   background: rgba(7, 11, 26, 0.72);
   border-bottom: 1px solid var(--line);
 }
-.nav-inner { display: flex; align-items: center; gap: 28px; height: 64px; }
+.nav-inner { display: flex; align-items: center; gap: 28px; height: 72px; }
 .brand {
   display: flex; align-items: center; gap: 10px;
   font-weight: 800; font-size: 15px; letter-spacing: 0.02em;
@@ -100,7 +121,8 @@ pre .st { color: var(--gold); }
 @media (max-width: 760px) { .nav-links { display: none; } }
 
 /* ── hero ────────────────────────────────────────── */
-.hero { padding: clamp(64px, 10vw, 120px) 0 clamp(48px, 7vw, 80px); }
+.hero { padding: clamp(64px, 9vw, 104px) 0 clamp(84px, 12vw, 136px); } /* 하단 여백 ≥ 1.3× 상단 (Hallmark 44a) */
+.hero .wrap { position: relative; } /* moonglow 기준점 */
 .eyebrow {
   font-size: 12px; font-weight: 600; letter-spacing: 0.22em;
   color: var(--gold); text-transform: uppercase; margin-bottom: 18px;
@@ -114,15 +136,16 @@ pre .st { color: var(--gold); }
   max-width: 640px; margin-top: 22px;
   color: var(--muted); font-size: 17px;
 }
-.cta-row { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.cta-row { display: flex; align-items: center; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
 
 /* ── buttons ─────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 12px 22px; border-radius: 12px;
-  font-weight: 700; font-size: 15px;
+  font-weight: 700; font-size: 15px; white-space: nowrap;
   transition: transform 0.25s var(--ease), background 0.25s var(--ease);
 }
+.btn:active { transform: translateY(1px); }
 .btn-primary { background: var(--gold); color: #231a04; }
 .btn-primary:hover { transform: translateY(-1px); }
 .btn-ghost { border: 1px solid var(--line-strong); color: var(--text); }
@@ -134,6 +157,7 @@ section { padding: clamp(40px, 6vw, 72px) 0; }
 .section-head h2, .page-head h1 {
   font-size: clamp(26px, 3.6vw, 36px); font-weight: 800; letter-spacing: -0.01em;
 }
+.section-head h2, .page-head h1, .hero h1 { overflow-wrap: anywhere; min-width: 0; }
 .section-head .lead, .page-head .lead {
   max-width: 680px; margin-top: 14px; color: var(--muted);
 }
@@ -170,7 +194,8 @@ section { padding: clamp(40px, 6vw, 72px) 0; }
   border-radius: var(--r-md); padding: 22px;
   transition: transform 0.25s var(--ease), border-color 0.25s var(--ease);
 }
-.path-card:hover { transform: translateY(-3px); border-color: var(--line-strong); }
+.path-card:hover { border-color: var(--line-strong); } /* 단일 색상 채널 + 스폿라이트 (Hallmark 13) */
+.path-card:active { border-color: var(--gold); }
 .path-card .n { color: var(--gold); font-weight: 800; font-size: 13px; letter-spacing: 0.12em; }
 .path-card h3 { margin: 8px 0 8px; font-size: 16.5px; font-weight: 700; }
 .path-card p { color: var(--muted); font-size: 13.8px; line-height: 1.6; }
@@ -185,7 +210,8 @@ section { padding: clamp(40px, 6vw, 72px) 0; }
 .article ul, .article ol { color: var(--muted); font-size: 15.5px; padding-left: 22px; margin-bottom: 14px; }
 .article li { margin-bottom: 6px; }
 .file-ref {
-  display: inline-block; font-family: var(--mono); font-size: 12.5px;
+  display: inline-block; max-width: 100%; overflow-wrap: anywhere;
+  font-family: var(--mono); font-size: 12.5px;
   color: var(--gold); background: var(--panel-strong);
   border: 1px solid var(--line); border-radius: 6px;
   padding: 2px 10px; margin-bottom: 10px;
@@ -193,7 +219,99 @@ section { padding: clamp(40px, 6vw, 72px) 0; }
 
 /* ── footer ──────────────────────────────────────── */
 footer { border-top: 1px solid var(--line); margin-top: 40px; }
-.foot-inner { padding: 34px 0 44px; color: var(--faint, #6b7490); font-size: 13px; }
+.foot-inner { padding-block: 44px 60px; color: var(--faint, #6b7490); font-size: 13px; }
 .foot-inner p { color: var(--muted); }
 .foot-links { margin-top: 10px; }
 .foot-links a { color: var(--gold); margin-right: 6px; }
+
+/* ── polish: selection, focus, active nav ───────── */
+::selection { background: rgba(245, 208, 110, 0.25); color: #fff; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+.nav-links a { position: relative; transition: color 0.2s var(--ease); }
+.nav-links a.here { color: var(--text); }
+.nav-links a.here::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -4px;
+  height: 2px; border-radius: 2px; background: var(--gold);
+}
+@media (max-width: 760px) {
+  /* padding-block만 — .wrap의 좌우 패딩을 덮어쓰지 않는다 */
+  .nav-inner { flex-wrap: wrap; height: auto; padding-block: 14px 10px; }
+  .nav-links { display: flex; width: 100%; gap: 18px; overflow-x: auto;
+    padding-bottom: 6px; scrollbar-width: none; }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a { white-space: nowrap; }
+  .nav-links a.here::after { bottom: -2px; }
+}
+
+/* ── reading progress ───────────────────────────── */
+.progress {
+  position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 40;
+  background: linear-gradient(90deg, var(--gold), var(--moon));
+  transform-origin: 0 50%; transform: scaleX(0); pointer-events: none;
+}
+
+/* ── scroll reveal (JS-added, html.js only) ─────── */
+html.js .reveal { opacity: 0; transform: translateY(14px); }
+html.js .reveal.in {
+  opacity: 1; transform: none;
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+
+/* ── code block: copy button ────────────────────── */
+.pre-wrap { position: relative; }
+.pre-wrap .copy {
+  position: absolute; top: 10px; right: 10px;
+  font-family: var(--sans); font-size: 12px; font-weight: 600;
+  color: var(--muted); background: rgba(7, 11, 26, 0.72);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 5px 12px; cursor: pointer;
+  opacity: 0; transform: translateY(-2px);
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease), color 0.2s, border-color 0.2s;
+}
+.pre-wrap:hover .copy, .pre-wrap .copy:focus-visible { opacity: 1; transform: none; }
+.pre-wrap .copy:hover { color: var(--text); border-color: var(--line-strong); }
+.pre-wrap .copy.ok { color: var(--teal); border-color: rgba(var(--teal-rgb), 0.4); }
+.pre-wrap .copy:active { transform: translateY(1px); }
+.pre-wrap .copy:focus-visible { opacity: 1; transform: none; transition: var(--focus-instant); }
+
+/* ── cursor spotlight on cards ──────────────────── */
+.spot { position: relative; overflow: hidden; }
+.spot::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%),
+    var(--moon-wash), transparent 65%);
+  opacity: 0; transition: opacity 0.3s var(--ease);
+}
+.spot:hover::before { opacity: 1; }
+
+/* ── starfield + moon glow ──────────────────────── */
+.stars {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+.moonglow {
+  position: absolute; top: -60px; right: -40px;
+  width: clamp(220px, 30vw, 380px); aspect-ratio: 1;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle,
+    rgba(var(--moon-rgb), 0.14) 0%, rgba(var(--moon-rgb), 0.05) 42%, transparent 70%);
+  animation: moonbreathe 9s ease-in-out infinite;
+}
+.moonglow::after {
+  content: ''; position: absolute; inset: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 36%,
+    rgba(var(--moon-rgb), 0.5), rgba(var(--moon-rgb), 0.12) 58%, transparent 72%);
+  box-shadow: 0 0 90px rgba(var(--moon-rgb), 0.18);
+}
+@keyframes moonbreathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+/* z-index 1 keeps content above the starfield canvas; .nav keeps its own sticky */
+main, footer { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  html.js .reveal { opacity: 1; transform: none; }
+  .moonglow { animation: none; }
+  .btn, .path-card { transition: none; }
+  .pre-wrap .copy, .spot::before { transition: none; }
+}

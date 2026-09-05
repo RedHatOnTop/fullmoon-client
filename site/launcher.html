@@ -8,6 +8,7 @@
 <meta name="description" content="풀문 클라이언트 런처의 소스 해설. bindings.ts, 설치 파이프라인, Microsoft 계정 흐름을 코드와 함께 읽어요.">
 <meta name="theme-color" content="#0d1226">
 <link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 
@@ -47,17 +48,17 @@
     <span class="file-ref">launcher/src/core/bindings.ts</span>
     <p>
       UI가 core에 시킬 수 있는 일이 타입과 함께 이 한 파일에 있어요.
-      설정 조회부터 게임 실행까지 37개 함수예요. UI는 이 목록만 보고 만들었고,
+      설정 조회부터 게임 실행까지 41개 함수예요. UI는 이 목록만 보고 만들었고,
       core는 이 목록만 지키면 돼요.
     </p>
 <pre><span class="cm">// 계약의 일부 — 전문은 파일 참고</span>
-<span class="kw">export interface</span> Core {
-  versions_manifest(): Promise&lt;VersionManifest&gt;;
-  instance_install(id: string, version: string): Promise&lt;void&gt;;
-  auth_begin_device_code(): Promise&lt;DeviceCode&gt;;
-  launch_quickplay(req: QuickPlay): Promise&lt;void&gt;;
+<span class="kw">export interface</span> PinionCore {
+  auth_begin_device_code(): Promise&lt;DeviceCodePrompt&gt;;
+  versions_manifest(): Promise&lt;VersionSummary[]&gt;;
+  instance_install(id: string): Promise&lt;string&gt;; <span class="cm">// -&gt; taskId</span>
+  launch_quickplay(instanceId: string, server: string): Promise&lt;string&gt;;
   news_feed(): Promise&lt;NewsItem[]&gt;;
-  <span class="cm">// …37개 전체</span>
+  <span class="cm">// …41개 전체</span>
 }</pre>
     <p>
       구현은 두 가지예요. <code>mockCore.ts</code>는 가짜 데이터로 UI만 돌리고,

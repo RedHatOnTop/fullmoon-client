@@ -8,10 +8,11 @@ use tauri::{AppHandle, State};
 
 use crate::{
     catalog, cosmetics,
+    economy, news,
     error::{Error, Result},
     hud, install, java, meta,
     model::*,
-    mods, offline, paths, ping,
+    mods, offline, paths, ping, shaders,
     state::AppState,
     store,
 };
@@ -343,6 +344,42 @@ pub async fn mod_favorite(instance_id: String, mod_id: String, favorite: bool) -
     mods::save_state(&instance_id, &st).await
 }
 
+#[tauri::command]
+pub async fn shaders_status(instance_id: String) -> Result<ShaderStatus> {
+    Ok(shaders::status(&instance_id).await)
+}
+
+#[tauri::command]
+pub async fn shaders_install(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> Result<ShaderStatus> {
+    let (game, loader) = {
+        let instances = state.instances.lock().await;
+        let inst = instances
+            .iter()
+            .find(|i| i.id == instance_id)
+            .ok_or_else(|| Error::NotFound(format!("instance {instance_id}")))?;
+        (inst.version_id.clone(), inst.loader.clone())
+    };
+    let concurrency = state.settings.lock().await.concurrency as usize;
+    shaders::install_easy(
+        &state.http,
+        &paths::resources(&app),
+        &instance_id,
+        &game,
+        &loader,
+        concurrency,
+    )
+    .await
+}
+
+#[tauri::command]
+pub async fn shaders_set_enabled(instance_id: String, enabled: bool) -> Result<ShaderStatus> {
+    shaders::set_enabled(&instance_id, enabled).await
+}
+
 // ── cosmetics / hud ───────────────────────────────────────────
 
 use crate::cosmetics::{Loadout, LoadoutMap};
@@ -413,8 +450,20 @@ pub async fn hud_reset(instance_id: String) -> Result<HudConfig> {
 // ── home ──────────────────────────────────────────────────────
 
 #[tauri::command]
-pub async fn news_feed() -> Result<Vec<NewsItem>> {
-    Ok(catalog::get().news.clone())
+pub async fn news_feed(state: State<'_, AppState>) -> Result<Vec<NewsItem>> {
+    Ok(news::feed(&state.http).await)
+}
+
+/// The wallet read fails soft on the frontend by design — no economy.json or
+/// no linked account is a normal state, not a boot error.
+#[tauri::command]
+pub async fn economy_wallet(state: State<'_, AppState>) -> Result<WalletInfo> {
+    economy::wallet(&state).await
+}
+
+#[tauri::command]
+pub async fn economy_transactions(state: State<'_, AppState>) -> Result<Vec<WalletTx>> {
+    economy::transactions(&state).await
 }
 
 #[tauri::command]

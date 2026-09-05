@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
 import { Badge, Button, ConfirmModal, IconButton, Modal, SkinFace } from "../components/ui";
-import Skin3D from "../widgets/Skin3D";
+import Skin2D from "../widgets/Skin2D";
 import {
   addOfflineAccount,
   core,
@@ -250,16 +250,14 @@ function ActiveHero({ account, onAdd }: { account: Account; onAdd: () => void })
   return (
     <section className="acc-hero card">
       <div className="acc-hero-stage">
-        <Skin3D
+        <Skin2D
           skin={account.skinUrl ?? "/skins/blackcow.png"}
           cape={cape?.capeUrl ?? null}
-          /* fixed three-quarters, facing the viewer: this panel answers "who am
-             I", and a spin that parks the figure edge-on half the time cannot */
-          rotate={false}
-          angle={-0.42}
-          width={214}
-          height={306}
-          zoom={0.88}
+          /* fixed front view: this panel answers "who am I" — a face, not a
+             spinning model */
+          view="front"
+          scale={8}
+          label={account.username}
         />
       </div>
 
@@ -451,7 +449,7 @@ export function AccountsScreen() {
 
       {(others.length > 0 || activeAccount) && (
         <>
-          <h3 className="acc-section">{t("accounts.others")}</h3>
+          <h2 className="acc-section">{t("accounts.others")}</h2>
           <div className="acc-grid stagger">
             {others.map((a) => (
               <AccountCard key={a.uuid} account={a} />

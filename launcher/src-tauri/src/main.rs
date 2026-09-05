@@ -6,6 +6,7 @@ mod catalog;
 mod commands;
 mod cosmetics;
 mod download;
+mod economy;
 mod error;
 mod fabric;
 mod hud;
@@ -15,9 +16,11 @@ mod launch;
 mod meta;
 mod model;
 mod mods;
+mod news;
 mod offline;
 mod paths;
 mod ping;
+mod shaders;
 mod state;
 mod store;
 mod version;
@@ -54,6 +57,9 @@ fn main() {
             commands::mods_list,
             commands::mod_toggle,
             commands::mod_favorite,
+            commands::shaders_status,
+            commands::shaders_install,
+            commands::shaders_set_enabled,
             commands::cosmetics_catalog,
             commands::cosmetics_equipped,
             commands::cosmetics_equip,
@@ -61,6 +67,8 @@ fn main() {
             commands::hud_set,
             commands::hud_reset,
             commands::news_feed,
+            commands::economy_wallet,
+            commands::economy_transactions,
             commands::servers_list,
             commands::servers_save,
             commands::servers_ping,

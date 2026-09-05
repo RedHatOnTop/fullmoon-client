@@ -159,6 +159,39 @@ One defect this capture caught:
 
 
 
+## P5-R — launcher UI overhaul (Hallmark anti-slop pass)
+
+| file | what it settles |
+| --- | --- |
+| `fullmoon-launcher-01-play.png` | The launch stage rebuilt asymmetric: eyebrow/headline/sub/CTA on the left axis, the skin figure on its moonlit dais right, worlds + featured news in the deck. |
+| `fullmoon-launcher-01-play-rabbit-hover.png` | The moon rabbit appears on launch intent only (hover/focus-within), `--ease-out`, tokens for every fill. |
+| `fullmoon-launcher-01b-dashboard-servers.png` | The dashboard as instrument panel: status band (network/players/balance/instance), underline tab rail, server cards with live badges, dashed add-form. |
+| `fullmoon-launcher-01c-dashboard-wallet.png` | Wallet: the one shouting number in accent, income/expense in function colours, transactions as hairline ledger rows. |
+| `fullmoon-launcher-01d-dashboard-news.png` | News as an editorial ledger — hue swatch, badge, title, summary, date; no fake click affordance. |
+| `fullmoon-launcher-10-light-play.png` / `10-light-play-dash.png` | The light theme holds the same system: paper sky, hairline cards, the single gold button. |
+| `fullmoon-launcher-11-en-play.png` / `11-en-play-dash.png` | English locale renders fully — Home/Play no longer bypass `t()`. |
+| `fullmoon-launcher-20-fold-1280.png` / `21-fold-1280-dash.png` | At 1280×800 the CTA and the deck sit inside the fold (gate 44). |
+| `fullmoon-launcher-22-narrow-1100.png` / `23-narrow-1100-dash.png` | At 1100px the grids collapse cleanly; the h-scroll probe prints `no-h-scroll` at every width (gate 34). |
+
+The 58-gate answer sheet for this pass is `p5r-hallmark-audit.md`, including the stacking
+defect the old captures hid: the fixed backdrop painted over every non-positioned element,
+which is why the settings body, the mods toolbar and the topbar heading were invisible until
+`.shell` became a stacking layer.
+
+## P5-R2 — review fixes + the masthead titlebar
+
+| file | what it settles |
+| --- | --- |
+| `evidence-titlebar-idle.png` | The rebuilt titlebar at rest: feather mark + FULLMOON wordmark + version sitting on the sidebar's column with no rule between them (the masthead reads as one surface with the sidebar), hairline only under the drag sky and the 46px window controls. |
+| `evidence-titlebar-session.png` | The one live element the sky allows: a session chip (state dot — amber while starting, green while running — state word, mono uptime, console glyph). Clicking it reopens the launch overlay; when the overlay is hidden this line is the only place still saying the game is running. |
+| `fullmoon-launcher-03-cosmetics.png` | The slot column after un-nesting: selecting a slot and unequipping an item are two real buttons (`aria-pressed` select, `aria-label` unequip) instead of a button containing a fake one. |
+
+Review fixes shipped in the same pass: heading order (h1 topbar → h2 sections; the play
+display headline is a `p`, the featured title inside its button is a `span`), the wallet
+stats and ledger reading the same 30-entry window with an honest "last N of M" count line
+(`home.txWindow`), and `Skin2D` gaining a `label` prop so every skin canvas carries the
+player's name (`role="img"`).
+
 ## P6 — versioned Paper channel and legacy fallback
 
 | file | what it settles |
@@ -346,3 +379,23 @@ Three defects were found by driving and looking at the launcher rather than by c
   handler lived only on the stage node. Rows now take focus and dispatch the same immutable nudge.
 - At the declared 1040×680 minimum window, the two-column editor crushed the stage to 254×143 and
   wrapped its dimension label vertically. It now stacks below 1180 px and renders a 510×287 stage.
+
+## Integration — the launcher-UI line merged with main
+
+This one comes after P10 in time even though its label continues the P5-R series: the launcher
+UI line and the P6–P11 client line grew apart on separate branches and were merged in one pass,
+28 commits and 12 conflicts. Four captures settle the resolutions a compiler cannot check,
+taken from the merged tree against Vite's mock core at 1600×1000.
+
+| file | what it settles |
+| --- | --- |
+| `merge-01-play.png` | The backdrop resolution taken from main: one gold bloom, `z-index: -1`, the starfield reading through the empty right half and below the two cards while the hero, the skin figure and every card surface stay above it. The launcher-UI branch had two blooms and a `.nebula-sky` layer; `scripts/shell-layering.test.ts` asserts exactly one layer and that z-index, so main's side won and the second layer went. |
+| `merge-06-settings-hud.png` | main's `screens.css` HUD-editor block driving main's `HudEditor.tsx` in the merged tree: the 16:9 plane with all eight chips placed, the `640 × 360 GUI px · 0.82×` caption, the 1/2/4/8 px snap control with 4 px active, and the eight-row ledger with anchor and offset pairs. Both halves of that pair came from main, and this frame is the proof they still match after the merge. |
+| `merge-04-accounts.png` | `.acc-hero` under `background: var(--surface)`, replacing main's `var(--raised)`, which no tokens file defines. The hero reads as a raised panel against the page, and the "다른 계정" grid below it still reads as a lighter tier than the hero. |
+| `merge-09-offline-account-start.png` | `.acc-local-blocked` under `color: var(--warning)`, replacing main's `var(--status-warn)`, likewise undefined. The 온라인 서버 접속 불가 chip carries the amber the other two scope chips do not, which is the whole point of the row. |
+
+Gates run after resolution, before the merge commit: `tsc --noEmit`, `cargo check` (0 warnings),
+the seven contract tests (40 assertions, both shell-layering ones among them), `vite build`,
+`verify-tokens.mjs` over 110 files, `gradlew test jacocoTestCoverageVerification`,
+`_sitejs.mjs` at 15/15, and `verify.mjs` live against a dev server for the 14 captures these
+four are drawn from.

@@ -16,7 +16,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { flushSync } from "react-dom";
 import { core, errText, getActiveAccountUuid } from "../core/client";
 import type {
   Account,
@@ -170,15 +169,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   /** sessionId whose launch overlay the user dismissed — null shows it again */
   const [overlayHiddenFor, setOverlayHiddenFor] = useState<string | null>(null);
 
-  /* screen switches ride the View Transitions API when available */
+  /* screen switches animate through .screen-enter/.stagger CSS entrances —
+     a View Transition here would snapshot the whole window on every nav, a
+     full-window paint on the exact path the user says feels laggy */
   const setScreen = useCallback((s: Screen, tab?: SettingsTab) => {
     setSettingsTab(tab ?? null);
-    const doc = document as Document & { startViewTransition?: (cb: () => void) => void };
-    if (doc.startViewTransition) {
-      doc.startViewTransition(() => flushSync(() => setScreenState(s)));
-    } else {
-      setScreenState(s);
-    }
+    setScreenState(s);
   }, []);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [activeUuid, setActiveUuid] = useState<string | null>(null);

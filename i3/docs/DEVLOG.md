@@ -1106,3 +1106,304 @@ matched the smoke result. The installed mod hash was
 The same clean-install script now gates tag releases before artifact collection. Microsoft OAuth
 application registration and Authenticode signing remain external release configuration; neither is
 claimed by this run.
+
+
+## 2026-09-02 · P5-R 런처 UI 전면 개편 — Hallmark 58게이트 정합화
+
+P5 이후 올라간 `game-*` 글래스모피즘 레이어가 기존 토큰 시스템과 충돌하고 있었다. 이번
+패스는 미세 조정이 아니라 **한 언어로의 재작성**이다. 무엇보다 먼저, 캡처가 잡은 결정적
+결함 하나:
+
+- **백드롭이 크롬을 삼키고 있었다.** `.game-backdrop`(fixed, z-index 0) 아래로 모든
+  비포지셔닝 요소 — 탑바 제목과 검색 버튼, 타이틀바 컨트롤, 사이드바 그룹 라벨, 설정
+  본문 전체, 코스메틱 슬롯 열, 모드 툴바 — 이 페인트 순서상 밑에 깔려 캡처에서
+  증발했다. DOM과 히트 테스트에는 살아 있는 채로. `.titlebar`와 `.shell`을
+  `--z-shell` 스태킹 레이어로 올려 해결. 증거는 `05-settings-general.png` 전후 비교:
+  전에는 탭 레일만 뜬 빈 하늘, 후에는 Java 런타임 장부 전체.
+
+그 외 이번 패스의 사실들:
+
+- **토큰 일괄 회수**: Chakra 그린/레드(`#68D391`/`#FC8181`), 디스코드 블러플(`#5865F2`),
+  Tailwind 네뷸러(`#3B82F6`/`#06B6D4`), 히어로의 그라디언트 텍스트, `transition: all`
+  14곳, 미정의 토큰 참조(`--radius-pill`/`--text-1`/`--font-ui`) 전부 제거. `styles/`
+  안의 생 hex는 grep 기준 0건 — 유일한 예외는 토큰으로 승격한 `--hud-sim-*`(HUD 에디터
+  리허설 지평선)과 데이터로서의 액센트 스와치.
+- **백드롭 재설계**: 움직이는 반짝임·인디고/시안 네뷸러·그리드 삭제. 깊은 남색 하늘 +
+  단일 골드 문 블룸 + 정지한 별(56개, 크기·휘도 2단). 하늘은 날씨이고 스크린세이버가
+  아니다.
+- **플레이 화면 재구조**: 가운데 정렬 일변도(게이트 6 auto-fail 형상)를 비대칭 2열
+  스테이지로 — 왼쪽에 eyebrow·헤드라인(그라디언트 아닌 단색 액센트)·서브·런치 버튼,
+  오른쪽에 달빛 단상 위의 3D 피겨. 달토끼 이스터에그는 호버/포커스 의도 위에서만
+  `--ease-out`으로 고개를 낸다. 하단 데크(월드 목록 + 주요 소식)는 유지하되 토큰화.
+  Play 내부에 HomeScreen을 통째로 임베드하던 스크롤 구조는 폐기 — 두 화면은 이제 각자의
+  라우트에서 한 가지 일만 한다.
+- **대시보드 재구조**: 마케팅 히어로("백악의 만월궁…")를 걷어내고 기능적 상태 밴드
+  (네트워크 n/3 · 접속자 · 잔액 · 인스턴스) + 조용한 언더라인 탭(서버/재화/소식) +
+  마스터/레일 데크. 월렛은 히어로 숫자 + 헤어라인 거래 장부, 뉴스는 타일이 아니라
+  장부 행.
+- **i18n 회수**: Home/Play의 하드코딩 한국어를 `home.*`/`play.*` 키로 전면 이전,
+  `cosmetics.liveRender`, `settings.mcVersion` 추가. 영어 로케일이 더는 한국어를
+  렌더하지 않는다(`11-en-*.png`).
+- **입력/상태 규율**: `.input` 포커스를 box-shadow에서 outline 링으로(기하 불변),
+  disabled는 `opacity .55 + cursor: not-allowed + 네이티브 속성` 3채널, 텔레메트리
+  토글의 성공 토스트 삭제(효과가 이미 보이는 자리에 축하를 띄우지 않는다).
+
+### 증거
+
+- `npx tsc --noEmit` → 통과. `npm run build` → `✓ built in 1.31s`.
+- `node launcher/scripts/verify.mjs` → 12장 전수 재캡처 통과 (`docs/evidence/fullmoon-launcher-01..08`).
+- `node launcher/scripts/_theme-locale.mjs` → 라이트 테마·영어 로케일 4장 (`10-light-*`, `11-en-*`).
+- `node launcher/scripts/_viewports.mjs` → 1600/1280/1100px 가로 스크롤 프로브 전부 `no-h-scroll`, 1280×800 폴드 안에 CTA·덱 진입 (`20..23`).
+- 58게이트 전수 응답표: `docs/evidence/p5r-hallmark-audit.md`.
+
+## 2026-09-02 · P5-R2 리뷰 수정 4건 + 타이틀바 전면 재설계 (만월 마스트헤드)
+
+리뷰에서 나온 네 가지와, 사용자 판정 "쓰레기"였던 타이틀바를 같이 정리했다.
+
+- **코스메틱 슬롯의 중첩 인터랙티브 해제**: 슬롯 버튼 안의 `role="button"` span(해제)을
+  실제 버튼 둘로 분리 — 슬롯 선택(`.cos-slot-main`, `aria-pressed`)과 장착 해제
+  (`.cos-unequip`, `aria-label`)이 서로 다른 대상을 갖는다.
+- **헤딩 계층 정리**: 탑바 h1 아래 화면별 h3/h4 스킵을 h2로. 플레이 스테이지의 디스플레이
+  헤드라인은 h1이 아니라 `p`(문서 헤딩이 아니라 표시 텍스트), featured 카드 제목은 버튼
+  안이라 `span`+block. 모달 제목 h3→h2. 죽은 `.section-head`/`.page-actions` 규칙 삭제.
+- **지갑 "최근"의 정직화**: 통계와 장부가 같은 창(최근 30건)을 읽도록 일치시키고, 잘릴 때
+  카운트 줄이 "최근 30건 · 전체 N건"이라고 말한다 (`home.txWindow`).
+- **Skin3D 접근 이름**: `label` prop → 캔버스에 `role="img"` + `aria-label`. 네 서피스
+  (플레이/대시보드 레일/계정/코스메틱)가 사용자 이름을 전달.
+- **타이틀바 재설계**: 40px 스트립(로고+태그)을 44px 마스트헤드로. 브랜드 셀(깃털 타일 +
+  FULLMOON 워드마크 + 버전)은 사이드바 기둥 위에 얹히고 **밑변 헤어라인이 없다** — 크롬이
+  한 건물로 읽힌다. 스카이 셀은 순수 드래그 영역이며, 게임이 살아 있을 때만 세션 칩이
+  뜬다(상태 점: 시작 중 amber/실행 중 green, 모노 업타임, 클릭 → 오버레이 콘솔 복귀).
+  오버레이를 숨겨도 이 줄이 여전히 "게임이 돌고 있다"고 말하는 유일한 자리다.
+  윈도우 버튼은 46px 히트면. 버전 칩에서 워드마크가 잘리는 것을 잡으면서 core 정보는
+  툴팁으로 옮겼다.
+- **타이틀바 재설계 과정에서 스태킹 수정 재발 방지**: 재작성한 `.titlebar`에서
+  `position/z-index`를 빼먹어 백드롭 버그가 재발할 뻔했다 — `z-shell` 레이어 유수를
+  규칙 주석으로 못 박았다.
+- 타이틀바의 목 알림("데스크톱 빌드에서 동작합니다")도 `titlebar.desktopOnly` 키로 i18n 회수.
+
+### 증거
+
+- `npx tsc --noEmit` 통과, `npm run build` → `✓ built in 3.15s`.
+- `docs/evidence/evidence-titlebar-idle.png` / `evidence-titlebar-session.png` — 타이틀바
+  48px 크롭: 대기(마스트헤드+윈도우 컨트롤)와 라이브(세션 칩).
+- `fullmoon-launcher-*.png` 20장 최종 상태 재캡처 (01..08, 10 라이트, 11 영어, 20..23 뷰포트).
+- `verify.mjs` / `_theme-locale.mjs` / `_viewports.mjs` 전부 통과, h-scroll 프로브 음성.
+- 리뷰 게이트 수정 1건: 거래 창의 정렬 가정을 로컬로 강제 — 바인딩 계약은 순서를
+  못 박지 않으므로 `at` 내림차순 정렬 후 30건 슬라이스(ISO-8601 UTC 문자열 비교).
+  `tsc`/`build`/`verify.mjs` 재통과, 지갑 캡처 갱신.
+
+## 2026-09-02 · P5-R3 성능·모션·디스코드 연동 (피드 + 지갑 읽기), 출석 설계
+
+- **성능**: 원인은 CSS가 아니었다(blur/blend/drop-shadow 잔존 0건 확인). 주범은
+  skinview3d — 정지 피겨도 뷰어마다 표시 주사율 rAF를 돌린다. `Skin3D` 재작성:
+  정적 피겨(rotate=false·walk=false)는 웨이크 후 1.4초 뒤 `renderPaused=true`,
+  포인터 상호작용·케이프 교체·가시성 복귀 시에만 재가동, DPR 1.75 상한. 자동
+  회전은 플레이 스테이지 피겨만.
+- **모션**: transform/opacity 전용, 토큰 듀레이션 — 대시보드/플레이 `.stagger`
+  입장(280ms·12px·40ms 스텝), 탑바 제목 화면 전환 페이드(`key={screen}`),
+  세션 칩 scale-in. `prefers-reduced-motion` 전역 규칙이 전부 커버.
+- **패치노트 ↔ 디스코드**: 코어 `news.rs` 신설 —
+  `play.fullmoon.ink/feeds/patchnotes.json`을 3초 타임아웃으로 fetch → 실패 시
+  디스크 캐시 → 번들 카탈로그(빈 패널 금지). `NewsItem.url` 추가(디스코드 메시지
+  링크) — 소식 행/피처드 카드/벨 메뉴에서 DISCORD 배지와 함께 `openExternal`.
+  발행 절차(봇 → 웹 루트 JSON)는 `docs/patchnotes-feed.md` 계약으로 문서화.
+  봇 쪽 발행기는 박스 작업으로 후속.
+- **지갑 실데이터 (읽기)**: 실코어에 economy 커맨드가 아예 없어 Tauri 앱에서 지갑이
+  항상 비어 있었다. economy-api에 `GET /v1/accounts/by-mc/:username`(읽기 전용
+  기존 인증 벽 동일) 신설 — 라벨은 봇의 `cardTheme.txLabel`을 임포트(포크 금지).
+  러스트 `economy.rs` + `economy_wallet/transactions` 커맨드 등록. 자격은 앱 데이터
+  `economy.json` 파일(baseUrl+읽기 키) — 바이너리에 키를 싣지 않는다. 가짜 풀
+  테스트 3건 포함 16/16 통과.
+- **출석 클레임**: economy-api의 2026-07-12 읽기 전용 아키텍처 결정과 충돌하므로
+  코드가 아니라 설계로 제출 — `docs/economy-claim-design.md`. 핵심: MC 세션
+  증명(join/hasJoined) 인증, `ref_id=daily:<UTC날짜>` 공유로 두 표면이 하루
+  한 번을 자동 공유, 지급 로직은 봇의 `grant`를 순수 모듈로 추출해 공유(포크
+  금지), `ECONOMY_WRITE_MODE` 플래그 기본 off. **승인 후 구현 착수**.
+- 기타: `tauri.conf.json` devUrl 4173→5921 수정(깨진 개발 명령 복구).
+
+### 증거
+
+- `npx tsc --noEmit` 통과, `npm run build` 통과, `cargo check` 통과.
+- economy-api `node --test test/api.test.js` → 16/16 (by-mc 3건 신규 포함).
+- `verify.mjs` 12장 전수 통과 — 소식 탭 DISCORD 배지 확인
+  (`fullmoon-launcher-01d-dashboard-news.png`).
+- Tauri 앱 실동작: `tauri dev` 재실행, 컴파일 11.7초 클린.
+
+## 2026-09-02 · P5-R4 economy-api by-mc 라우트 프로덕션 배포
+
+런처의 지갑 읽기가 프로덕션에서 동작하려면 economy-api의 by-mc 라우트가 박스에 있어야
+한다. 배포·검증 증거:
+
+- 박스 실태: economy-api 유닛은 `/opt/mc-network/minecraft-server-project/economy-api`
+  에서 `node src/index.js` (node v22.23.1). 상대 임포트
+  `../../coin-bridge-bot/src/economy/cardTheme.js`는 같은 프로젝트 트리의 봇 카피를
+  가리킨다.
+- **배포 전 발견**: 박스의 cardTheme.js에는 `export function txLabel`이 없다 — 박스
+  봇 카피가 더 최신이라 txLabel이 `./txLabel.js`로 추출되고 cardTheme가 **재수출**한다
+  (`export { txLabel, txOrigin } from './txLabel.js'`). 즉 import 경로는 그대로
+  동작한다. (로컬 coin-bridge-bot 체크아웃이 박스보다 뒤처져 있음 — 별도 동기화
+  대상.) streakPolicy.js는 양쪽 md5 동일.
+- 절차: 백업(`server.js.bak-20260902-230726`) → scp(server.js + test/api.test.js) →
+  재시작 **전** 모듈 로드 스모크(SMOKE OK) → `systemctl --user restart economy-api`
+- 검증: 유닛 active · `/v1/health` 200 · by-mc 무키 401(인증 벽) · 실계정
+  (seoyeonsama)+키 200 — 잔액 5,603.8534원, 거래 30건, 첫 라벨 "플레이타임"
+  (2026-09-02T08:33Z 실시간 데이터).
+- 남은 운영자 작업: 런처 배포용 읽기 키 — `ECONOMY_API_CLIENTS`에 `launcher` 클라이언트
+  등록(또는 기존 키 재사용 결정) 후, 플레이어 PC의 앱 데이터에 `economy.json`
+  { baseUrl: "https://api.fullmoon.ink/economy", token } 배포.
+- 로컬 레포의 economy-api 변경은 미커밋 상태 — 커밋·푸시 필요(박스와 정합 유지).
+
+## 2026-09-02 · P5-R5 3D 피겨 철거 — 2D 스프라이트 렌더 (지연 제거)
+
+사용자 보고: "UI가 제깍제깍 따라와야 하는데 딜레이가 있음". 원인 확정 —
+skinview3d 뷰어(특히 플레이 스테이지의 autoRotate)가 rAF를 상시 점유해
+웹뷰 컴포지터·입력 처리를 밀어낸다. P5-R3의 render-pause는 정적 피겨만 구했고
+회전 피겨는 풀 루프 그대로였다. 사용자 제안대로 **3D를 철거하고 2D 정면 렌더로
+교체**한다.
+
+- **`Skin2D.tsx` 신설**: 스킨 텍스처의 스프라이트 영역을 CSS 배경으로 배치하는
+  정적 렌더 — 캔버스·WebGL·rAF 0. front(얼굴)/back(케이프) 뷰, 16×32 그리드
+  ×정수 스케일, `image-rendering: pixelated`. legacy 64×32 스킨은 오버레이
+  생략+좌측 다리 미러링으로 처리. 케이프는 뒷뷰에서 **몸 위로 드리움**(먼저
+  그리면 10유닛 전체가 몸·팔 뒤에 가려진다 — 첫 캡처가 잡은 결함).
+- **4개 서피스 교체**: 플레이(front, scale 11) · 대시보드 레일(front, 7) ·
+  계정 히어로(front, 8) · 코스메틱 스테이지(**back**, 10 — 케이프가 보이는
+  유일한 뷰). 걷기 토글·드래그 힌트·"실시간 렌더링" 라벨은 2D에서 거짓말이
+  되므로 삭제(키 포함).
+- **번들**: three.js+skinview3d가 그래프에서 빠지며 index 청크
+  780.75 kB(gzip 215.81) → **274.78 kB(gzip 88.02)**, −65%.
+  `Skin3D.tsx`/`PlayerRender.tsx`(미사용) 삭제는 승인 대기열 — 승인 후
+  `npm uninstall three skinview3d @types/three` 예정.
+- **지연 보험 2건**: 화면 전환 `startViewTransition`(전체 창 스냅샷) 제거 —
+  CSS 입장 애니메이션으로 충분 · `.game-backdrop`에 `translateZ(0)` 레이어
+  승격 — 스크롤이 하늘을 다시 그리지 않게.
+
+### 증거
+
+- `npx tsc --noEmit` 통과, `npm run build` 통과(청크 274.78 kB 확인).
+- `verify.mjs` 12장 통과 — `fullmoon-launcher-01-play.png`(2D 정면 피겨),
+  `fullmoon-launcher-03-cosmetics.png`(케이프 드레이프 확인).
+- Tauri 앱 실동작(HMR로 즉시 반영).
+- 리뷰 게이트 수정 3건(Skin2D): ① BACK 뷰 좌표 오류 — 머리 뒷면 (16,8)→(24,8), 몸통 뒷면 (20,32)→(32,20), 오버레이 뒷면들, 왼팔 뒷면 (40,52)→(44,52) 등 표준 64×64 레이아웃으로 전면 교정(기존 좌표는 옆면/타 영역을 잘라냄) ② legacy 미러링 — 오른팔 원본 복사본까지 미러링한 비일관성 제거(왼쪽 복사본만 미러) ③ 죽은 `canvas` 셀렉터 3곳 → `> div` — 지면 그림자가 피겨 발 위에 페인트되던 회귀 수정. 검증: 케이프 미장착 상태의 뒷토르소를 직접 캡처(`evidence-backview-unequipped.png` — 셔츠 뒷면 확인), 장착 상태 드레이프(`evidence-backview-equipped.png`).
+
+## 2026-09-03 · P5-R6 원클릭 셰이더 통합 (feat/easy-shaders 체리포트)
+
+`feat/easy-shaders`의 커밋 5c3123c("one-click Iris and Complementary shaders")를 현재
+브랜치로 포팅했다. 작업 트리가 오늘의 대개편으로 지저분하므로 cherry-pick 대신
+`git apply --3way`(영향 파일 선스테이징)로 통합하고, 충돌 3건(commands.rs 임포트,
+package.json test 스크립트, paths.rs 헬퍼 블록)을 수동 해결했다.
+
+- **기능**: 모드 화면의 "한 번에 설치" → Iris+Sodium+Complementary Reimagined를
+  Modrinth에서 해석·다운로드(게임 버전+로더 매칭, sha1 검증) → `config/iris.properties`
+  기록으로 다음 실행부터 팩 적용. Iris는 카탈로그에서 기본 off(`defaultEnabled: false`
+  + `defaults_seeded` 시딩으로 apply가 되살리지 않음) — 원클릭이 켜는 유일한 경로.
+- **통합 메모**: 박스와 로컬의 cardTheme 드리프트와 무관하게 셰이더 경로는 Modrinth
+  직접 조회라 영향 없음. paths.rs의 미사용 `MOD_NAMESPACE`/`instance_mod_config_dir`
+  (이 브랜치에는 아직 쓰는 곳 없음)는 제거하고 경고 0으로.
+- **검증**: `cargo check` 경고 0 · `npm test`(shaders-contract) 2/2 · `tsc` 통과 ·
+  `npm run build` 통과 · `verify.mjs` 통과 — `fullmoon-launcher-02-mods.png`에서
+  "한 번에 설치" 배너 + Iris 카드(미설치·off) 확인.
+
+## 2026-09-05 · P5-R7 사이트 인터랙션 레이어 + 3D 잔재 철거
+
+P5-R…R6이 디스크에만 있던 상태를 정리하는 세션. 88개 dirty 엔트리와 `git apply --3way`가
+남긴 `UU` 3건(`package.json`·`paths.rs`·`commands.rs`)을 읽고 해결해 `6e63136`으로 먼저
+체크포인트했고, 그 위에 사이트 슬라이스와 승인 대기 항목을 얹었다.
+
+- **`site/assets/site.js` 신설(192줄)**: 다섯 페이지가 공유하는 단일 스크립트 —
+  읽기 진행 바, 스태거 reveal, 같은 페이지 앵커 scrollspy, 코드 블록 복사 버튼,
+  커서 스포트라이트, 별밭+히어로 달무리. 전부 `html.js` 게이트 뒤이고
+  `prefers-reduced-motion`에서 모션 채널 둘 다 off. reveal은 `transitionend`에서
+  자기 클래스(`reveal`/`in`)와 인라인 `transition-delay`를 스스로 제거한다 —
+  안 그러면 이후 hover 트랜지션을 하이재크한다(900ms 폴백은 탭 전환 누락 대비).
+- **`launcher/scripts/_sitejs.mjs` 신설**: 5페이지 × 1440/768/320px 실측. 스크린샷이
+  못 잡는 두 결함을 노린다 — (1) reveal이 안 돌면 DOM은 완벽한데 화면이 `opacity: 0`,
+  (2) `html`/`body`의 `overflow-x: clip`이 `scrollWidth`를 눌러서 자식이 뷰포트 밖에
+  걸려도 h-scroll 프로브는 깨끗하게 읽는다. 그래서 요소별 `getBoundingClientRect`로
+  재고, **조상 중 스크롤 가능한 게 없을 때만** 결함으로 센다(그 walk이 없으면 모바일
+  nav 스크롤러와 `<pre>` 안의 하이라이트 span까지 6건 오보한다).
+- **결함 1건 실측 후 수정**: `.file-ref`가 320px에서 잘렸다 — 60자 Java 경로를
+  줄바꿈 규칙 없는 `inline-block`에 넣어서, clip이 자르고 스크롤로 닿을 방법도 없다.
+  `max-width: 100%` + `overflow-wrap: anywhere`(이 파일의 제목 규칙과 같은 관용구).
+  달무리는 wrap 밖으로 삐져나오는 게 의도이므로 `data-bleed`로 명시.
+- **카피를 트리에 맞춤**(마지막으로 센 시점이 아니라): `commands.rs` 선언·등록
+  모두 43개(37 아님) · `src-tauri` 22모듈 5,283줄(19/4,500 아님) · 계약은
+  `PinionCore` 41개 메서드이고 `bindings.ts` 스니펫의 시그니처 4개가 전부 틀려서
+  파일의 실제 다섯 줄로 교체 · "0개 외부 에셋 다운로드, Mojang 원본만"은 처음부터
+  거짓이었고 이 브랜치가 더 키웠다(모드는 Modrinth·Fabric maven, 셰이더는 Iris와
+  재배포 금지 팩) → 런처가 설치하는 범위를 규정하는 카탈로그 5개로 교체하고,
+  `trust.html`의 설치 후 다운로드 목록을 3종 → 4종으로 고쳐 Iris와 셰이더 팩을 명시.
+- **`Skin3D.tsx`/`PlayerRender.tsx` 삭제 + `npm uninstall three skinview3d @types/three`**:
+  P5-R5의 승인 대기 항목. 두 파일을 import하는 곳 0건, `three`/`skinview3d`를
+  import하는 곳 0건을 먼저 확인했다. `node_modules` 207M → 138M. 번들은 그대로다 —
+  청크에서 빠진 건 P5-R5의 import 제거 시점이고(780.75 → 274.78 kB), 이번엔
+  설치 용량과 신뢰해야 할 의존성 3개가 줄었다. `docs/evidence/README.md`의
+  P5-R2 항목이 가리키던 `Skin3D`의 `label` prop은 `Skin2D`가 그대로 들고 있어
+  참조만 고쳤다.
+
+### 증거
+
+- `node scripts/_sitejs.mjs` → `site interaction layer: all clean`, 15/15 조합
+  (수정 전 3건 BAD: 768/320px `div.moonglow`, 320px `mod` `span.file-ref` ×4).
+- 320px `mod.html` 캡처 — 경로 칩이 컬럼 안에서 3줄로 감기고 우측 끝 296 ≤ 320.
+- 카피 수정의 근거를 트리에서 확인: `Ui.MOON`=0xFFF5D06E ↔ `tokens.css --moon-300`
+  =#F5D06E, `Ui.INK`=0xFF0B101F ↔ `--bg`=#0B101F(mod.html의 단일 팔레트 주장 성립) ·
+  `WarpScreen`이 선택 행에 `Ui.MOON` 2px 규칙을 채우고 푸터가 "서버 응답 대기…" ·
+  `BRIDGE.md`에 welcome timeout 5s와 쿨다운 4000ms · `FullmoonBridge`의 페이로드는
+  `writeByteArray` 한 번(varint 길이 + JSON 객체 하나).
+- 철거 후 게이트: `npx tsc --noEmit` exit 0 · `npm run build` exit 0(index 청크
+  279.11 kB) · `shaders-contract` 2/2 · `verify-tokens.mjs` 82파일 리터럴 0.
+
+## 2026-09-06 · 런처 UI 라인과 main 통합
+
+P5-R…R7이 `main`에서 28커밋 뒤처진 브랜치에만 있던 상태를 끝낸다. `origin/main`
+(`47784dd`, PR #5 머지)을 `feat/i3-p5-launcher-ui`로 머지했고 충돌 12건이 났다.
+해결 정책은 하나 — **main 쪽이 테스트된 계약이나 실제로 실린 마크업을 들고 있으면
+main이 이긴다.** 내 쪽이 더 새로워서가 아니라 그게 트리에 체크인된 약속이기 때문이다.
+
+- **`shell.css` + `AtmosphericBackdrop.tsx` → main**: 내 쪽은 블룸 둘과 `.nebula-sky`
+  레이어였는데, `scripts/shell-layering.test.ts`가 `nebula-layer` **1개**와
+  `.game-backdrop { z-index: -1 }`, `.app { isolation: isolate }`를 정확히 단정한다.
+  main의 테스트를 고치는 게 아니라 내 레이어를 뺐다. 안 쓰게 된 `--z-backdrop`
+  토큰도 elevation 어휘에서 제거(`--z-shell: 1` … `--z-grain: 999`는 그대로).
+- **`screens.css` → main 양쪽 다**: 머지된 `HudEditor.tsx`가 origin/main과
+  바이트 동일하고 `hud-plane`·`hud-zone`·`hud-vanilla`·`hud-plane-empty`를 쓴다.
+  즉 스타일시트와 마크업 둘 다 main 것이어야 짝이 맞는다.
+- **`paths.rs`**: main의 `MOD_NAMESPACE`/`instance_mod_config_dir` 헬퍼를 살리고
+  (P5-R6에서 "쓰는 곳 없어서" 지웠던 그 코드가 main에서는 쓰인다) 셰이더 경로
+  둘(`instance_shaderpacks_dir`, `instance_iris_properties`)만 그 옆에 접었다.
+  HUD·코스메틱 파일은 main대로 `config/fullmoon/`로 간다.
+- **`site/launcher.html`·`site/trust.html` → main의 해요체 + 내가 고친 수치**:
+  P5-R7에서 센 41개 메서드와 4종 다운로드 목록을 main의 목소리에 실었다.
+- **양쪽이 추가만 한 곳은 합집합**: `package.json` 테스트 7개(전부 디스크에 존재
+  확인), `main.rs`의 `mod news` + `mod offline`, `commands.rs` import(`store`는
+  이미 다음 줄에 있어서 넣으면 중복이었다), `Accounts.tsx` import(`Skin2D` 259행,
+  `LOCAL_TEST_USERNAME` 395·409행에서 실제 사용, 미사용 `Empty`는 버림),
+  `DEVLOG.md`와 `evidence/README.md`는 각 파일의 정렬 순서대로.
+- **main이 참조하지만 정의된 적 없는 이름 2개**: `--raised` → `--surface`,
+  `--status-warn` → `--warning`. 머지가 깨뜨린 게 아니라 origin/main의
+  `screens.css`가 처음부터 그랬다 — 클래스·변수 전수 감사에서 잡혔다.
+
+### 남은 계약 불일치 (이 머지가 만든 게 아니라, 이 머지로 보이게 된 것)
+
+`i3/mod`(`dev.fullmoon.client`, id `fullmoon`)는 `ci.yml`·`release.yml` 어디에도
+없다. 빌드·배포되는 건 `pinion-mod`(`dev.pinion`, id `pinion`) 하나뿐이다.
+그런데 main의 `paths.rs`는 런처가 쓰는 `hud.json`·`cosmetics.json`을
+`config/fullmoon/`에 두는데, 그 경로를 읽는 쪽은 `i3/mod`다. 실제로 실리는
+`pinion-mod`는 게임 디렉터리 기준 `pinion/hud.json`을 읽는다. **계약의 두 끝이
+만나지 않는다** — 런처가 쓴 HUD 레이아웃은 배포되는 모드가 열지 않는다.
+어느 쪽으로 맞출지(CI에 `i3/mod`를 넣을지, `paths.rs`를 `pinion`으로 돌릴지)는
+모드 하나로 합칠지와 같은 결정이라 사용자 몫으로 남긴다.
+
+### 증거
+
+- `npx tsc --noEmit` exit 0 · `cargo check` exit 0 (13.53s, 경고 0).
+- 계약 테스트 7파일 **40 pass / 0 fail** — `shell-layering`의 단정 둘 포함.
+- `npx vite build` exit 0 (76 모듈) · `verify-tokens.mjs` 110파일 리터럴 0 ·
+  `./gradlew -p i3/mod --offline test jacocoTestCoverageVerification` BUILD SUCCESSFUL.
+- `node launcher/scripts/_sitejs.mjs` → 15/15 ok, `site interaction layer: all clean`.
+- `node scripts/verify.mjs` 라이브 → 14샷,
+  `FULLMOON LAUNCHER VERIFICATION COMPLETED SUCCESSFULLY`. 해결한 충돌을 덮는 4장을
+  `i3/docs/evidence/merge-*.png`로 남겼다 — 백드롭 레이어링, HUD 에디터, `--surface`,
+  `--warning`.

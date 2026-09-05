@@ -101,10 +101,6 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 .plate:hover::before { transform: translate(5px, 5px); }
 
-/* view transitions — settle, don't drift */
-::view-transition-old(root) { animation: fade-out var(--dur-fast) var(--ease-standard); }
-::view-transition-new(root) { animation: fade-in var(--dur-base) var(--ease-standard); }
-
 /* ── keyframes: the permitted set ─────────────────────────── */
 
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

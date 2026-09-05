@@ -22,6 +22,7 @@ export function Button({
   loading = false,
   children,
   className = "",
+  disabled,
   ...rest
 }: {
   variant?: BtnVariant;
@@ -29,10 +30,13 @@ export function Button({
   icon?: IconName;
   loading?: boolean;
 } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  /* disabled is computed once and kept OUT of the spread — spreading rest after
+     it used to hand the attribute back as undefined and re-enable a loading
+     button mid-request */
   return (
     <button
       className={`btn btn-${variant} btn-${size} ${className}`}
-      disabled={rest.disabled || loading}
+      disabled={disabled || loading}
       {...rest}
     >
       {loading ? <span className="spinner" /> : icon ? <Icon name={icon} size={size === "sm" ? 14 : 16} /> : null}
@@ -223,7 +227,7 @@ export function Modal({
     >
       <div className="modal" style={{ width }} ref={ref} role="dialog" aria-modal>
         <div className="modal-head">
-          <h3>{title}</h3>
+          <h2>{title}</h2>
           <IconButton icon="x" label="close" onClick={onClose} />
         </div>
         <div className="modal-body">{children}</div>

@@ -8,6 +8,7 @@
 <meta name="description" content="풀문 클라이언트의 배포 방식. GitHub Release, SHA256SUMS, 태그 빌드, 서명된 업데이트.">
 <meta name="theme-color" content="#0d1226">
 <link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 
@@ -60,13 +61,15 @@
     <h2>설치 파일에 넣는 것과, 나중에 받는 것</h2>
     <p>
       우리가 만들었거나 골라 넣은 것(모드 jar, 리소스, 폰트, 뉴스 글)은 설치
-      파일 하나에 들어 있어요. 런처가 설치 후에 따로 받는 것은 아래 세 가지예요.
+      파일 하나에 들어 있어요. 런처가 설치 후에 따로 받는 것은 아래 네 가지예요.
     </p>
     <ol>
       <li><b>Minecraft 본체와 에셋</b> — Mojang CDN에서 받고, Mojang이 공개한
         SHA1으로 확인해요. 원본을 우리가 실을 수 없어서 이렇게 받아요.</li>
-      <li><b>Fabric Loader / API, Sodium, Lithium</b> — 각자 공식 배포처에서
-        받아요. 우리가 고쳐서 다시 올리지 않아요.</li>
+      <li><b>Fabric Loader / API, Sodium, Lithium, Iris</b> — 각자 공식
+        배포처에서 받아요. 우리가 고쳐서 다시 올리지 않아요.</li>
+      <li><b>쉐이더 팩</b> — 재배포가 금지된 원본이라 설치 파일에 넣지 않고,
+        쉐이더를 켤 때 공식 배포처에서 받아요.</li>
       <li><b>뉴스 JSON</b> — 정적 텍스트 파일이에요.</li>
     </ol>
     <p>

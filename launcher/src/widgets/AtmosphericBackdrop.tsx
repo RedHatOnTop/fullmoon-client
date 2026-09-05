@@ -6,20 +6,19 @@ interface Star {
   left: string;
   size: number;
   opacity: number;
-  duration: string;
-  delay: string;
 }
 
+/* The night sky the client is named after: one navy depth, one moonlit
+   bloom, and stars that hold still. Nothing here moves — the wallpaper's
+   job is to make the foreground readable, never to ask for a glance. */
 export function AtmosphericBackdrop() {
   const stars: Star[] = useMemo(() => {
-    return Array.from({ length: 42 }, (_, i) => ({
+    return Array.from({ length: 56 }, (_, i) => ({
       id: i,
       top: `${(i * 19.7) % 94}%`,
       left: `${(i * 23.3) % 98}%`,
-      size: (i % 3 === 0 ? 2.5 : (i % 2 === 0 ? 1.8 : 1.2)),
-      opacity: 0.25 + (i % 5) * 0.15,
-      duration: `${3 + (i % 4) * 1.5}s`,
-      delay: `${(i % 7) * 0.8}s`,
+      size: i % 3 === 0 ? 2 : i % 2 === 0 ? 1.5 : 1,
+      opacity: 0.18 + (i % 5) * 0.11,
     }));
   }, []);
 
@@ -38,15 +37,12 @@ export function AtmosphericBackdrop() {
               width: `${s.size}px`,
               height: `${s.size}px`,
               opacity: s.opacity,
-              animationDuration: s.duration,
-              animationDelay: s.delay,
             }}
           />
         ))}
       </div>
 
       <div className="backdrop-vignette" />
-      <div className="backdrop-grid" />
     </div>
   );
 }

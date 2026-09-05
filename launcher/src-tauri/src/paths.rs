@@ -87,6 +87,14 @@ pub fn instance_mods_dir(id: &str) -> PathBuf {
     instance_minecraft_dir(id).join("mods")
 }
 
+pub fn instance_shaderpacks_dir(id: &str) -> PathBuf {
+    instance_minecraft_dir(id).join("shaderpacks")
+}
+
+pub fn instance_iris_properties(id: &str) -> PathBuf {
+    instance_minecraft_dir(id).join("config").join("iris.properties")
+}
+
 /// The mod's own namespace (`fabric.mod.json` id), which is what FabricLoader puts under
 /// `config/` — not the launcher's brand slug, even where the two read the same.
 const MOD_NAMESPACE: &str = "fullmoon";
