@@ -8,6 +8,7 @@
 <meta name="description" content="풀문 클라이언트의 배포 신뢰 모델 — 단일 배포 경로, SHA256SUMS, 태그 빌드, 서명된 OTA.">
 <meta name="theme-color" content="#0d1226">
 <link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 
@@ -62,15 +63,17 @@
     <h2>번들 원칙: 예외는 Mojang뿐</h2>
     <p>
       우리가 만들었거나 골라 넣은 것 — mod jar, 리소스, 폰트, 뉴스 카피 — 는
-      전부 설치 파일 하나에 번들된다. 런처가 설치 후 추가로 받는 것은 세
+      전부 설치 파일 하나에 번들된다. 런처가 설치 후 추가로 받는 것은 네
       종류뿐이다.
     </p>
     <ol>
       <li><b>Minecraft 본체와 에셋</b> — Mojang CDN에서 받고, Mojang이 공표한
         SHA1으로 검증한다. 재배포가 금지된 원본이라 우리가 실을 수 없고, 그래서
         검증해서 받는다. 이 예외는 문서로 못박혀 있다.</li>
-      <li><b>Fabric Loader / API, Sodium, Lithium</b> — 각자의 공식 배포처에서
-        받는다. 우리가 만지지 않는다.</li>
+      <li><b>Fabric Loader / API, Sodium, Lithium, Iris</b> — 각자의 공식
+        배포처에서 받는다. 우리가 만지지 않는다.</li>
+      <li><b>쉐이더 팩</b> — 재배포가 금지된 원본이라 번들하지 않고, 쉐이더를
+        켤 때 공식 배포처에서 받는다.</li>
       <li><b>뉴스 JSON</b> — 정적 파일. 내용은 텍스트다.</li>
     </ol>
     <p>

@@ -8,6 +8,7 @@
 <meta name="description" content="풀문 네트워크 전용 마인크래프트 클라이언트의 소스 해설. 런처와 인게임 mod, 두 조각이 어떻게 서버와 대화하는지 코드를 따라 걷는다. GPL-3.0, 전체 소스 공개.">
 <meta name="theme-color" content="#0d1226">
 <link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
 </head>
 <body>
 
@@ -64,7 +65,7 @@
         <div class="tree-line dir">launcher/</div>
         <div class="tree-line">├ <span class="f">src/</span> — React UI (screens, state, widgets)</div>
         <div class="tree-line">├ <span class="f">src/core/bindings.ts</span> — UI↔core 유일한 접점</div>
-        <div class="tree-line">└ <span class="f">src-tauri/</span> — Rust core (4,500줄, 19 모듈)</div>
+        <div class="tree-line">└ <span class="f">src-tauri/</span> — Rust core (5,283줄, 22 모듈)</div>
         <div class="tree-line dir">pinion-mod/</div>
         <div class="tree-line">├ <span class="f">hud/</span> — HUD·설정 GUI·코스메틱</div>
         <div class="tree-line">└ <span class="f">bridge/</span> — 서버 채널 클라이언트</div>
@@ -84,9 +85,9 @@
         </p>
         <h3>숫자로 보는 규모</h3>
         <ul class="facts">
-          <li><b>37</b>개 Tauri 명령 — 계약의 전부, <code>commands.rs</code> 한 파일에</li>
+          <li><b>43</b>개 Tauri 명령 — core가 노출하는 전부, <code>commands.rs</code> 한 파일에</li>
           <li><b>1</b>개 채널 페이로드 — varint 프레임 + JSON 한 객체</li>
-          <li><b>0</b>개 외부 에셋 다운로드 — Mojang 원본만, SHA1 검증해서</li>
+          <li><b>5</b>개 카탈로그 모드 — 런처가 설치하는 모드는 이 목록뿐이다</li>
         </ul>
       </div>
     </div>
