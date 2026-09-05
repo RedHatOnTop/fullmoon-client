@@ -493,6 +493,621 @@ Tauri v2 백엔드 상에서 모장 버전 매니페스트 파싱, 자산/라이
 
 
 
+## 2026-08-30 · P6 versioned Paper channel and truthful server HUD
+
+P6 resumes client work without touching the concurrent launcher worktree. It introduces a
+versioned `fullmoon:v1` Fabric custom payload, an immutable bridge state machine, measured Paper
+health in the existing TPS chip, and a restrained server notice overlay.
+
+- `network/BridgeProtocol` defines typed hello, welcome, HUD sync, and notice messages. It accepts
+  the Minecraft byte-array frame or bare fixture JSON, limits the payload to 32,767 bytes, and
+  validates every version, revision, metric, string length, severity, and duration before state
+  can change.
+- `network/BridgeState` owns the five-second handshake fallback, protocol compatibility, monotonic
+  HUD revisions, five-second metric freshness, and expiring notice state through immutable record
+  replacement.
+- `network/FullmoonChannel` registers the Fabric codecs and lifecycle callbacks, sends the actual
+  installed mod version on join, clears state on disconnect, and logs handshake boundaries without
+  logging every steady-state metric at info level.
+- `hud/ServerTickHud` now displays Paper-owned TPS and tick time. It renders `—` when the channel is
+  absent, incompatible, or stale; only the editor retains a labelled demonstration value.
+- `hud/ServerNoticeOverlay` fits two lines into a flat, token-only strip with a two-pixel semantic
+  severity rule. It adds no icon, gradient, motion, sound, or action.
+
+### Test-first evidence
+
+The first targeted test run was red because the production types did not exist. The compiler
+reported, among the expected missing-type errors:
+
+```text
+BridgeStateTest.java:114: error: cannot find symbol
+symbol:   class BridgeState
+BUILD FAILED in 15s
+GRADLE_EXIT=1
+```
+
+After implementation, the protocol and state suites passed. Edge-case tests cover framed and bare
+payloads, malformed JSON, oversized input, fractional and out-of-range numbers, notice bounds,
+protocol mismatch, stale metrics, duplicate revisions, notice expiry, and handshake timeout.
+JaCoCo verification now enforces at least 80% line and branch coverage over `SettingSearch`,
+`BridgeProtocol`, and `BridgeState` rather than reporting coverage without a gate. The final full
+run executed 180 tests with 0 failures, errors, or skips. The gated class set reached 97.99% line
+coverage and 93.63% branch coverage.
+
+### Executed Paper flow
+
+A temporary Paper bridge fixture on local port 25566 sent the server's measured TPS and average tick
+time once per second, then sent notice `p6-roundtrip-dusk`. The client log records:
+
+```text
+[12:44:35] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[12:44:36] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[12:44:37] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 HUD revision 1 (19.749744571037354 TPS, 3.8701057899999998 ms)
+[12:44:46] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 notice p6-roundtrip-dusk
+```
+
+The matching server log records the Fullmoon 3.0.0 hello, HUD revision 1, and the same notice ID.
+`docs/evidence/p6-live-channel-960x540.png` shows the resulting notice and `TPS 20.0 · 2.2 ms` in
+the real client. `p6-live-channel-320x180.png` verifies the compact GUI width. The fixture held the
+overworld at dusk tick 13000 with clear weather during both captures.
+
+A second run used protocol 0 and intentionally sent no welcome. The client remained playable and
+recorded the exact fallback boundary:
+
+```text
+[12:46:40] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[12:46:45] [Render thread/INFO] (Fullmoon/Channel) No fullmoon:v1 welcome within 5 seconds; using vanilla fallback
+```
+
+`docs/evidence/p6-legacy-fallback-960x540.png` shows the user-visible result: no error toast and
+`TPS —`. The installed bridge JAR was restored to its pre-test SHA-256
+`db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, and the local server was
+stopped after capture.
+
+The first ambience fixture incorrectly applied world time to every loaded dimension. Paper rejected
+the clockless dimension with this exact exception:
+
+```text
+java.lang.IllegalArgumentException: Cannot set time in world without world clock
+at org.bukkit.craftbukkit.CraftWorld.setFullTime(CraftWorld.java:813)
+```
+
+That capture was discarded. The fixture was narrowed to the overworld, restarted without the task
+exception, and all three committed frames were captured from the corrected run.
+
+### Runtime noise observed
+
+The offline development client still emitted these unrelated Microsoft/Realms authentication
+failures while loading the local world:
+
+```text
+Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+```
+
+The server also emitted this unrelated lobby-build warning:
+
+```text
+[LobbyMotion] fast-travel pad is not standable: moon_room
+```
+
+Neither error interrupted the local join, protocol exchange, HUD update, notice display, or legacy
+fallback. The full Hallmark audit and contrast evidence are in
+`docs/evidence/p6-hallmark-audit.md`.
+
+## 2026-08-30 · P7 native server route ledger
+
+P7 completes the client half of the existing `fullmoon:v1` warp contract without modifying the
+concurrent launcher worktree or the production Paper source.
+
+- `BridgeProtocol` now validates complete waypoint snapshots, rejects duplicate or malformed route
+  IDs, bounds coordinates and copy, decodes `waypoint_sync`, `tp_result`, and `screen_open`, and
+  emits `tp_request` with only the server-owned route ID.
+- `BridgeState` immutably replaces route snapshots, admits one known request at a time, applies only
+  a matching server result, exposes a bounded outcome, and turns a silent request into a timeout.
+- `FullmoonChannel` opens the native route screen only after a compatible handshake, sends requests
+  through the registered Fabric payload, refreshes an open screen after a full snapshot update, and
+  converts local send failure into the same visible outcome path.
+- `WarpScreen` is a token-only master-detail ledger with all live distances, one primary request
+  action, a persistent keyboard ring, explicit server-authority copy, and no icons, gradients,
+  motion, purple, or fabricated destination description.
+- `ListPanel` now bounds a restored scroll origin to the viewport. The live selection capture found
+  that selecting row three in a six-row list hid rows one and two even though all six fit; the final
+  capture and regression test verify the correction.
+
+### Test-first evidence
+
+The first protocol/state run failed before implementation with the expected missing contract:
+
+```text
+BridgeStateTest.java:199: error: cannot find symbol
+symbol:   class Waypoint
+location: class BridgeProtocol
+51 errors
+BUILD FAILED in 1s
+```
+
+The route ordering/distance test then failed with three missing `WarpRoutes` symbols, and the visual
+regression produced two missing `ListPanel.boundedFirst` symbols before their implementations were
+added. The final `./gradlew clean check` run executed 193 tests with zero failures, errors, or
+skips. The gated protocol, state, search, and route classes reached 94.76% line coverage and 84.75%
+branch coverage.
+
+### Executed Paper flow
+
+A temporary Paper fixture used the production bridge source, called its existing
+`openWarpScreen` method after handshake, and delayed the production request handler by 80 ticks so
+the waiting state could be captured. The client log records:
+
+```text
+[15:15:06] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[15:15:06] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[15:15:07] [Render thread/INFO] (Fullmoon/Channel) Opened fullmoon:v1 warp screen
+[15:15:24] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request palace_gate
+[15:15:28] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result palace_gate (accepted)
+```
+
+The server accepted the same ID and logged `warp Player969 -> palace_gate`. The selected, pending,
+accepted, and 640×360 compact frames are committed under `docs/evidence/p7-warp-*.png`. The fixture
+held the overworld at dusk tick 13000 with clear weather. The installed bridge was restored to
+SHA-256 `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, and both Paper ports were
+closed after capture.
+
+The shipped Paper plugin exposes `openWarpScreen` but currently has no production caller. That
+server-side trigger is explicitly unverified and unchanged; this phase verifies the complete
+client behavior when the protocol event arrives.
+
+## 2026-08-30 · P8 in-game map
+
+P8 draws the terrain the client already has and the routes the server already published, and refuses
+to draw anything else. It adds no packet: `welcome` carries the waypoint snapshot, so the map reads
+the same `BridgeState` the route ledger reads.
+
+- `MapViewport` is the whole coordinate contract — five declared survey scales (1, 2, 4, 8, 16 blocks
+  a cell), cell/world projection in both directions, cell panning, and cursor-anchored zoom that
+  recentres so the block under the pointer keeps its pixel. It rejects a NaN or infinite centre, an
+  undeclared scale, and a zero-sized raster.
+- `TerrainSnapshot` carries what the sampler found as run-length rows, and reports the fraction of the
+  frame that is real. `TerrainSample` pairs it with the fact that a column was outside the client
+  cache, so an unmapped cell draws as grid rather than as invented ground.
+- `TerrainSampler` reads the client's own loaded chunks through `getMapColor` and has no unit test,
+  because it needs a live `ClientLevel`. The committed frames are the only evidence it has, and the
+  footer percentage in each one is the claim it makes.
+- `MapMarkers` places the published routes into raster cells and, new in this pass, blanks the labels
+  that would land on a kept one. Ledger order decides who keeps the name, and the ring stays on every
+  marker: a coarse scale costs names, never destinations. The label box is injected as a `LabelBox`
+  because `Typeset.width` needs a running client, the same reason `Clipboard` is an interface.
+- `WorldNames` matches a server-published world against the dimension the player is standing in, so
+  the plane never marks a route belonging to another world.
+- `MapScreen` is the master-detail surface: plane on the left, position and route rail on the right,
+  arrow panning, wheel and `±` zoom, `R` back to the player. Clicking a rail row centres the plane on
+  that route and requests no teleport. A rail too short to list every route now prints `목록 밖 2개`
+  instead of truncating in silence.
+- `MapCanvas` draws the plane and stays shaped for a HUD minimap, which is not in this phase.
+
+### What the captures corrected
+
+Three findings came from the rendered frames rather than from the tests:
+
+- At `칸당 8블록` three route names overprinted into an unreadable smear. Fixed in pure
+  `MapMarkers.declutter`; `MapMarkersTest` covers the blanking order and the empty-label case, and the
+  survey frame shows six rings with four names.
+- The rail listed as many rows as fit and said nothing about the rest while the heading still counted
+  six. It now admits the loss.
+- Light ink on a near-white palace wall was a guess. Each label now draws its own plate at the same box
+  the collision test uses, which is why the committed frames are this phase's third capture pass.
+
+The regression tests for the first two were written with the fixes, not before them; the frames are
+what failed first.
+
+### Gates on the committed tree
+
+```text
+./gradlew -p . test jacocoTestCoverageVerification   → 212 tests, 0 failures, 0 errors, 0 skipped
+node design/verify-tokens.mjs                        → scanned 104 file(s)
+                                                       no colour or motion literals outside the token block
+```
+
+The gated core is 95.78% line and 88.50% branch in aggregate. Every gated map class is at 100% of
+both: `MapViewport` 32/32 lines and 12/12 branches, `MapMarkers` 22/22 and 24/24, `TerrainSnapshot`
+26/26 and 24/24, `TerrainSample` 6/6 and 4/4, `WorldNames` 9/9 and 12/12.
+
+### Executed Paper flow
+
+Two sessions against the local Paper server, one per window size, with the shipped bridge and no
+fixture. The client log records the map's own provenance:
+
+```text
+[17:26:32] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[17:27:28] [Render thread/INFO] (Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+```
+
+against Paper's `[FullmoonBridge] handshake ok: Player280 (client=fullmoon v3.0.0, proto 1) — 6
+waypoint(s)`. The pairing goes further than the count: Paper logged the join at
+`([minecraft:overworld]502.5, 72.0, -16.5)`, the map centres on the player when it opens, and the rail
+reads `503 -17`.
+
+The zoom pair is arithmetic a reader can redo. The pointer sat at GUI (337, 295), which is cell
+(104, 74) of the 226×140 raster; at `칸당 8블록` around centre (499, −20) that cell holds world
+(431, 16); one notch in must therefore centre on 431 − (104 − 112.5) × 4 = 465 and
+16 − (74 − 69.5) × 4 = −2. `p8-map-zoom-960x540.png` reads `465 -2`.
+
+The six frames are committed under `docs/evidence/p8-map-*.png` with the two log extracts and
+`docs/evidence/p8-hallmark-audit.md`. Nothing was installed on the server, so nothing was restored;
+Paper was stopped after the second set.
+
+## 2026-08-30 · P9 warp from the map
+
+The map stops being a read-only instrument. The routes it already marked are how a player asks to be
+moved, over the request P7 defined — the client still owns no teleport, and the server still answers
+with an id, an `ok` and a reason.
+
+This supersedes one sentence of P8: "the map asks for no teleport of its own". P8's captures and its
+audit stand as taken. `PLAN.md` answers that sentence in a new phase instead of editing the phase it
+was true for, and the three Hallmark gates whose answers change — 15, 17 and 46 — are answered again
+in `docs/evidence/p9-hallmark-audit.md`.
+
+- `MapMarkers.at` hit-tests in cell space: the nearest marker inside the radius wins and ledger order
+  breaks a tie. Two markers a player cannot separate at `칸당 16블록` have to resolve the same way every
+  frame, because a hint that names one route while a click chooses another is a surface lying about
+  where the pointer is.
+- `WarpRoutes.reasonKey` now holds the denial vocabulary. It was a seven-arm `switch` inside
+  `WarpScreen`; the map asks for the same warp over the same channel, and a vocabulary copied into two
+  screens is a vocabulary that drifts in one of them. Membership in a `List` rather than a string
+  `switch`, because a multi-label string switch compiles to a hashCode lookup plus `equals` chains
+  whose false arms are unreachable, and a gated class cannot reach 100% branch through them.
+- `MapScreen` grew the pointer half of the contract: a hint naming the marker under the cursor and its
+  coordinates, a click that chooses the marker where it stands, a rail row that still centres on what
+  it picks, an action band carrying the one confirm action, and `Enter` as its keyboard road.
+  `HIT_CELLS` is 2.5 — the outer ring `MapCanvas` draws around a chosen marker — so the target is the
+  ring a player can see, not the block under it.
+- A choice outlives every viewport move. Panning away from a destination is not changing your mind
+  about it, so pan, zoom and `R` no longer clear it; the rail row stays lit and the marker stays ringed
+  however far off frame it goes.
+- `MapCanvas.draw` takes a `Marks` record instead of a list and a flag, and `raster` and `plot` became
+  public, because a surface that hit-tests a ring has to round the way the ring was drawn.
+- `fullmoon.map.marker.hint`, `.chosen` and `.chosen.none` in both languages, and the footer legend
+  gained `클릭 선택 · Enter 이동 요청`. The status line reads out of `fullmoon.warp.*`, the ledger's own
+  namespace, so one server answer never gets two vocabularies.
+
+### What the frames settle
+
+Nothing in these captures corrected the implementation. Three sessions, eight frames, every one right
+on the first attempt. What they settle is the part no test in this repo can reach.
+
+The sharpest is an accident of the geometry. `p9-map-chosen-960x540.png` has `별궁 중앙 홀` chosen — a
+route at `500 16` — while `중심` still reads `500 -100`. The claim "a click chooses the marker where it
+stands, so the plane does not move out from under the cursor" is one frame wide, and that is the frame.
+The rail row above it is lit at the same time, which is the other half: a row centres, a marker does
+not.
+
+Two facts of the rig shaped how the rest were taken.
+
+- The join position drifts between runs. P8 saw `503 -17` and `507 -36`; these three sessions started
+  at `500.5 -35.5`, `501.5 -35.5` and `495.5 -20.5`. A marker pixel derived from wherever the player
+  happened to land is not a number a reader can redo, so every run opens the map and clicks rail row 0
+  first. From there the plane is centred on `palace_gate` and every marker is arithmetic.
+- A loopback warp round trip is under a tenth of a second and the rig's shutter is at least 1.6 s, so
+  the in-flight frame is unreachable against the shipped plugin. It is the only frame with a fixture
+  behind it, disclosed below.
+
+### Gates on the committed tree
+
+```text
+./gradlew -p . clean test jacocoTestCoverageVerification  → 215 tests, 0 failures, 0 errors, 0 skipped
+node design/verify-tokens.mjs                             → scanned 104 file(s)
+                                                            no colour or motion literals outside the token block
+```
+
+The gated core is 95.90% line and 88.92% branch in aggregate. Both classes P9 changed are at 100% of
+both: `MapMarkers` 36/36 lines and 34/34 branches, `WarpRoutes` 13/13 and 4/4. The map classes P8 left
+at 100% are still there — `MapViewport` 32/32 and 12/12, `TerrainSnapshot` 26/26 and 24/24,
+`TerrainSample` 6/6 and 4/4, `WorldNames` 9/9 and 12/12.
+
+`MapScreen` is not gated and has no unit test, the same as P8. Every claim above about the hint, the
+click, the band and `Enter` is a claim about the frames.
+
+### Executed Paper flow
+
+Three sessions against the local Paper server on `:25566`. The first two ran the shipped
+`FullmoonBridge.jar`; the third ran a fixture, and only the two in-flight frames come from it.
+
+The 960×540 session asked for the same route twice, and Paper answered differently each time:
+
+```text
+[18:22:21] [Render thread/INFO] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[18:22:24] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:22:24] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (accepted)
+[18:22:27] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:22:27] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (cooldown)
+```
+
+against Paper's own two lines for those two requests:
+
+```text
+[18:22:24] [Server thread/INFO]: [FullmoonBridge] warp Player475 -> aux_palace
+[18:22:27] [Server thread/INFO]: [FullmoonBridge] warp denied for Player475: cooldown
+```
+
+The refusal is the shipped plugin's `COOLDOWN_MS = 4000` and nothing else — two requests three seconds
+apart by the client's own clock. `p9-map-denied-960x540.png` is what `WarpRoutes.reasonKey("cooldown")`
+renders: `요청 거절 · 재사용 대기 중` in the danger ink, above a `이동 요청` that is still live, because a
+cooldown is a wait and not a wall.
+
+The marker pixels are arithmetic, and this is it longhand. At 960×540 GUI px the edge is
+`Tokens.Space.SECTION`, so content is (24, 24, 912, 492), the body starts 48 px below it, and the 208 px
+rail plus a 24 px gutter leave the plane 680 px wide — whole 3 px cells make it 678×420, the 226×140
+the client logged. `MapViewport.project` puts a route at
+`(world − centre) / blocksPerCell + (cells − 1) / 2` and `MapCanvas.plot` rounds that to
+`origin + round(cell × 3)` from the raster origin (24, 72). Centred on `palace_gate` at `칸당 2블록`,
+`aux_palace` at `500 16` is column `(500 − 500) / 2 + 112.5 = 112.5` and row
+`(16 − (−100)) / 2 + 69.5 = 127.5`, so GUI (24 + 338, 72 + 383) = **(362, 455)**.
+`p9-map-hint-960x540.png` put the pointer there and read `별궁 중앙 홀 · X 500 Z 16` while `만월궁 정문`
+was still the chosen route. `palace_keep` at `500 -140` is row `−20 + 69.5 = 49.5`, GUI **(362, 221)**.
+
+The compact session redoes the same arithmetic at another size: edge `Tokens.Space.LOOSE`, raster origin
+(12, 60), 148×88 cells, which puts `palace_keep` at column `73.5` and row `23.5` — GUI **(233, 131)**.
+`p9-map-compact-640x360.png` read `만월궁 대전 · X 500 Z -140` there, with `목록 밖 4개` under the two rail
+rows that fit and nothing clipped. Its accepted frame was requested with a bare `Return` while the
+pointer sat on the marker and nothing held the keyboard, which is the branch in `keyPressed` that exists
+for a player whose hand is on the mouse:
+
+```text
+[18:24:00] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_keep at 500 -140 in world
+[18:24:02] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request palace_keep
+[18:24:02] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result palace_keep (accepted)
+[18:24:02] [Server thread/INFO]: [FullmoonBridge] warp Player582 -> palace_keep
+```
+
+Both accepted frames prove the teleport landed and not merely that a banner drew: the player mark moves
+onto the marker that was chosen, `aux_palace` at (362, 455) in the 960 set and `palace_keep` at
+(233, 131) in the compact one.
+
+#### The one fixture, and its restore
+
+`p9-map-inflight-960x540.png` and `p9-map-inflight-resolved-960x540.png` come from a temporary Paper
+plugin built from the shipped bridge source with one insertion: `handleTpRequest`'s body was renamed
+`handleTpRequestNow` and a `runTaskLater(..., 80L)` put in front of it. No decision changed — unknown
+id, permission, cooldown, world, chunk warm-up, teleport and result are the production path untouched —
+the handler just starts 4 s late, inside the client's `WARP_TIMEOUT_MILLIS` of 5 s. The hold is legible
+in the log, and the answer at the end of it is the same `accepted` the live plugin gave:
+
+```text
+[18:30:22] [Render thread/INFO] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[18:30:23] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:30:27] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (accepted)
+[18:30:27] [Server thread/INFO]: [FullmoonBridge] warp Player49 -> aux_palace
+```
+
+That is why the pair is committed and not just the in-flight shot. The first frame is `서버 응답 대기 중`
+in amber with the button in its loading state; the second is the same session four seconds later,
+`이동 승인됨` in green with the button live again and the player mark on the aux_palace marker. The
+fixture delayed the answer; it did not choose it.
+
+The fixture jar was SHA-256 `1d8a2e6e66341836c56a8fe2ec659c03314151071cb1d7005a808cb83567c376`. After
+those two frames the installed bridge was restored to
+`db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c` — byte-identical to the jar that
+served the first two sessions, and the same value P7 recorded restoring to — and Paper was stopped over
+RCON with no JVM left holding `:25566` or `:25577`. Nothing was installed on the production Oracle host
+at any point in this phase.
+
+## 2026-08-30 · MapLayout — the map's decisions move inside the gate
+
+P9 shipped with a sentence attached to it: "`MapScreen` is not gated and has no unit test. Every claim
+above about the hint, the click, the band and `Enter` is a claim about the frames." Half of that was a
+boundary and half of it was a gap. The boundary is real — a `Screen` reaches `Minecraft.getInstance()`,
+a `Painter` and `I18n` in nearly every method, and nothing in this repo can call it without a running
+client. The gap was that the screen's *arithmetic* was in there too, and arithmetic is exactly what a
+test can hold.
+
+`MapLayout` is that arithmetic, 171 lines and 44 gated ones, at 100% of both counters. `MapScreen` went
+from 589 lines to 556 and now holds only what needs a client.
+
+- `MapLayout.of(width, height, actionWidth, actionHeight)` divides the window: the compact threshold,
+  the page margin, header and footer heights, the rail width, the plane snapped to whole `CELL_SIZE`
+  cells, the action band's height from the type it stacks, and the button's box inside it. `init()` is
+  one call and one `request.place(layout.action())`.
+- The rail's vertical steps became named positions — `positionHeading`, `centreFact`, `scaleFact`,
+  `routesHeading`, `routesTop`, `routeRow(index)` — instead of a `y` cursor that each drawing method
+  advanced and returned. `section` no longer returns an `int`, because a heading is not a cursor.
+- `routeCapacity`, `visibleRoutes` and `beyond` replace the loop that broke when the next row would
+  cross the band. `whatTheRailShowsPlusWhatItAdmitsToIsEveryPublishedRoute` is the invariant the rail's
+  `목록 밖 N개` depends on, and it is now a test rather than a frame.
+- `cellAt(px, py, snapshot)` is the hit test: off-plane answers empty, and on-plane it measures from
+  the raster, not from the slot the raster sits in. `pointerCellsAreMeasuredFromThePlaneNotTheSlot` is
+  the one that would have caught an off-by-a-margin, which at `칸당 16블록` is several routes wide.
+- `raster` and `plot` moved out of `MapCanvas` into `MapLayout`, and `MapCanvas` calls them. P9 had
+  made them public so the screen could round the way the ring was drawn; the rounding rule and the
+  geometry that uses it now live together, and there is still exactly one of it.
+
+`MapLayout.NONE` exists because `of(0, 0, …)` is not an empty layout. A window of zero still produces
+a 3×3 plane at (12, 60) — `Math.max(CELL_SIZE, …)` guarantees it — so `map().holds(x, y)` answered
+`true` for a pixel in the corner before `init()` had run. The all-`Box.EMPTY` sentinel is the pre-`init`
+value; nine pixels of live hit area is the kind of thing that is invisible until it is a bug report
+about a click that did something on a screen that was not up yet.
+
+`node design/verify-tokens.mjs` failed the first time, on `MapLayoutTest.java:25`: the snapshot fixture
+filled its cells with `0xFF000000`. The scanner is right and the fix is the sibling tests' own habit —
+`TerrainSnapshot.Cell.unmapped(7)`, the same meaningless small int `TerrainSnapshotTest` and
+`TerrainSampleTest` use, because a fixture that needs a snapshot's *dimensions* has no business naming
+a colour.
+
+### Gates on the committed tree
+
+```text
+./gradlew -p . clean test jacocoTestReport jacocoTestCoverageVerification
+  --no-build-cache --rerun-tasks                          → 7 tasks executed, 27 suites,
+                                                            232 tests, 0 failures, 0 errors, 0 skipped
+node design/verify-tokens.mjs                             → scanned 106 file(s)
+                                                            no colour or motion literals outside the token block
+node generate.mjs (in design/)                            → all contrast floors met,
+                                                            status.warn on surface.base 9.35 : 1 (>= 3)
+```
+
+The gated core is 96.18% line and 89.30% branch, up from P9's 95.90% and 88.92%. `MapLayout` is
+44/44 lines and 14/14 branches; `MapLayoutTest` is 17 tests. Every other gated class is where P9 left
+it — `MapMarkers` 36/36 and 34/34, `MapViewport` 32/32 and 12/12, `TerrainSnapshot` 26/26 and 24/24,
+`WorldNames` 9/9 and 12/12, `WarpRoutes` 13/13 and 4/4.
+
+What is still outside the gate is now only client runtime: drawing, `I18n` lookups, terrain sampling
+off `Minecraft.getInstance()`, the channel send, and the key and mouse dispatch `Screen` owns. That is
+a boundary with a reason, not a gap with an excuse.
+
+### Executed Paper flow
+
+A refactor that claims to preserve behaviour has to be run. Local Paper on `:25566` (non-production),
+shipped `FullmoonBridge.jar` at `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c` —
+no fixture installed, so nothing to restore — and two capture sessions retaking P9's baselines:
+
+```sh
+timeout 900 python3 tools/capture.py /tmp/p9r-960 --geometry 1920x1080 --scale 2 --server 127.0.0.1:25566 \
+  "hint:wait=8,M,wait=3,move=832x181,click,wait=2,move=362x455" \
+  "chosen:click"
+timeout 900 python3 tools/capture.py /tmp/p9r-640 --geometry 1280x720 --scale 2 --server 127.0.0.1:25566 \
+  "compact:wait=8,M,wait=3,move=554x169,click,wait=2,move=233x131"
+```
+
+```text
+[19:55:22] (Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[19:55:27] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+[19:55:32] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[19:56:49] (Fullmoon/Map) Map open: 148x88 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[19:56:54] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+```
+
+Those two raster sizes are the claim. 226×140 and 148×88 are the cell counts P8 and P9 logged at the
+same two window sizes, which means the extracted `of()` and `raster()` divide the window into the same
+plane the shipped code did — and the `Map route chosen:` lines mean the extracted `cellAt` and `plot`
+land on the same marker pixels: rail row 0 at GUI (832, 181) chose `palace_gate`, and the click at
+(362, 455) chose `aux_palace at 500 16`, the arithmetic P9 wrote out longhand.
+
+The frames agree. `p9r-map-hint-960x540.png` is layout-identical to `p9-map-hint-960x540.png` — same
+rail rows, `중심 500 -100`, `축척 칸당 2블록`, `항로 6곳`, the same hint plate `별궁 중앙 홀 · X 500 Z 16`,
+the same marker plates and footer legend — and `p9r-map-chosen-960x540.png` still has `별궁 중앙 홀`
+chosen with `중심` unmoved. `p9r-map-compact-640x360.png` is the compact branch: origin (12, 60),
+148×88, two rail rows and `목록 밖 4개`, nothing clipped. The differences are session facts only —
+`불러온 지형 81%` against the baseline's `89%`, and the player mark where Paper placed these runs
+(`502.5, 72.0, -15.5` and `503.5, 72.0, -16.5`) rather than P9's. Neither session asks for a teleport:
+the extraction moved where a marker is, not what confirming one does, and P9's four warp-state frames
+still carry that half. Nothing was installed on the production Oracle host.
+
+## 2026-08-31 · P10 — the launcher and client write one HUD layout
+
+P10 began as wiring that already existed in two commits and ended as a driven seam. The mod watches
+`config/fullmoon/hud.json` every 500 ms and the launcher reads and writes the same anchor-and-offset
+shape through Rust. The finish work did not add a translator. It removed the old percentage position
+model from the editor, kept unknown element IDs, and made every write a complete immutable
+`HudConfig` so neither side can leave a half-layout behind.
+
+### What the live client did
+
+Two Fabric sessions ran against local Paper, one at 640×360 GUI px and one at 960×540. In each
+session the shared file was edited while the client stayed open. The client recorded four adoptions:
+
+```text
+[23:33:13] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100393325
+[23:33:43] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100423209
+[23:41:48] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100908200
+[23:42:19] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1788100939219
+```
+
+The 640 set moves coordinates from the top-left to `BOTTOM_LEFT (40,44)`, then moves FPS to
+`TOP_CENTER (31,16)`. The 960 set carries those edge-relative placements into the larger frame,
+switches TPS off and moves the clock to `TOP_RIGHT (63,104)`. The before and after captures visibly
+agree with `p10-final-hud.json`; the log lines prove each change was adopted rather than reconstructed
+after a restart.
+
+The local capture rig uses an offline development identity, so its logs also contain expected
+Microsoft authentication 401 responses. They are unrelated to HUD adoption and are not presented as
+a clean online-auth run.
+
+### What the browser run found
+
+The first screenshot was not valid evidence: only the navigation and controls were readable. The
+fixed `.game-backdrop` had `z-index: 0`, so it painted above ordinary shell copy. A failing source
+contract test required an isolated `.app` stacking context and a negative backdrop layer before the
+CSS was changed. The next real Chromium frame showed the full settings content.
+
+The second defect needed interaction rather than inspection. Clicking the coordinate row left focus
+on that row, but `ArrowRight` did nothing because only the draggable stage node owned `onKeyDown`.
+A failing contract test preceded the fix. The pointer-down path now focuses its node, each ledger row
+dispatches the same keyboard handler, and the browser probe records `(16,56) -> (20,56)` with
+`activeElement.className === "hud-row-pick"`.
+
+The declared Tauri minimum uncovered a third layout failure. At 1040×680 the two-column editor made
+the stage 254×143 and wrapped `640 × 360 GUI px` into a vertical stack. A failing responsive contract
+test preceded the 1180 px breakpoint. The verified minimum now has one 510 px column, a 510×287 stage,
+vertical content scrolling and no horizontal overflow. The default 1280×820 and wide 1920×1080 runs
+also report `documentElement.scrollWidth === clientWidth`.
+
+Two smaller feedback corrections came from the Hallmark pass. Reset no longer raises a redundant
+success toast because the restored layout is already visible. Dark tertiary copy changed from
+`#6B7490` to `#8B97B6`; the new test measures it against both dark grounds and enforces 4.5:1. The HUD
+surface consumes named spacing and client-palette tokens, and the shell keeps one restrained gold
+bloom instead of three competing gold, blue and cyan blooms.
+
+### Gates on the finished tree
+
+```text
+npm test (launcher)                                           → 32 tests, 0 failures
+npm run build (launcher)                                      → TypeScript and Vite pass
+cargo test --manifest-path launcher/src-tauri/Cargo.toml      → 27 tests, 0 failures
+./gradlew -p i3/mod clean test jacocoTestReport
+  jacocoTestCoverageVerification --no-build-cache
+  --rerun-tasks                                               → 247 tests, 0 failures, 0 errors, 0 skipped
+node i3/design/verify-tokens.mjs                              → scanned 110 files
+node i3/design/generate.mjs                                   → all contrast floors met
+```
+
+The mod gate is 96.58% line and 90.09% branch. The freshly built runtime jar and the launcher's
+bundled `launcher/src-tauri/resources/mods/fullmoon-client.jar` are byte-identical at SHA-256
+`d75a577eee556547df932443b738aee317e4405807d79ca8427eb53e68eab3b9`.
+
+The release workflows had retained the pre-move `pinion-mod` directory and an old jar glob. They now
+build `i3/mod`, exclude `*-sources.jar`, and copy the newly built runtime jar into the Tauri resources
+before packaging. This was inspected and YAML-parsed locally; GitHub Actions, PowerShell packaging and
+an installed NSIS artifact were not run on this Linux box.
+
+P10 does not claim wiring that is absent. Cosmetics remain launcher-only previews, zoom and
+fullbright do not exist in the mod, CPS exists only inside keystrokes, renderers still ignore
+`scale`, and the shipped bridge does not publish `hud_sync`, so TPS remains unfed. Those limits are
+documented in the plan and README rather than hidden behind a completed phase label.
+
+## 2026-08-31 · First-tester release hardening
+
+A clean real-core profile used to start with no instances while the interface no longer exposed
+instance creation. The launcher now creates one stable `fullmoon-managed` Fabric 26.1.2 instance,
+copies the profile memory setting, assigns `play.fullmoon.ink` for quick play, creates the isolated
+game and mods directories, and persists the instance before the first window is used. Existing
+profiles retain their instances and only discard an interrupted install marker. The bundled real
+catalog now contains the Fullmoon lobby instead of the mock core being the only place where a server
+existed.
+
+The local real binary was built and launched under Xvfb with a new `FULLMOON_DATA_ROOT`. It remained
+alive after startup and wrote this state:
+
+```text
+id=fullmoon-managed
+versionId=26.1.2
+installed=false
+quickPlayServer=play.fullmoon.ink
+directories=instances/fullmoon-managed/minecraft/mods, shared
+```
+
+Pull request CI run `33392965627` built the NSIS package on `windows-latest`, installed it silently
+into an empty directory, launched the installed `fullmoon.exe` with a clean data root, read the same
+managed instance from `instances.json`, checked the production lobby, and confirmed the process was
+still alive. The uploaded `Fullmoon_1.0.0_x64-setup.exe` was 8,973,022 bytes with SHA-256
+`51ea4d8c4d568941ecd59713d28a088ac9e1588f515ffc672ca661235968e64a`; the downloaded artifact's hash
+matched the smoke result. The installed mod hash was
+`32da42163dfd0e5dd3f68b45204b663b5392a56de90209124364fc3f598aa5fa`.
+
+The same clean-install script now gates tag releases before artifact collection. Microsoft OAuth
+application registration and Authenticode signing remain external release configuration; neither is
+claimed by this run.
+
+
 ## 2026-09-02 · P5-R 런처 UI 전면 개편 — Hallmark 58게이트 정합화
 
 P5 이후 올라간 `game-*` 글래스모피즘 레이어가 기존 토큰 시스템과 충돌하고 있었다. 이번

@@ -5,7 +5,7 @@
 <script>document.documentElement.classList.replace('no-js', 'js');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>신뢰와 배포 — 풀문 클라이언트 소스 해설</title>
-<meta name="description" content="풀문 클라이언트의 배포 신뢰 모델 — 단일 배포 경로, SHA256SUMS, 태그 빌드, 서명된 OTA.">
+<meta name="description" content="풀문 클라이언트의 배포 방식. GitHub Release, SHA256SUMS, 태그 빌드, 서명된 업데이트.">
 <meta name="theme-color" content="#0d1226">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
@@ -37,71 +37,63 @@
     <p class="eyebrow">04&nbsp;&nbsp;║&nbsp;&nbsp;TRUST &amp; DISTRIBUTION</p>
     <h1>신뢰와 배포</h1>
     <p class="lead">
-      소스 공개는 반쪽이다. 나머지 반은 "공개된 소스가 실제 배포물과 같다"를
-      확인 가능하게 만드는 일이다. 이 문서는 그 장치들을 나열한다.
+      소스를 공개하는 것만으로는 부족해요. 받은 설치 파일이 그 소스에서 나왔는지도
+      볼 수 있어야 하거든요. 이 페이지는 그걸 어떻게 확인하는지 적었어요.
     </p>
   </div>
 
   <section>
-    <h2>배포 경로는 하나다</h2>
+    <h2>설치 파일은 GitHub Release에만 있어요</h2>
     <p>
-      설치 파일은 GitHub Release 에셋으로만 존재한다. 제3 미러 없음, 디스코드
-      첨부 없음. 릴리스 워크플로가 태그에서 인스톨러를 빌드하고,
-      <code>SHA256SUMS</code> 파일을 같이 올린다 — 해시는 워크플로 자신이
-      계산하므로, 릴리스 페이지의 해시와 받은 파일의 해시가 다르면 그 파일은
-      릴리스가 아니다.
+      제3 미러나 디스코드 첨부는 쓰지 않아요. 릴리스 워크플로가 태그에서
+      설치 파일을 만들고 <code>SHA256SUMS</code>를 같이 올려요. 해시는 워크플로가
+      계산하니까, 릴리스 페이지의 해시와 받은 파일이 다르면 그 파일은 그 릴리스가
+      아니에요.
     </p>
     <p>
-      "이 바이너리 == 이 커밋"의 근거는 두 겹이다. 태그 빌드라서 커밋이 기록에
-      남고, GitHub Actions의 빌드 로그가 공개돼서 같은 커밋에서 같은 절차로
-      재현할 수 있다. 소스가 GPL-3.0이라는 것은 이 확인이 가능하다는 뜻이기도
-      하다.
+      이 파일이 이 커밋에서 나왔는지는 두 가지로 봐요. 태그 빌드라서 커밋이 기록에
+      남고, GitHub Actions 빌드 로그가 공개돼 있어서 같은 커밋으로 다시 만들어 볼
+      수 있어요. 소스가 GPL-3.0인 덕분에 그 확인이 가능해요.
     </p>
   </section>
 
   <section>
-    <h2>번들 원칙: 예외는 Mojang뿐</h2>
+    <h2>설치 파일에 넣는 것과, 나중에 받는 것</h2>
     <p>
-      우리가 만들었거나 골라 넣은 것 — mod jar, 리소스, 폰트, 뉴스 카피 — 는
-      전부 설치 파일 하나에 번들된다. 런처가 설치 후 추가로 받는 것은 네
-      종류뿐이다.
+      우리가 만들었거나 골라 넣은 것(모드 jar, 리소스, 폰트, 뉴스 글)은 설치
+      파일 하나에 들어 있어요. 런처가 설치 후에 따로 받는 것은 아래 네 가지예요.
     </p>
     <ol>
-      <li><b>Minecraft 본체와 에셋</b> — Mojang CDN에서 받고, Mojang이 공표한
-        SHA1으로 검증한다. 재배포가 금지된 원본이라 우리가 실을 수 없고, 그래서
-        검증해서 받는다. 이 예외는 문서로 못박혀 있다.</li>
-      <li><b>Fabric Loader / API, Sodium, Lithium, Iris</b> — 각자의 공식
-        배포처에서 받는다. 우리가 만지지 않는다.</li>
-      <li><b>쉐이더 팩</b> — 재배포가 금지된 원본이라 번들하지 않고, 쉐이더를
-        켤 때 공식 배포처에서 받는다.</li>
-      <li><b>뉴스 JSON</b> — 정적 파일. 내용은 텍스트다.</li>
+      <li><b>Minecraft 본체와 에셋</b> — Mojang CDN에서 받고, Mojang이 공개한
+        SHA1으로 확인해요. 원본을 우리가 실을 수 없어서 이렇게 받아요.</li>
+      <li><b>Fabric Loader / API, Sodium, Lithium, Iris</b> — 각자 공식
+        배포처에서 받아요. 우리가 고쳐서 다시 올리지 않아요.</li>
+      <li><b>쉐이더 팩</b> — 재배포가 금지된 원본이라 설치 파일에 넣지 않고,
+        쉐이더를 켤 때 공식 배포처에서 받아요.</li>
+      <li><b>뉴스 JSON</b> — 정적 텍스트 파일이에요.</li>
     </ol>
     <p>
-      대조표는 저장소의 THIRD-PARTY-NOTICES.md에 있고, 릴리스마다 그대로 실린다.
-      숨길 것이 없다는 선언보다, 예외를 명시하고 검증 동작을 기록하는 편이
-      강하다.
+      목록은 저장소의 THIRD-PARTY-NOTICES.md에 있고, 릴리스에도 같이 실려요.
     </p>
   </section>
 
   <section>
-    <h2>OTA: 서명된 manifest만</h2>
+    <h2>자동 업데이트는 서명이 맞는 manifest만 받아요</h2>
     <p>
-      자동 업데이트는 Tauri v2 updater로 이루어진다. 업데이트 파일은 릴리스
-      워크플로에서 업데이터 키페어로 서명되고, 클라는 서명이 맞는 manifest만
-      받아들인다. 서명 키는 GitHub Actions 시크릿으로만 존재하고 로컬 빌드에는
-      없다 — 그래서 로컬 빌드는 OTA 없는 인스톨러를 만든다. 업데이트 경로도
-      결국 릴리스 페이지 하나로 모인다.
+      자동 업데이트는 Tauri v2 updater를 써요. 업데이트 파일은 릴리스 워크플로에서
+      키로 서명하고, 클라는 서명이 맞는 manifest만 받아요. 서명 키는 GitHub
+      Actions 시크릿에만 있어서, 로컬에서 만든 설치 파일에는 자동 업데이트가
+      없어요. 업데이트도 GitHub Release 한곳으로 모여요.
     </p>
   </section>
 
   <section>
-    <h2>치트가 아닌 근거</h2>
+    <h2>왜 치트가 아니냐면요</h2>
     <p>
-      커스텀 클라이언트에 대한 의심은 합리적이다. 이 클라이언트의 대답은 기능
-      목록이 아니라 구조다: 게임플레이 효과를 만드는 모든 요청(tp, 상거래)은
-      서버가 권한·쿨다운·세계를 검증하고, 클라가 보낸 것은 표시 편의를 위한
-      데이터뿐이다. 클라가 전부 거짓말해도 서버가 버틴다는 설계 — 그 코드는
-      <a href="bridge.html">브리지 프로토콜</a> 장에서 읽을 수 있다.
+      커스텀 클라이언트를 의심하는 건 당연해요. 텔레포트 같은 요청은 서버가
+      권한, 쿨다운, 월드를 확인하고, 클라가 보내는 값은 화면에 쓰는 데만 써요.
+      그 흐름은 <a href="bridge.html">브리지 프로토콜</a> 페이지에 더 자세히
+      적어 두었어요.
     </p>
   </section>
 </main>
@@ -109,8 +101,8 @@
 <footer>
   <div class="wrap foot-inner">
     <p>
-      풀문 클라이언트는 GPL-3.0으로 공개된다. Minecraft는 Mojang Synergies AB의 상표이며,
-      이 프로젝트는 Mojang과 무관하다.
+      풀문 클라이언트는 GPL-3.0으로 공개돼요. Minecraft는 Mojang Synergies AB의 상표고,
+      이 프로젝트는 Mojang과 무관해요.
     </p>
     <p class="foot-links">
       <a href="bridge.html">이전: 브리지 프로토콜</a> ·

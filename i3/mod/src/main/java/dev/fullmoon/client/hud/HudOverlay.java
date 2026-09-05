@@ -29,11 +29,13 @@ public final class HudOverlay {
         int height = client.getWindow().getGuiScaledHeight();
 
         Painter painter = new Painter(gfx);
+        HudElementRegistry.getInstance().poll(System.currentTimeMillis());
         for (HudElement elem : HudElementRegistry.getInstance().elements()) {
             if (elem.enabled()) {
                 Box bounds = elem.computeBounds(width, height, client);
                 elem.draw(painter, bounds, client, false);
             }
         }
+        ServerNoticeOverlay.draw(painter, System.currentTimeMillis());
     }
 }

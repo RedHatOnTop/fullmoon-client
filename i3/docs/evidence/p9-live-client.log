@@ -1,0 +1,23 @@
+[18:23:47] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[18:23:47] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[18:23:53] [Render thread/INFO] (Fullmoon/Map) Map open: 148x88 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[18:23:57] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+[18:24:00] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_keep at 500 -140 in world
+[18:24:02] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request palace_keep
+[18:24:02] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result palace_keep (accepted)
+[18:30:09] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[18:30:09] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[18:30:15] [Render thread/INFO] (Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[18:30:19] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+[18:30:22] [Render thread/INFO] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[18:30:23] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:30:27] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (accepted)
+[18:22:06] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[18:22:07] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[18:22:13] [Render thread/INFO] (Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[18:22:17] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+[18:22:21] [Render thread/INFO] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[18:22:24] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:22:24] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (accepted)
+[18:22:27] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 warp request aux_palace
+[18:22:27] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 warp result aux_palace (cooldown)

@@ -8,6 +8,8 @@
    the shape.
    ───────────────────────────────────────────────────────────── */
 
+import type { Anchor } from "./hud";
+
 // ── auth ──────────────────────────────────────────────────────
 
 export interface Account {
@@ -131,7 +133,8 @@ export interface GameState {
   exitCode: number | null;
 }
 
-export type LogLevel = "INFO" | "WARN" | "ERROR" | "DEBUG" | "PINION";
+/** `OURS` is a line our own client logged — the core tags it off the `(Fullmoon/…)` logger name. */
+export type LogLevel = "INFO" | "WARN" | "ERROR" | "DEBUG" | "OURS";
 
 // ── cosmetics / hud ───────────────────────────────────────────
 
@@ -152,17 +155,21 @@ export interface Cosmetic {
 
 export type Loadout = Record<CosmeticSlot, string | null>;
 
-export interface HudModule {
-  id: string;
+/** One element as the client stores it: a nine-way anchor and a pixel offset measured from it.
+ *  The vocabulary and the arithmetic are mirrored in core/hud.ts from the mod's own source. */
+export interface HudElementState {
   enabled: boolean;
-  /** position in percent of the screen, 0..100 */
-  x: number;
-  y: number;
+  anchor: Anchor;
+  offsetX: number;
+  offsetY: number;
   scale: number;
 }
 
+/** Keyed by element id, because that is the only thing the two editors agree to key on — the
+ *  order the map arrives in is the serialiser's, and never the order to render. */
 export interface HudConfig {
-  modules: HudModule[];
+  elements: Record<string, HudElementState>;
+  gridSnap: number;
 }
 
 // ── settings ──────────────────────────────────────────────────
@@ -279,8 +286,7 @@ export interface PinionCore {
   auth_select(uuid: string): Promise<void>;
   auth_remove(uuid: string): Promise<void>;
   auth_refresh(uuid: string): Promise<Account>;
-  /** offline profile — real core only, see `addOfflineAccount` in client.ts */
-  auth_add_offline?(username: string): Promise<Account>;
+  auth_add_offline(username: string): Promise<Account>;
 
   // versions / instances
   versions_manifest(): Promise<VersionSummary[]>;
@@ -316,6 +322,9 @@ export interface PinionCore {
   cosmetics_equip(uuid: string, slot: CosmeticSlot, itemId: string | null): Promise<void>;
   hud_get(instanceId: string): Promise<HudConfig>;
   hud_set(instanceId: string, cfg: HudConfig): Promise<void>;
+  /** Put the catalogue default back and hand it over: the defaults live in the core, and a UI
+   *  that restated them would be the drift this asks about. */
+  hud_reset(instanceId: string): Promise<HudConfig>;
 
   // settings
   settings_get(): Promise<Settings>;

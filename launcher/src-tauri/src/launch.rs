@@ -198,6 +198,9 @@ pub fn plan(
     Ok(Plan { program: PathBuf::from(java), args, cwd: game_dir })
 }
 
+/// Uppercased, because `level_of` matches against an uppercased line.
+const OUR_LOGGER_TAG: &str = "(FULLMOON/";
+
 fn level_of(line: &str) -> &'static str {
     // "[19:57:12] [Render thread/INFO]: …" — the tag is what the game means
     let upper = line.to_ascii_uppercase();
@@ -205,6 +208,10 @@ fn level_of(line: &str) -> &'static str {
         "ERROR"
     } else if upper.contains("/WARN") {
         "WARN"
+    } else if upper.contains(OUR_LOGGER_TAG) {
+        // our own client logs under (Fullmoon/Channel), (Fullmoon/Hud), (Fullmoon/Map) …;
+        // the console gives those the accent so a player can find them in vanilla noise
+        "OURS"
     } else if upper.contains("/DEBUG") {
         "DEBUG"
     } else {
@@ -358,6 +365,25 @@ mod tests {
         assert_eq!(level_of("[12:00:00] [main/ERROR]: boom"), "ERROR");
         assert_eq!(level_of("[12:00:00] [main/WARN]: hmm"), "WARN");
         assert_eq!(level_of("[12:00:00] [main/INFO]: fine"), "INFO");
+    }
+
+    #[test]
+    fn our_own_clients_lines_are_told_apart_from_the_games() {
+        // verbatim from docs/evidence/p9r-live-client.log — the console's accent level had no
+        // line that could ever reach it before this
+        assert_eq!(
+            level_of("[19:55:07] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)"),
+            "OURS"
+        );
+        assert_eq!(
+            level_of("[19:55:22] [Render thread/INFO] (Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1"),
+            "OURS"
+        );
+        // and a broken one is still an error first: that is what a player has to see
+        assert_eq!(
+            level_of("[19:55:23] [Render thread/ERROR] (Fullmoon/Map) nope"),
+            "ERROR"
+        );
     }
 
     #[test]

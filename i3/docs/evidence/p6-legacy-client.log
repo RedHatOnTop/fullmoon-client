@@ -1,0 +1,2 @@
+[12:46:40] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[12:46:45] [Render thread/INFO] (Fullmoon/Channel) No fullmoon:v1 welcome within 5 seconds; using vanilla fallback

@@ -191,3 +191,191 @@ display headline is a `p`, the featured title inside its button is a `span`), th
 stats and ledger reading the same 30-entry window with an honest "last N of M" count line
 (`home.txWindow`), and `Skin2D` gaining a `label` prop so every skin canvas carries the
 player's name (`role="img"`).
+
+## P6 — versioned Paper channel and legacy fallback
+
+| file | what it settles |
+| --- | --- |
+| `p6-live-channel-960x540.png` | A real protocol-1 Paper session completed hello/welcome, rendered measured `TPS 20.0 · 2.2 ms`, and displayed the Korean two-line server notice over the live world. |
+| `p6-live-channel-320x180.png` | The same event at 320×180 GUI pixels remains within the viewport; title and body retain their hierarchy without an oversized panel. |
+| `p6-legacy-fallback-960x540.png` | A protocol-0 bridge deliberately stayed quiet; after five seconds the mod retained vanilla play, omitted the notice, and rendered unsupported metrics as `TPS —`. |
+| `p6-live-client.log` / `p6-live-server.log` | Matching hello, welcome, first HUD revision, and notice identifiers prove the server-to-client round trip. |
+| `p6-legacy-client.log` / `p6-legacy-server.log` | The server records the version mismatch and the client records its five-second fallback. |
+| `p6-hallmark-audit.md` | The six-axis critique and all 58 Hallmark anti-slop gates, with native-GUI scope called out explicitly. |
+
+The Paper fixture was compiled in a temporary directory and installed only for this run. After the
+captures, the original `FullmoonBridge.jar` was restored byte-for-byte and the local server was
+stopped. The fixture held the overworld at dusk tick 13000 with clear weather for every committed
+P6 frame. These images are direct client captures, not mockups.
+
+Two visual decisions came from the rendered frames:
+
+- The server event is a flat, top-centred strip with one two-pixel severity rule. It uses no icon,
+  gradient, blur bloom, animation, or redundant action. The world remains the visual subject.
+- Missing support never masquerades as healthy data. The legacy frame visibly says `TPS —` rather
+  than keeping the editor's sample or inventing a nominal 20 TPS reading.
+
+## P7 — native server route ledger
+
+| file | what it settles |
+| --- | --- |
+| `p7-warp-selected-960x540.png` | A real six-route Paper snapshot with `palace_gate` selected. All six rows remain visible, while the detail plane shows only server-published group, ID, world, coordinates, and live distance. |
+| `p7-warp-pending-960x540.png` | The ID-only request is in flight. The one action stops answering, retains its keyboard ring, and reports server-waiting state without animation or optimistic teleport copy. |
+| `p7-warp-accepted-960x540.png` | Paper accepted `palace_gate`, the client received the matching result, the distance changed from 83 m to 1 m, and the footer reports the accepted decision. |
+| `p7-warp-compact-640x360.png` | All routes, facts, the action, and keyboard footer remain contained at 640×360 GUI px. |
+| `p7-live-client.log` / `p7-live-server.log` | Matching hello, welcome, `screen_open`, `tp_request palace_gate`, and accepted server teleport. |
+| `p7-hallmark-audit.md` | The fresh six-axis critique and all 58 Hallmark gates for the route surface. |
+
+The Paper fixture was a temporary copy of `FullmoonBridgePlugin` that called the plugin's existing
+`openWarpScreen` API one second after handshake and delayed the production request handler by 80
+ticks so the in-flight state could be photographed. It held only the overworld at dusk tick 13000
+with clear weather. The actual permission, cooldown, world, chunk warm-up, teleport, and result
+handler remained the production code path. After capture, the installed bridge was restored to
+SHA-256 `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c` and Paper was stopped.
+
+The production plugin currently exposes `openWarpScreen` but does not call it from `/워프` or
+another shipped command. P7 changes only the client, so automatic production invocation remains a
+server-side integration task rather than an unverified client claim.
+
+One defect was found only in the rendered selection flow. `ListPanel` restored its view with the
+selected row at the top even when all six rows fit, so selecting the third route hid the first two
+without a scrollbar while the heading still said six. The draw pass now bounds the restored first
+row against the actual viewport. A regression test covers both all-rows-fit and scrolled cases,
+and the final selected capture visibly contains all six routes.
+
+## P8 — in-game map
+
+| file | what it settles |
+| --- | --- |
+| `p8-map-960x540.png` | A live Paper session at `칸당 2블록`. The plane carries loaded terrain and unmapped corners in the same frame, the footer reports `불러온 지형 93%`, and all six published routes are listed in the rail with five of them marked in view. |
+| `p8-map-survey-960x540.png` | The same session two scales out at `칸당 8블록`. The footer drops to `불러온 지형 8%` and the 92% the client has never loaded draws as empty grid, not as invented ground. Six rings remain; two labels are blanked where they would have landed on a kept one. |
+| `p8-map-zoom-960x540.png` | The other half of the zoom pair. The pointer sat at GUI (337, 295) — cell (104, 74) of the 226×140 raster — over world (431, 16) at `칸당 8블록`; after one wheel notch the rail reads `465 -2` at `칸당 4블록`, which puts (431, 16) back under the same cell. |
+| `p8-map-route-960x540.png` | Clicking the third rail row centres the plane on it: `동쪽 달빛 게이트` wears the accent wash and bar, and `중심` becomes `564 0` — the coordinates the row itself publishes. No teleport is requested; the map has no such authority. |
+| `p8-map-compact-640x360.png` | The compact layout at 640×360 GUI px. The rail fits four of the six rows and says so with `목록 밖 2개`, while the plane still marks `별궁 중앙 홀`, whose row the rail dropped. |
+| `p8-map-compact-survey-640x360.png` | The compact rail at `칸당 8블록`: `불러온 지형 20%`, six rings, four labels, and the overflow line still accounting for the two rows it cannot show. |
+| `p8-live-client.log` / `p8-live-server.log` | Both sessions' hello, welcome, and `Map open:` provenance against Paper's own handshake and waypoint count. |
+| `p8-hallmark-audit.md` | The fresh six-axis critique and all 58 Hallmark gates for the map. |
+
+No fixture was installed for P8 and none was owed. `welcome` already carries the waypoint snapshot,
+so the shipped `FullmoonBridge.jar` publishes the six routes on handshake with no test-only code in
+the path — the reason the two log files pair on `6 waypoint(s)` and nothing else. Nothing was
+restored afterwards because nothing was replaced; Paper was stopped once both sets were taken.
+
+The pairing is tighter than the handshake. Paper logs where it places a joining player, the map
+centres on the player when it opens, and `%.0f` rounds that coordinate for the rail — so the
+server's `502.5, 72.0, -16.5` is the `503 -17` the 960 frames read, and its `506.5, 72.0, -35.5`
+is the `507 -36` of the compact set. The raster sizes in the same lines, 226×140 and 148×88 cells,
+are the two window sizes divided by the 3 px cell.
+
+Two defects and one legibility failure came out of these captures:
+
+- Labels collided at coarse scales. At `칸당 8블록` the six routes crowd into a few dozen pixels and
+  three names overprinted into an unreadable smear. The rule now lives in pure `MapMarkers.declutter`
+  with the measurement injected as a `LabelBox`, because `Typeset.width` needs a running client and a
+  collision rule inside `MapCanvas` could not be tested. Ledger order decides who keeps the name, so
+  the same labels drop every frame instead of flickering; the ring and dot stay on every marker, so a
+  coarse scale costs names, never destinations. A regression test covers it.
+- The rail truncated the route list silently. It listed as many rows as fit and said nothing about
+  the rest while the heading still counted six. It now prints `목록 밖 2개`, visible in both compact
+  frames and correctly absent from the 960 frames where all six fit.
+- Names were unreadable over bright terrain. `만월궁 정문` sits on the palace wall and the gate labels
+  sit on the plaza, both near-white, and light ink on them was a guess at best. Each label now draws
+  its own plate at the same box the collision test uses, so a name is legible over any block the map
+  can render. This is why the committed frames are the third capture of this phase, not the first.
+
+## P9 — warp from the map
+
+| file | what it settles |
+| --- | --- |
+| `p9-map-hint-960x540.png` | The pointer at GUI (362, 455), the cell `MapViewport.project` puts `별궁 중앙 홀` in when the plane is centred on `만월궁 정문` at `칸당 2블록`. The hint names the marker and its coordinates — `별궁 중앙 홀 · X 500 Z 16` — while the chosen route is still `만월궁 정문`, so hovering reads and does not choose. |
+| `p9-map-chosen-960x540.png` | The same pointer, one click later. `별궁 중앙 홀` is now chosen in the band and lit in the rail, and `중심` still reads `500 -100`: a marker click chooses where the marker stands, so the plane does not move out from under the cursor. A rail row still centres, which is why both behaviours needed separate frames. |
+| `p9-map-accepted-960x540.png` | `이동 승인됨` in the live ink after one confirm action, with the player mark now on the aux_palace marker at (362, 455). The banner and the teleport are the same event, not two. |
+| `p9-map-denied-960x540.png` | The shipped plugin's `COOLDOWN_MS = 4000` refusing a second request three seconds after the first: `요청 거절 · 재사용 대기 중` in the danger ink, which is `WarpRoutes.reasonKey("cooldown")` resolved through `fullmoon.warp.reason.*`. `이동 요청` stays live underneath, because a cooldown is a wait and not a wall. |
+| `p9-map-inflight-960x540.png` | The window between the request and the answer: `서버 응답 대기 중` in the warn ink with the button in its loading state and the chosen route unchanged. Reachable only with the fixture disclosed below — on loopback the real round trip is shorter than the rig's shutter. |
+| `p9-map-inflight-resolved-960x540.png` | The same session four seconds later: `이동 승인됨`, the button live again, the player mark on the marker. The pair is what shows the fixture delayed the answer without choosing it. |
+| `p9-map-compact-640x360.png` | The compact layout, where the arithmetic is different and the contract is not: raster origin (12, 60), 148×88 cells, `만월궁 대전` at GUI (233, 131) and its hint reading `만월궁 대전 · X 500 Z -140`. Two rail rows fit, `목록 밖 4개` accounts for the rest, and the band and the live `이동 요청` are uncropped. |
+| `p9-map-compact-accepted-640x360.png` | The same route accepted after a bare `Return` with the pointer on the marker and nothing holding the keyboard — the keyboard road for a player whose hand is on the mouse — with the player mark landing on (233, 131). |
+| `p9-live-client.log` / `p9-live-server.log` | All three sessions' `Map open:`, `Map route chosen:`, `Sent … warp request` and `Received … warp result` lines against Paper's own `warp <player> -> <id>` and `warp denied for <player>: cooldown` for the same ids at the same seconds. |
+| `p9-hallmark-audit.md` | The fresh six-axis critique and all 58 Hallmark gates, with 15, 17 and 46 answered anew for a map that now carries a focusable button, a tooltip, and a teleport request. |
+
+One fixture was installed, for the in-flight pair only. It was built from the shipped bridge source
+with a single insertion — `handleTpRequest`'s body renamed `handleTpRequestNow`, a
+`runTaskLater(..., 80L)` in front of it — so unknown id, permission, cooldown, world, chunk warm-up,
+teleport and result all remain the production path and only the start is 4 s late, inside the client's
+5 s timeout. Its jar was SHA-256
+`1d8a2e6e66341836c56a8fe2ec659c03314151071cb1d7005a808cb83567c376`. The other six frames ran the
+shipped jar, and afterwards the installed bridge was restored to
+`db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, the value P6 and P7 also recorded
+restoring to. Paper was stopped over RCON with no JVM left on `:25566` or `:25577`. Nothing was
+installed on the production Oracle host.
+
+The pairing is on the route id and the answer, not just the handshake. The client logs the id it sent
+and the verdict it received; Paper logs `warp Player475 -> aux_palace` for the accept and
+`warp denied for Player475: cooldown` for the refusal three seconds later, so the accepted and denied
+frames are two halves of one exchange rather than two moods of one screen. The join lines in the same
+file are why every run clicks rail row 0 before anything else: Paper placed the three players at
+`500.5 -35.5`, `501.5 -35.5` and `495.5 -20.5`, and a marker pixel measured from a drifting spawn is
+not a number a reader can redo. Centred on `palace_gate`, it is.
+
+These captures corrected nothing. Every frame the phase owed came out right on the first attempt of
+all three sessions, which is worth stating plainly rather than dressing a clean run as a discovery.
+What they carry that the tests cannot is the hint text over a live raster, the plane holding still
+under a marker click, the loading and resolved states of one button, and a teleport that visibly moved
+the player.
+
+## P9-R — the MapLayout extraction, held against P9's own frames
+
+`MapScreen` shipped in P9 with the sentence "not gated and has no unit test" attached to it. Its
+layout arithmetic and its hit test are pure and now live in `MapLayout`, gated at 100% of 44 lines
+and 14 branches. A refactor that keeps a screen's behaviour has to be shown keeping it, so these
+three frames are the P9 baselines retaken on the extracted code.
+
+| file | what it settles |
+| --- | --- |
+| `p9r-map-hint-960x540.png` | The same session shape as `p9-map-hint-960x540.png`: rail row 0 clicked, then the pointer parked at GUI (362, 455). Rail rows, `중심 500 -100`, `축척 칸당 2블록`, `항로 6곳`, the hint plate `별궁 중앙 홀 · X 500 Z 16`, the marker plates and the footer legend all land where the baseline has them. `MapLayout.cellAt` reaches the marker `MapScreen`'s deleted copy reached. |
+| `p9r-map-chosen-960x540.png` | One click later, `별궁 중앙 홀` chosen in the band and lit in the rail with `중심` still `500 -100` — P9's sharpest frame, redrawn from `MapLayout.plot` instead of `MapCanvas.plot`. |
+| `p9r-map-compact-640x360.png` | The compact branch of `MapLayout.of`, which is the one worth a second frame: edge `Tokens.Space.LOOSE`, raster origin (12, 60), 148×88 cells, `routeCapacity` 2, so two rail rows and `목록 밖 4개`, band and live `이동 요청` uncropped. |
+| `p9r-live-client.log` / `p9r-live-server.log` | `Map open: 226x140 cells` and `Map open: 148x88 cells` — the same two rasters P8 and P9 logged — against Paper's handshake and `6 waypoint(s)` for both sessions. |
+
+No fixture was installed and nothing was owed one. Both sessions ran the shipped
+`FullmoonBridge.jar` at `db30e62c8d1bbed9ba75d87b099caa82055a4c9ce6656001c78cab7d055fc14c`, the
+value P9 recorded restoring to, so there was nothing to restore afterwards. Neither session asks for
+a teleport: the extraction touched where a marker is, not what happens when one is confirmed, and
+P9's four warp-state frames still carry that. Nothing was installed on the production Oracle host.
+
+The frames differ from the baselines in two places, both session facts rather than layout. The
+footer reads `불러온 지형 81%` against the baseline's `89%`, because chunk load is a race with the
+rig's shutter; and the player mark sits where Paper placed this run — `502.5, 72.0, -15.5` and
+`503.5, 72.0, -16.5` — not where it placed the P9 runs. The compact frame also has `만월궁 정문`
+chosen where the baseline has `만월궁 대전`: this session clicked rail row 0 and then only hovered
+the 대전 marker, which is the hint-without-choosing half of the contract at the compact size.
+
+## P10 — one HUD layout shared by launcher and client
+
+| file | what it settles |
+| --- | --- |
+| `p10-launcher-hud-editor.png` | The real Chromium-rendered launcher at 1280×820: the HUD tab is discoverable in settings, the 640×360 client plane, all eight element rows, selected coordinate chip, anchor inspector and offset controls are visible together. |
+| `p10-launcher-browser.log` | DOM probes at the Tauri minimum, default and wide window sizes: no horizontal overflow, eight rows, zero console errors, reset with zero toasts, and a focused row moved from `(16,56)` to `(20,56)` by `ArrowRight`. |
+| `p10-hud-boot-640x360.png` | The live Fabric client before an external edit, with the default edge-relative layout over the world. |
+| `p10-hud-xyz-moved-640x360.png` | The same client after the shared file moved coordinates to `BOTTOM_LEFT (40,44)` without a restart. |
+| `p10-hud-fps-moved-640x360.png` | A second external edit in the same session moved FPS to `TOP_CENTER (31,16)`. |
+| `p10-hud-carried-960x540.png` | The edited layout carried to a 960×540 GUI frame; edge anchors, not launcher-stage percentages, determine the new positions. |
+| `p10-hud-tps-off-960x540.png` | The same running client adopted an external `enabled: false` for the server-tick element. |
+| `p10-hud-time-moved-960x540.png` | A further external edit moved the clock to `TOP_RIGHT (63,104)` without relaunching the client. |
+| `p10-live-client-640x360.log` / `p10-live-client-960x540.log` | Four `Adopted hud.json edited outside the game` lines land between the corresponding before and after frames. |
+| `p10-final-hud.json` | The exact complete eight-element file left by the live run, including disabled elements and scale values the renderer currently preserves but does not consume. |
+| `p10-hallmark-audit.md` | The six-axis critique and all 58 Hallmark gates for the HUD editor and the shell visible around it. |
+
+The browser surface uses Vite's mock core, so it settles rendering, focus, responsive layout and
+feedback rather than Tauri IPC. The live Fabric sessions settle the disk seam: the launcher and client
+use one json shape, and the client adopts edits while running. The two evidence sets are intentionally
+separate rather than pretending a mock DOM call proves a native file write.
+
+Three defects were found by driving and looking at the launcher rather than by compiling it:
+
+- The fixed atmospheric backdrop painted above ordinary content, leaving settings copy invisible.
+  The application now establishes an isolated stacking context and places the backdrop behind it.
+- Clicking a ledger row selected the element but left arrow-key nudging unreachable because the key
+  handler lived only on the stage node. Rows now take focus and dispatch the same immutable nudge.
+- At the declared 1040×680 minimum window, the two-column editor crushed the stage to 254×143 and
+  wrapped its dimension label vertically. It now stacks below 1180 px and renders a 510×287 stage.

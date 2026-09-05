@@ -67,6 +67,52 @@ class AnchorTest {
     }
 
     @Test
+    void everyAnchorInvertsItsOwnPlacement() {
+        // The launcher's editor drags in screen pixels and stores an offset; the pair has to be
+        // exact in both directions or a layout moves every time it is opened.
+        for (Anchor a : Anchor.values()) {
+            Box b = a.place(960, 540, 100, 40, 13, 17);
+            assertEquals(13, a.computeOffsetX(960, 100, b.x()), a.name());
+            assertEquals(17, a.computeOffsetY(540, 40, b.y()), a.name());
+        }
+    }
+
+    @Test
+    void theCentreRowAndColumnSplitWhatIsLeftOverEvenly() {
+        Anchor a = Anchor.CENTER;
+        Box b = a.place(961, 541, 100, 40, 0, 0);
+        assertEquals((961 - 100) / 2, b.x());
+        assertEquals((541 - 40) / 2, b.y());
+
+        assertEquals(0, a.computeOffsetX(961, 100, b.x()));
+        assertEquals(0, a.computeOffsetY(541, 40, b.y()));
+    }
+
+    @Test
+    void aGridCellNamesItsAnchorAndOffTheGridIsTheNearestCorner() {
+        assertEquals(Anchor.CENTER_RIGHT, Anchor.fromGrid(2, 1));
+        assertEquals(Anchor.TOP_LEFT, Anchor.fromGrid(-4, -1));
+        assertEquals(Anchor.BOTTOM_RIGHT, Anchor.fromGrid(9, 9));
+    }
+
+    @Test
+    void anAnchorReportsTheCellAndTheFractionsItWasBuiltFrom() {
+        Anchor a = Anchor.BOTTOM_CENTER;
+        assertEquals(1, a.col());
+        assertEquals(2, a.row());
+        assertEquals(0.5f, a.u());
+        assertEquals(1.0f, a.v());
+        assertEquals("하단 중앙", a.label());
+        assertEquals(a, Anchor.valueOf("BOTTOM_CENTER"));
+    }
+
+    @Test
+    void aScreenWithNoSizeStillNamesAnAnchor() {
+        // computeBounds runs before the window has reported itself at least once.
+        assertEquals(Anchor.BOTTOM_RIGHT, Anchor.nearest(0, 0, 100, 30, 0, 0));
+    }
+
+    @Test
     void nearestAnchorDetection() {
         assertEquals(Anchor.TOP_LEFT, Anchor.nearest(960, 540, 100, 30, 20, 20));
         assertEquals(Anchor.TOP_RIGHT, Anchor.nearest(960, 540, 100, 30, 800, 20));

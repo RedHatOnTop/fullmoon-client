@@ -10,11 +10,11 @@ use crate::{
     catalog, cosmetics,
     economy, news,
     error::{Error, Result},
-    install, java,
-    meta,
+    hud, install, java, meta,
     model::*,
-    mods, paths, ping, shaders, store,
+    mods, offline, paths, ping, shaders,
     state::AppState,
+    store,
 };
 
 // ── settings ──────────────────────────────────────────────────
@@ -433,16 +433,18 @@ pub async fn cosmetics_equip(
 
 #[tauri::command]
 pub async fn hud_get(instance_id: String) -> Result<HudConfig> {
-    Ok(store::read_or(&paths::instance_hud_file(&instance_id), || {
-        catalog::get().default_hud.clone()
-    })
-    .await)
+    Ok(hud::read(&instance_id).await)
 }
 
 #[tauri::command]
 pub async fn hud_set(instance_id: String, cfg: HudConfig) -> Result<()> {
-    // this file is the contract with the in-game mod, not launcher scratch
-    store::write(&paths::instance_hud_file(&instance_id), &cfg).await
+    // this file is the contract with the in-game client, not launcher scratch
+    hud::write(&instance_id, &cfg).await
+}
+
+#[tauri::command]
+pub async fn hud_reset(instance_id: String) -> Result<HudConfig> {
+    hud::reset(&instance_id).await
 }
 
 // ── home ──────────────────────────────────────────────────────
@@ -535,32 +537,9 @@ pub async fn auth_remove(state: State<'_, AppState>, uuid: String) -> Result<()>
 /// so worlds keep their player data across launchers.
 #[tauri::command]
 pub async fn auth_add_offline(state: State<'_, AppState>, username: String) -> Result<Account> {
-    let name = username.trim();
-    if name.is_empty() || name.len() > 16 || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
-    {
-        return Err(Error::Invalid(
-            "a Minecraft name is 1-16 characters of letters, digits or underscore".into(),
-        ));
-    }
-
-    let uuid = uuid::Uuid::new_v3(
-        &uuid::Uuid::NAMESPACE_OID,
-        format!("OfflinePlayer:{name}").as_bytes(),
-    );
-    let account = Account {
-        uuid: uuid.to_string(),
-        username: name.to_string(),
-        skin_hue: (uuid.as_u128() % 360) as u16,
-        skin_url: None,
-        source: "offline".into(),
-        capes: Vec::new(),
-    };
-
-    let mut accounts: Vec<Account> = store::read_or(&paths::accounts_file(), Vec::new).await;
-    if accounts.iter().any(|a| a.uuid == account.uuid) {
-        return Err(Error::Invalid(format!("{name} is already added")));
-    }
-    accounts.push(account.clone());
+    let account = offline::create_account(&username)?;
+    let saved: Vec<Account> = store::read_or(&paths::accounts_file(), Vec::new).await;
+    let accounts = offline::append_account(saved, account.clone())?;
     store::write(&paths::accounts_file(), &accounts).await?;
 
     let mut active = state.active_account.lock().await;

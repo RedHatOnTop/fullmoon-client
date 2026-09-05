@@ -56,6 +56,13 @@ public record Box(int x, int y, int w, int h) {
         return px >= x && px < right() && py >= y && py < bottom();
     }
 
+    /** Whether two boxes share a pixel. An empty box shares none, including with itself. */
+    public boolean overlaps(Box other) {
+        return !empty() && !other.empty()
+            && x < other.right() && other.x < right()
+            && y < other.bottom() && other.y < bottom();
+    }
+
     /** The leading {@code width} of this box, and what is left of it past a {@code gap}. */
     public Split splitLeft(int width, int gap) {
         int cut = Math.clamp(width, 0, w);

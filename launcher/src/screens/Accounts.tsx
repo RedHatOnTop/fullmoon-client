@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
-import { Badge, Button, ConfirmModal, Empty, IconButton, Modal, SkinFace } from "../components/ui";
+import { Badge, Button, ConfirmModal, IconButton, Modal, SkinFace } from "../components/ui";
 import Skin2D from "../widgets/Skin2D";
-import { addOfflineAccount, core, errText, openExternal } from "../core/client";
+import {
+  addOfflineAccount,
+  core,
+  errText,
+  LOCAL_TEST_USERNAME,
+  openExternal,
+} from "../core/client";
 import type { Account, AuthStatus, DeviceCodePrompt } from "../core/bindings";
 import { useStore } from "../state/store";
 import { useT } from "../i18n";
@@ -372,6 +378,57 @@ function AccountCard({ account }: { account: Account }) {
   );
 }
 
+function LocalAccountStart({ onMicrosoft }: { onMicrosoft: () => void }) {
+  const { syncAccounts, toast } = useStore();
+  const { t } = useT();
+  const [busy, setBusy] = useState(false);
+
+  const createLocalTestAccount = async () => {
+    setBusy(true);
+    try {
+      const account = await addOfflineAccount(LOCAL_TEST_USERNAME);
+      await syncAccounts();
+      toast("success", t("accounts.loggedIn", { name: account.username }));
+    } catch (error) {
+      toast("error", errText(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="acc-local-start card">
+      <div className="acc-local-identity" aria-hidden="true">
+        <SkinFace hue={45} size={78} />
+        <span className="acc-local-name mono">{LOCAL_TEST_USERNAME}</span>
+      </div>
+      <div className="acc-local-copy">
+        <span className="acc-hero-kicker">{t("accounts.localTestKicker")}</span>
+        <h2>{t("accounts.localTestTitle")}</h2>
+        <p>{t("accounts.localTestDesc")}</p>
+        <div className="acc-local-scope">
+          <span><Icon name="play" size={14} />{t("accounts.localTestClient")}</span>
+          <span><Icon name="user" size={14} />{t("accounts.localTestSingleplayer")}</span>
+          <span className="acc-local-blocked"><Icon name="server" size={14} />{t("accounts.localTestNoServer")}</span>
+        </div>
+        <div className="acc-local-actions">
+          <Button
+            variant="primary"
+            icon="play"
+            loading={busy}
+            onClick={() => void createLocalTestAccount()}
+          >
+            {t("accounts.localTestAction")}
+          </Button>
+          <Button variant="outline" icon="plus" onClick={onMicrosoft}>
+            {t("accounts.microsoftAction")}
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function AccountsScreen() {
   const { accounts, activeAccount } = useStore();
   const { t } = useT();
@@ -387,16 +444,7 @@ export function AccountsScreen() {
       {activeAccount ? (
         <ActiveHero account={activeAccount} onAdd={() => setAddOpen(true)} />
       ) : (
-        <Empty
-          icon="users"
-          title={t("accounts.noneTitle")}
-          hint={t("accounts.noneHint")}
-          action={
-            <Button variant="primary" icon="plus" onClick={() => setAddOpen(true)}>
-              {t("accounts.add")}
-            </Button>
-          }
-        />
+        <LocalAccountStart onMicrosoft={() => setAddOpen(true)} />
       )}
 
       {(others.length > 0 || activeAccount) && (

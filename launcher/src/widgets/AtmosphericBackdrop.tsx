@@ -24,9 +24,7 @@ export function AtmosphericBackdrop() {
 
   return (
     <div className="game-backdrop" aria-hidden="true">
-      {/* the moon's bloom and one cooler breath for depth */}
       <div className="nebula-layer nebula-gold" />
-      <div className="nebula-layer nebula-sky" />
 
       <div className="starfield">
         {stars.map((s) => (

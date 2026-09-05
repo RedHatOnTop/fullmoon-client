@@ -170,6 +170,25 @@
   --radius-3: 14px;   /* floaters  */
   --radius-round: 999px; /* geometry only */
 
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+
+  --hud-void-t: 0.145 0.008 89;
+  --hud-hairline-t: 0.31 0.009 89;
+  --hud-void: oklch(var(--hud-void-t));
+  --hud-hairline: oklch(var(--hud-hairline-t));
+  --hud-line-strong: oklch(0.42 0.011 89);
+  --hud-ink-1: oklch(0.945 0.01 89);
+  --hud-ink-2: oklch(0.76 0.009 89);
+  --hud-ink-3: oklch(0.575 0.008 89);
+  --hud-accent: oklch(0.87 0.124 89);
+  --hud-live: oklch(0.78 0.105 168);
+  --hud-danger-t: 0.615 0.155 25;
+  --hud-warn-t: 0.805 0.128 66;
+
   /* ---------- Elevation: borders first ---------- */
   --shadow-1: 0 1px 2px rgb(7 11 26 / 0.05);
   --shadow-2: 0 1px 2px rgb(7 11 26 / 0.06), 0 8px 24px -12px rgb(7 11 26 / 0.18);
@@ -203,7 +222,6 @@
   --space-3xl: 64px;
 
   /* ---------- Elevation layers — one z-index vocabulary ---------- */
-  --z-backdrop: 0;
   --z-shell: 1;
   --z-dock: 40;
   --z-progress: 45;
@@ -232,7 +250,7 @@
 
   --text:        #F4F6FB;
   --text-2:      var(--sky-400);
-  --text-3:      var(--sky-500);
+  --text-3:      var(--sky-300);
   --text-invert: var(--sky-950);
 
   --accent:            var(--moon-300);

@@ -1,0 +1,9 @@
+[19:55:07] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[19:55:07] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[19:55:22] [Render thread/INFO] (Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[19:55:27] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world
+[19:55:32] [Render thread/INFO] (Fullmoon/Map) Map route chosen: aux_palace at 500 16 in world
+[19:56:33] [Render thread/INFO] (Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)
+[19:56:33] [Render thread/INFO] (Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)
+[19:56:49] [Render thread/INFO] (Fullmoon/Map) Map open: 148x88 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld
+[19:56:54] [Render thread/INFO] (Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world

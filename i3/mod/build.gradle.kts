@@ -67,8 +67,22 @@ tasks.withType<JavaCompile>().configureEach {
 
 jacoco { toolVersion = "0.8.15" }
 
-fun settingsSearchClasses() = files(sourceSets.main.get().output.asFileTree.matching {
-    include("dev/fullmoon/client/settings/SettingSearch*")
+fun verifiedCoreClasses() = files(sourceSets.main.get().output.asFileTree.matching {
+    include(
+        "dev/fullmoon/client/hud/Anchor*",
+        "dev/fullmoon/client/hud/HudGrid*",
+        "dev/fullmoon/client/hud/HudWatch*",
+        "dev/fullmoon/client/settings/SettingSearch*",
+        "dev/fullmoon/client/network/BridgeProtocol*",
+        "dev/fullmoon/client/network/BridgeState*",
+        "dev/fullmoon/client/warp/WarpRoutes*",
+        "dev/fullmoon/client/map/MapLayout*",
+        "dev/fullmoon/client/map/MapViewport*",
+        "dev/fullmoon/client/map/TerrainSnapshot*",
+        "dev/fullmoon/client/map/TerrainSample.class",
+        "dev/fullmoon/client/map/WorldNames*",
+        "dev/fullmoon/client/map/MapMarkers*",
+    )
 })
 
 tasks.test {
@@ -78,7 +92,7 @@ tasks.test {
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
-    classDirectories.setFrom(settingsSearchClasses())
+    classDirectories.setFrom(verifiedCoreClasses())
     reports {
         xml.required = true
         html.required = true
@@ -87,11 +101,16 @@ tasks.jacocoTestReport {
 
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.test)
-    classDirectories.setFrom(settingsSearchClasses())
+    classDirectories.setFrom(verifiedCoreClasses())
     violationRules {
         rule {
             limit {
                 counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.80".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
                 value = "COVEREDRATIO"
                 minimum = "0.80".toBigDecimal()
             }

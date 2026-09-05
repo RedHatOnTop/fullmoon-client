@@ -2,6 +2,7 @@
 
 .app {
   position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-rows: var(--titlebar-h) 1fr;
   height: 100vh;
@@ -17,7 +18,7 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: var(--z-backdrop);
+  z-index: -1;
   overflow: hidden;
   /* own compositor layer: scrolling content must never repaint the sky */
   transform: translateZ(0);
@@ -39,15 +40,6 @@
   width: 560px;
   height: 560px;
   background: radial-gradient(circle, var(--accent-wash) 0%, transparent 68%);
-}
-
-/* a second, cooler breath low-left so the sky has depth, not a lamp */
-.nebula-sky {
-  bottom: -22%;
-  left: -8%;
-  width: 640px;
-  height: 640px;
-  background: radial-gradient(circle, rgb(139 157 255 / 0.05) 0%, transparent 66%);
 }
 
 .starfield {
@@ -73,7 +65,6 @@
 [data-theme="light"] .game-backdrop {
   background: linear-gradient(180deg, var(--sky-25) 0%, var(--sky-50) 100%);
 }
-[data-theme="light"] .nebula-sky { background: radial-gradient(circle, var(--accent-wash) 0%, transparent 66%); }
 [data-theme="light"] .twinkle-star { background: var(--sky-200); }
 [data-theme="light"] .backdrop-vignette { background: none; }
 

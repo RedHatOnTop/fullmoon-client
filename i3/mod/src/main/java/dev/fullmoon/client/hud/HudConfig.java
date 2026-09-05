@@ -33,7 +33,7 @@ public final class HudConfig {
     }
 
     public Map<String, ElementState> elements = new LinkedHashMap<>();
-    public int gridSnap = 4;
+    public int gridSnap = HudGrid.DEFAULT_STEP;
 
     public static HudConfig load(Path path) {
         if (!Files.exists(path)) {

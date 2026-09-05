@@ -95,16 +95,26 @@ pub fn instance_iris_properties(id: &str) -> PathBuf {
     instance_minecraft_dir(id).join("config").join("iris.properties")
 }
 
-/// Written by the launcher's HUD editor and by the in-game one, read by the mod on a poll.
-pub fn instance_hud_file(id: &str) -> PathBuf {
-    instance_minecraft_dir(id).join("pinion").join("hud.json")
+/// The mod's own namespace (`fabric.mod.json` id), which is what FabricLoader puts under
+/// `config/` — not the launcher's brand slug, even where the two read the same.
+const MOD_NAMESPACE: &str = "fullmoon";
+
+/// `FabricLoader.getConfigDir()` resolves against the game directory, and `launch::plan` hands
+/// the game `instance_minecraft_dir` as both `--gameDir` and its working directory. So this is
+/// the exact path the running mod opens.
+fn instance_mod_config_dir(id: &str) -> PathBuf {
+    instance_minecraft_dir(id).join("config").join(MOD_NAMESPACE)
 }
 
-/// The equipped cosmetics of whichever account launched this instance.
+/// Written by the launcher's HUD editor and by the in-game one, read by the mod on a poll.
+pub fn instance_hud_file(id: &str) -> PathBuf {
+    instance_mod_config_dir(id).join("hud.json")
+}
+
+/// The equipped cosmetics of whichever account launched this instance. Written for a reader
+/// that does not exist yet — see `cosmetics.rs`.
 pub fn instance_cosmetics_file(id: &str) -> PathBuf {
-    instance_minecraft_dir(id)
-        .join("pinion")
-        .join("cosmetics.json")
+    instance_mod_config_dir(id).join("cosmetics.json")
 }
 
 pub fn instance_state_file(id: &str) -> PathBuf {

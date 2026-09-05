@@ -173,6 +173,7 @@ const checks = [
   ['accent (focus ring) on surface.base', 'accent', 'surface.base', 3.0],
   ['accent (focus ring) on surface.raised', 'accent', 'surface.raised', 3.0],
   ['status.live on surface.base', 'status.live', 'surface.base', 3.0],
+  ['status.warn on surface.base', 'status.warn', 'surface.base', 3.0],
   ['status.danger on surface.base', 'status.danger', 'surface.base', 3.0],
   ['line.hairline on surface.base', 'line.hairline', 'surface.base', 1.15],
 ];

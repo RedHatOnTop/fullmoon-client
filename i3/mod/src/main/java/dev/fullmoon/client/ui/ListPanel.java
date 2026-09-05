@@ -88,6 +88,7 @@ public final class ListPanel extends Widget {
 
     @Override
     public void draw(Painter painter, State state) {
+        first = boundedFirst(first, rows.size(), visible());
         Box b = bounds();
         Chrome chrome = voice().chrome(state);
         // The well is sunken in all eight: the states belong to the rows in it, and to the line
@@ -304,5 +305,9 @@ public final class ListPanel extends Widget {
             return 0;
         }
         return Math.clamp(Math.round((my - top - thumbH / 2.0) / room * over), 0, over);
+    }
+
+    static int boundedFirst(int first, int rows, int visible) {
+        return Math.clamp(first, 0, Math.max(0, rows - visible));
     }
 }

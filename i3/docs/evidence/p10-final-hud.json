@@ -1,0 +1,61 @@
+{
+  "elements": {
+    "armor": {
+      "enabled": false,
+      "anchor": "BOTTOM_LEFT",
+      "offsetX": 16,
+      "offsetY": 56,
+      "scale": 1.0
+    },
+    "clock": {
+      "enabled": true,
+      "anchor": "TOP_RIGHT",
+      "offsetX": 63,
+      "offsetY": 104,
+      "scale": 1.0
+    },
+    "coords": {
+      "enabled": true,
+      "anchor": "BOTTOM_LEFT",
+      "offsetX": 40,
+      "offsetY": 44,
+      "scale": 1.0
+    },
+    "effects": {
+      "enabled": false,
+      "anchor": "TOP_RIGHT",
+      "offsetX": 16,
+      "offsetY": 134,
+      "scale": 1.0
+    },
+    "fps": {
+      "enabled": true,
+      "anchor": "TOP_CENTER",
+      "offsetX": 31,
+      "offsetY": 16,
+      "scale": 1.0
+    },
+    "keystrokes": {
+      "enabled": true,
+      "anchor": "BOTTOM_RIGHT",
+      "offsetX": 16,
+      "offsetY": 56,
+      "scale": 1.0
+    },
+    "ping": {
+      "enabled": true,
+      "anchor": "TOP_RIGHT",
+      "offsetX": 16,
+      "offsetY": 56,
+      "scale": 1.0
+    },
+    "tps": {
+      "enabled": false,
+      "anchor": "TOP_RIGHT",
+      "offsetX": 16,
+      "offsetY": 108,
+      "scale": 1.0
+    }
+  },
+  "gridSnap": 4
+}

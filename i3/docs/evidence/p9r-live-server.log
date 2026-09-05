@@ -1,0 +1,5 @@
+[19:54:18] [Server thread/INFO]: [FullmoonBridge] fullmoon-bridge enabled: 6 waypoint(s) on fullmoon:v1 (proto 1)
+[19:55:06] [Server thread/INFO]: Player801[/127.0.0.1:56898] logged in with entity id 185 at ([minecraft:overworld]502.5, 72.0, -15.5)
+[19:55:07] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player801 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)
+[19:56:33] [Server thread/INFO]: Player133[/127.0.0.1:58508] logged in with entity id 355 at ([minecraft:overworld]503.5, 72.0, -16.5)
+[19:56:33] [Server thread/INFO]: [FullmoonBridge] handshake ok: Player133 (client=fullmoon v3.0.0, proto 1) — 6 waypoint(s)

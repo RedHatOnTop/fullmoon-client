@@ -36,6 +36,8 @@ import type {
   Settings,
   VersionSummary,
 } from "./bindings";
+import { isAnchor } from "./hud";
+import { levelOf } from "./logLevel";
 import { loadState, saveState } from "./persistence";
 import BRAND from "../brand";
 
@@ -269,19 +271,47 @@ const TXS: WalletTx[] = [
   { delta: 320, reason: "discord.chat", label: "채팅 활동", balanceAfter: 129310, at: "2026-08-21T21:47:00Z" },
 ];
 
+/* The layout the real core hands out, which is `catalog.json`'s `defaultHud` — itself pinned to the
+   client's own element constructors by `scripts/hud-contract.test.ts`. Restated rather than imported
+   so this file stays a standalone stand-in, and wrong the moment it drifts. */
 const DEFAULT_HUD: HudConfig = {
-  modules: [
-    { id: "fps", enabled: true, x: 4, y: 5, scale: 1 },
-    { id: "cps", enabled: true, x: 4, y: 16, scale: 1 },
-    { id: "coords", enabled: true, x: 4, y: 27, scale: 1 },
-    { id: "ping", enabled: true, x: 93, y: 6, scale: 1 },
-    { id: "keystrokes", enabled: true, x: 86, y: 74, scale: 1 },
-    { id: "gear", enabled: true, x: 93, y: 40, scale: 1 },
-    { id: "potion", enabled: false, x: 93, y: 24, scale: 1 },
-  ],
+  elements: {
+    coords: { enabled: true, anchor: "TOP_LEFT", offsetX: 16, offsetY: 56, scale: 1 },
+    fps: { enabled: true, anchor: "TOP_LEFT", offsetX: 16, offsetY: 82, scale: 1 },
+    ping: { enabled: true, anchor: "TOP_RIGHT", offsetX: 16, offsetY: 56, scale: 1 },
+    clock: { enabled: true, anchor: "TOP_RIGHT", offsetX: 16, offsetY: 82, scale: 1 },
+    keystrokes: { enabled: true, anchor: "BOTTOM_RIGHT", offsetX: 16, offsetY: 56, scale: 1 },
+    tps: { enabled: false, anchor: "TOP_RIGHT", offsetX: 16, offsetY: 108, scale: 1 },
+    armor: { enabled: false, anchor: "BOTTOM_LEFT", offsetX: 16, offsetY: 56, scale: 1 },
+    effects: { enabled: false, anchor: "TOP_RIGHT", offsetX: 16, offsetY: 134, scale: 1 },
+  },
+  gridSnap: 4,
 };
 
 const DEFAULT_LOADOUT: Loadout = { cape: "aero-cape", wings: null, trail: null };
+
+/** The stored half of a HUD layout over the default, keyed by element id, ignoring a gridSnap the
+ *  editor could not divide by. Anything stored under an id this build cannot name is carried
+ *  through untouched: it belongs to a client newer than this launcher. */
+function mergeHud(stored: unknown): HudConfig {
+  const base: HudConfig = {
+    elements: Object.fromEntries(
+      Object.entries(DEFAULT_HUD.elements).map(([id, e]) => [id, { ...e }]),
+    ),
+    gridSnap: DEFAULT_HUD.gridSnap,
+  };
+  if (!stored || typeof stored !== "object") return base;
+  const disk = stored as Partial<HudConfig>;
+  for (const [id, e] of Object.entries(disk.elements ?? {})) {
+    if (e && isAnchor(String(e.anchor)) && Number.isFinite(e.scale) && e.scale > 0) {
+      base.elements[id] = { ...e };
+    }
+  }
+  if (Number.isFinite(disk.gridSnap) && (disk.gridSnap as number) > 0) {
+    base.gridSnap = Math.trunc(disk.gridSnap as number);
+  }
+  return base;
+}
 
 /* ── install simulation tables ─────────────────────────────── */
 
@@ -323,64 +353,90 @@ const STAGE_FILES: Record<Exclude<InstallStage, "done">, string[]> = {
 
 /* ── boot log script ───────────────────────────────────────── */
 
-interface LogLine { delay: number; level: LogLevel; thread: string; text: string }
+/* Whole lines in the shape the game prints them, carrying the level the game itself printed. What
+   the console makes of one is then derived by `levelOf`, the way the real core derives it, so a line
+   accented out here is a line the running game would really have got accented. Our client's own
+   lines carry `(Fullmoon/…)`; their text is its real output (i3/docs/evidence/p9r-live-client.log). */
+interface LogLine { delay: number; level: "INFO" | "WARN" | "DEBUG" | "ERROR"; thread: string; text: string }
 
 function bootScript(version: string, server: string | null): LogLine[] {
-  const L = (delay: number, level: LogLevel, thread: string, text: string): LogLine => ({ delay, level, thread, text });
+  const L = (delay: number, thread: string, text: string, level: LogLine["level"] = "INFO"): LogLine =>
+    ({ delay, level, thread, text });
   const lines: LogLine[] = [
-    L(120, "INFO", "main", `Loading Minecraft ${version} with Fabric Loader 0.17.2`),
-    L(180, "INFO", "main", "Loading 4 mods:"),
-    L(60, "INFO", "main", "\t- fabric-api 0.115.0"),
-    L(40, "INFO", "main", "\t- lithium 0.15.1"),
-    L(40, "INFO", "main", "\t- pinion-hud 1.0.0"),
-    L(40, "INFO", "main", "\t- sodium 0.7.2"),
-    L(210, "INFO", "main", "SpongePowered MIXIN Subsystem Version=0.8.7"),
-    L(140, "INFO", "main", "Compatibility level: JAVA_21"),
-    L(330, "INFO", "main", "Applying 214 mixins... done (812 ms)"),
-    L(420, "PINION", "main", "pinion-hud: 인스턴스 구성 로드 — hud.json (7 modules)"),
-    L(260, "INFO", "Render thread", "Backend library: LWJGL version 3.3.3"),
-    L(190, "INFO", "Render thread", "OpenGL Vendor: NVIDIA Corporation"),
-    L(90, "INFO", "Render thread", "OpenGL Renderer: NVIDIA GeForce RTX 4070/PCIe/SSE2"),
-    L(90, "INFO", "Render thread", "OpenGL Version: 4.6.0 NVIDIA 561.09"),
-    L(520, "INFO", "Render thread", "Reloading ResourceManager: Default, Fabric Mods, pinion:cosmetics"),
-    L(610, "INFO", "Worker-Main-3", "Baking models: 21468 models in 748 ms"),
-    L(280, "WARN", "Render thread", "Ambiguity between arguments [teleport, location] and [teleport, targets]"),
-    L(340, "INFO", "Render thread", "Created: 1024x512x4 minecraft:textures/atlas/blocks.png-atlas"),
-    L(150, "INFO", "Render thread", "Created: 256x128x4 minecraft:textures/atlas/signs.png-atlas"),
-    L(430, "PINION", "Render thread", "cosmetics: cape=aero-cape 렌더 활성 (client-side only)"),
-    L(290, "INFO", "Render thread", "Sound engine started (OpenAL Soft 1.23.1)"),
-    L(220, "INFO", "Render thread", "Narrator library successfully loaded"),
-    L(510, "INFO", "Server thread", `Starting integrated minecraft server version ${version}`),
-    L(380, "INFO", "Server thread", 'Preparing level "world"'),
-    L(300, "INFO", "Server thread", "Preparing spawn area: 34%"),
-    L(300, "INFO", "Server thread", "Preparing spawn area: 78%"),
-    L(300, "INFO", "Server thread", "Preparing spawn area: 100%"),
-    L(240, "INFO", "Server thread", "Time elapsed: 2401 ms"),
+    L(120, "main", `Loading Minecraft ${version} with Fabric Loader 0.17.2`),
+    L(180, "main", "Loading 4 mods:"),
+    L(60, "main", "\t- fabric-api 0.115.0"),
+    L(40, "main", "\t- fullmoon 3.0.0"),
+    L(40, "main", "\t- lithium 0.15.1"),
+    L(40, "main", "\t- sodium 0.7.2"),
+    L(210, "main", "SpongePowered MIXIN Subsystem Version=0.8.7"),
+    L(140, "main", "Compatibility level: JAVA_25"),
+    L(330, "main", "Applying 214 mixins... done (812 ms)"),
+    L(260, "Render thread", "Backend library: LWJGL version 3.3.3"),
+    L(190, "Render thread", "OpenGL Vendor: NVIDIA Corporation"),
+    L(90, "Render thread", "OpenGL Renderer: NVIDIA GeForce RTX 4070/PCIe/SSE2"),
+    L(90, "Render thread", "OpenGL Version: 4.6.0 NVIDIA 561.09"),
+    L(520, "Render thread", "Reloading ResourceManager: Default, Fabric Mods"),
+    L(420, "Render thread", "(Fullmoon/Hud) Adopted hud.json edited outside the game: 8 element(s), mtime 1"),
+    L(610, "Worker-Main-3", "Baking models: 21468 models in 748 ms"),
+    L(280, "Render thread", "Ambiguity between arguments [teleport, location] and [teleport, targets]", "WARN"),
+    L(340, "Render thread", "Created: 1024x512x4 minecraft:textures/atlas/blocks.png-atlas"),
+    L(150, "Render thread", "Created: 256x128x4 minecraft:textures/atlas/signs.png-atlas"),
+    L(290, "Render thread", "Sound engine started (OpenAL Soft 1.23.1)"),
+    L(220, "Render thread", "Narrator library successfully loaded"),
+    L(510, "Server thread", `Starting integrated minecraft server version ${version}`),
+    L(380, "Server thread", 'Preparing level "world"'),
+    L(300, "Server thread", "Preparing spawn area: 34%"),
+    L(300, "Server thread", "Preparing spawn area: 78%"),
+    L(300, "Server thread", "Preparing spawn area: 100%"),
+    L(240, "Server thread", "Time elapsed: 2401 ms"),
   ];
   if (server) {
     lines.push(
-      L(360, "PINION", "Render thread", `Quick Play → ${server} 로 직행`),
-      L(420, "INFO", "Render thread", `Connecting to ${server}, 25565`),
-      L(380, "INFO", "Netty Client IO #1", "Handshake complete — protocol 773"),
-      L(320, "INFO", "Render thread", "Joined server hub. 40 chunks loaded."),
+      L(420, "Render thread", `Connecting to ${server}, 25565`),
+      L(380, "Netty Client IO #1", "Handshake complete — protocol 773"),
+      L(320, "Render thread", "Joined server hub. 40 chunks loaded."),
+      L(360, "Render thread", "(Fullmoon/Channel) Sent fullmoon:v1 hello (proto 1)"),
+      L(240, "Render thread", "(Fullmoon/Channel) Received fullmoon:v1 welcome (server proto 1, mode ACTIVE)"),
     );
   } else {
     lines.push(
-      L(360, "INFO", "Render thread", 'Loaded 0 advancements, world "world" ready'),
-      L(300, "INFO", "Render thread", "Singleplayer session started."),
+      L(360, "Render thread", 'Loaded 0 advancements, world "world" ready'),
+      L(300, "Render thread", "Singleplayer session started."),
     );
   }
   return lines;
 }
 
-const AMBIENT_LOGS: Array<[LogLevel, string, string]> = [
-  ["DEBUG", "Worker-Main-5", "Chunk system: updated 12 chunk tickets"],
-  ["INFO", "Render thread", "[CHAT] <Steve> o/"],
-  ["PINION", "Render thread", "hud: 243 fps · 41 ms ping · 모듈 7개 렌더 중"],
-  ["DEBUG", "Server thread", "Autosave started"],
-  ["INFO", "Render thread", "Loaded 214 advancements"],
-  ["WARN", "Render thread", "Can't keep up! Is the server overloaded? Running 2037ms behind"],
-  ["DEBUG", "Netty Epoll IO #2", "Keep-alive RTT 22 ms"],
+/* Fabric prints a named logger as `[thread/LEVEL] (Name) msg` and the game's own as
+   `[thread/LEVEL]: msg`; the tag in the first form is what `levelOf` reads as ours. */
+const composed = (line: LogLine): string =>
+  `[${line.thread}/${line.level}]${line.text.startsWith("(Fullmoon/") ? " " : ": "}${line.text}`;
+
+const AMBIENT_LOGS: LogLine[] = [
+  { delay: 0, level: "DEBUG", thread: "Worker-Main-5", text: "Chunk system: updated 12 chunk tickets" },
+  { delay: 0, level: "INFO", thread: "Render thread", text: "[CHAT] <Steve> o/" },
+  {
+    delay: 0,
+    level: "INFO",
+    thread: "Render thread",
+    text: "(Fullmoon/Map) Map open: 226x140 cells at 2 blocks per cell, 6 published route(s) in minecraft:overworld",
+  },
+  { delay: 0, level: "DEBUG", thread: "Server thread", text: "Autosave started" },
+  { delay: 0, level: "INFO", thread: "Render thread", text: "Loaded 214 advancements" },
+  {
+    delay: 0,
+    level: "WARN",
+    thread: "Render thread",
+    text: "Can't keep up! Is the server overloaded? Running 2037ms behind",
+  },
+  { delay: 0, level: "DEBUG", thread: "Netty Epoll IO #2", text: "Keep-alive RTT 22 ms" },
+  {
+    delay: 0,
+    level: "INFO",
+    thread: "Render thread",
+    text: "(Fullmoon/Map) Map route chosen: palace_gate at 500 -100 in world",
+  },
 ];
 
 /* ── the mock core ─────────────────────────────────────────── */
@@ -551,6 +607,30 @@ export class MockCore implements PinionCore {
     const found = this.accounts.find((a) => a.uuid === uuidRef);
     if (!found) throw new Error("account not found");
     return { ...found };
+  }
+
+  async auth_add_offline(username: string): Promise<Account> {
+    await sleep(80);
+    const name = username.trim();
+    if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) {
+      throw new Error("a Minecraft name is 1-16 characters of letters, digits or underscore");
+    }
+    if (this.accounts.some((account) => account.username === name && account.source === "offline")) {
+      throw new Error(`${name} is already added`);
+    }
+
+    const account: Account = {
+      uuid: uid(),
+      username: name,
+      skinHue: 45,
+      skinUrl: null,
+      source: "offline",
+      capes: [],
+    };
+    this.accounts = [...this.accounts, account];
+    this.activeUuid = this.activeUuid ?? account.uuid;
+    this.persist();
+    return { ...account };
   }
 
   getActiveUuid(): string | null {
@@ -784,11 +864,8 @@ export class MockCore implements PinionCore {
     script.forEach((line) => {
       t += line.delay;
       this.after(t, () => {
-        this.emit("game://log", {
-          sessionId,
-          level: line.level,
-          line: `[${line.thread}/${line.level}]: ${line.text}`,
-        });
+        const text = composed(line);
+        this.emit("game://log", { sessionId, level: levelOf(text), line: text });
       });
     });
     this.after(t + 350, () => {
@@ -804,9 +881,9 @@ export class MockCore implements PinionCore {
           clearInterval(ambient);
           return;
         }
-        const [level, , text] = AMBIENT_LOGS[n % AMBIENT_LOGS.length];
+        const text = composed(AMBIENT_LOGS[n % AMBIENT_LOGS.length]);
         n += 1;
-        this.emit("game://log", { sessionId, level, line: `[${level}]: ${text}` });
+        this.emit("game://log", { sessionId, level: levelOf(text), line: text });
       }, 3400);
       this.timers.add(ambient as unknown as ReturnType<typeof setTimeout>);
     });
@@ -819,7 +896,7 @@ export class MockCore implements PinionCore {
 
   async game_kill(sessionId: string): Promise<void> {
     if (this.game.sessionId !== sessionId) return;
-    this.emit("game://log", { sessionId, level: "WARN", line: "[pinion]: 사용자가 프로세스를 종료했습니다 (SIGTERM)" });
+    // the real core kills the child and reports it on game://state; it prints no line of its own
     this.after(500, () => {
       this.game = { ...this.game, state: "closed", exitCode: 0 };
       this.emit("game://state", { sessionId, state: "closed", exitCode: 0 });
@@ -852,16 +929,25 @@ export class MockCore implements PinionCore {
     this.persist();
   }
 
+  /* Merged onto the default per element, as `hud.rs::read` does — the file on the other side is
+     written by the mod too, and a layout saved by an older launcher is exactly the case the real
+     core survives by merging rather than replacing. */
   async hud_get(instanceId: string): Promise<HudConfig> {
     await sleep(60);
-    const cfg = this.hudConfigs[instanceId] ?? DEFAULT_HUD;
-    return { modules: cfg.modules.map((m) => ({ ...m })) };
+    return mergeHud(this.hudConfigs[instanceId]);
   }
 
   async hud_set(instanceId: string, cfg: HudConfig): Promise<void> {
     await sleep(70);
-    this.hudConfigs[instanceId] = { modules: cfg.modules.map((m) => ({ ...m })) };
+    this.hudConfigs[instanceId] = mergeHud(cfg);
     this.persist();
+  }
+
+  async hud_reset(instanceId: string): Promise<HudConfig> {
+    await sleep(70);
+    delete this.hudConfigs[instanceId];
+    this.persist();
+    return mergeHud(undefined);
   }
 
   /* ── settings ── */

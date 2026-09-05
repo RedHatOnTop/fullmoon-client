@@ -9,6 +9,7 @@ mod download;
 mod economy;
 mod error;
 mod fabric;
+mod hud;
 mod install;
 mod java;
 mod launch;
@@ -16,6 +17,7 @@ mod meta;
 mod model;
 mod mods;
 mod news;
+mod offline;
 mod paths;
 mod ping;
 mod shaders;
@@ -32,11 +34,12 @@ fn main() {
         .setup(|app| {
             let handle = app.handle().clone();
             tauri::async_runtime::block_on(async move {
-                let _ = paths::ensure_dir(&paths::root()).await;
-                let _ = paths::ensure_dir(&paths::shared()).await;
-                let _ = paths::ensure_dir(&paths::instances_dir()).await;
-                handle.manage(state::AppState::load().await);
-            });
+                paths::ensure_dir(&paths::root()).await?;
+                paths::ensure_dir(&paths::shared()).await?;
+                paths::ensure_dir(&paths::instances_dir()).await?;
+                handle.manage(state::AppState::load().await?);
+                Ok::<(), error::Error>(())
+            })?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -62,6 +65,7 @@ fn main() {
             commands::cosmetics_equip,
             commands::hud_get,
             commands::hud_set,
+            commands::hud_reset,
             commands::news_feed,
             commands::economy_wallet,
             commands::economy_transactions,
