@@ -379,3 +379,23 @@ Three defects were found by driving and looking at the launcher rather than by c
   handler lived only on the stage node. Rows now take focus and dispatch the same immutable nudge.
 - At the declared 1040×680 minimum window, the two-column editor crushed the stage to 254×143 and
   wrapped its dimension label vertically. It now stacks below 1180 px and renders a 510×287 stage.
+
+## Integration — the launcher-UI line merged with main
+
+This one comes after P10 in time even though its label continues the P5-R series: the launcher
+UI line and the P6–P11 client line grew apart on separate branches and were merged in one pass,
+28 commits and 12 conflicts. Four captures settle the resolutions a compiler cannot check,
+taken from the merged tree against Vite's mock core at 1600×1000.
+
+| file | what it settles |
+| --- | --- |
+| `merge-01-play.png` | The backdrop resolution taken from main: one gold bloom, `z-index: -1`, the starfield reading through the empty right half and below the two cards while the hero, the skin figure and every card surface stay above it. The launcher-UI branch had two blooms and a `.nebula-sky` layer; `scripts/shell-layering.test.ts` asserts exactly one layer and that z-index, so main's side won and the second layer went. |
+| `merge-06-settings-hud.png` | main's `screens.css` HUD-editor block driving main's `HudEditor.tsx` in the merged tree: the 16:9 plane with all eight chips placed, the `640 × 360 GUI px · 0.82×` caption, the 1/2/4/8 px snap control with 4 px active, and the eight-row ledger with anchor and offset pairs. Both halves of that pair came from main, and this frame is the proof they still match after the merge. |
+| `merge-04-accounts.png` | `.acc-hero` under `background: var(--surface)`, replacing main's `var(--raised)`, which no tokens file defines. The hero reads as a raised panel against the page, and the "다른 계정" grid below it still reads as a lighter tier than the hero. |
+| `merge-09-offline-account-start.png` | `.acc-local-blocked` under `color: var(--warning)`, replacing main's `var(--status-warn)`, likewise undefined. The 온라인 서버 접속 불가 chip carries the amber the other two scope chips do not, which is the whole point of the row. |
+
+Gates run after resolution, before the merge commit: `tsc --noEmit`, `cargo check` (0 warnings),
+the seven contract tests (40 assertions, both shell-layering ones among them), `vite build`,
+`verify-tokens.mjs` over 110 files, `gradlew test jacocoTestCoverageVerification`,
+`_sitejs.mjs` at 15/15, and `verify.mjs` live against a dev server for the 14 captures these
+four are drawn from.

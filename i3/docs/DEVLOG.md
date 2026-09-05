@@ -1354,3 +1354,56 @@ P5-R…R6이 디스크에만 있던 상태를 정리하는 세션. 88개 dirty �
   `writeByteArray` 한 번(varint 길이 + JSON 객체 하나).
 - 철거 후 게이트: `npx tsc --noEmit` exit 0 · `npm run build` exit 0(index 청크
   279.11 kB) · `shaders-contract` 2/2 · `verify-tokens.mjs` 82파일 리터럴 0.
+
+## 2026-09-06 · 런처 UI 라인과 main 통합
+
+P5-R…R7이 `main`에서 28커밋 뒤처진 브랜치에만 있던 상태를 끝낸다. `origin/main`
+(`47784dd`, PR #5 머지)을 `feat/i3-p5-launcher-ui`로 머지했고 충돌 12건이 났다.
+해결 정책은 하나 — **main 쪽이 테스트된 계약이나 실제로 실린 마크업을 들고 있으면
+main이 이긴다.** 내 쪽이 더 새로워서가 아니라 그게 트리에 체크인된 약속이기 때문이다.
+
+- **`shell.css` + `AtmosphericBackdrop.tsx` → main**: 내 쪽은 블룸 둘과 `.nebula-sky`
+  레이어였는데, `scripts/shell-layering.test.ts`가 `nebula-layer` **1개**와
+  `.game-backdrop { z-index: -1 }`, `.app { isolation: isolate }`를 정확히 단정한다.
+  main의 테스트를 고치는 게 아니라 내 레이어를 뺐다. 안 쓰게 된 `--z-backdrop`
+  토큰도 elevation 어휘에서 제거(`--z-shell: 1` … `--z-grain: 999`는 그대로).
+- **`screens.css` → main 양쪽 다**: 머지된 `HudEditor.tsx`가 origin/main과
+  바이트 동일하고 `hud-plane`·`hud-zone`·`hud-vanilla`·`hud-plane-empty`를 쓴다.
+  즉 스타일시트와 마크업 둘 다 main 것이어야 짝이 맞는다.
+- **`paths.rs`**: main의 `MOD_NAMESPACE`/`instance_mod_config_dir` 헬퍼를 살리고
+  (P5-R6에서 "쓰는 곳 없어서" 지웠던 그 코드가 main에서는 쓰인다) 셰이더 경로
+  둘(`instance_shaderpacks_dir`, `instance_iris_properties`)만 그 옆에 접었다.
+  HUD·코스메틱 파일은 main대로 `config/fullmoon/`로 간다.
+- **`site/launcher.html`·`site/trust.html` → main의 해요체 + 내가 고친 수치**:
+  P5-R7에서 센 41개 메서드와 4종 다운로드 목록을 main의 목소리에 실었다.
+- **양쪽이 추가만 한 곳은 합집합**: `package.json` 테스트 7개(전부 디스크에 존재
+  확인), `main.rs`의 `mod news` + `mod offline`, `commands.rs` import(`store`는
+  이미 다음 줄에 있어서 넣으면 중복이었다), `Accounts.tsx` import(`Skin2D` 259행,
+  `LOCAL_TEST_USERNAME` 395·409행에서 실제 사용, 미사용 `Empty`는 버림),
+  `DEVLOG.md`와 `evidence/README.md`는 각 파일의 정렬 순서대로.
+- **main이 참조하지만 정의된 적 없는 이름 2개**: `--raised` → `--surface`,
+  `--status-warn` → `--warning`. 머지가 깨뜨린 게 아니라 origin/main의
+  `screens.css`가 처음부터 그랬다 — 클래스·변수 전수 감사에서 잡혔다.
+
+### 남은 계약 불일치 (이 머지가 만든 게 아니라, 이 머지로 보이게 된 것)
+
+`i3/mod`(`dev.fullmoon.client`, id `fullmoon`)는 `ci.yml`·`release.yml` 어디에도
+없다. 빌드·배포되는 건 `pinion-mod`(`dev.pinion`, id `pinion`) 하나뿐이다.
+그런데 main의 `paths.rs`는 런처가 쓰는 `hud.json`·`cosmetics.json`을
+`config/fullmoon/`에 두는데, 그 경로를 읽는 쪽은 `i3/mod`다. 실제로 실리는
+`pinion-mod`는 게임 디렉터리 기준 `pinion/hud.json`을 읽는다. **계약의 두 끝이
+만나지 않는다** — 런처가 쓴 HUD 레이아웃은 배포되는 모드가 열지 않는다.
+어느 쪽으로 맞출지(CI에 `i3/mod`를 넣을지, `paths.rs`를 `pinion`으로 돌릴지)는
+모드 하나로 합칠지와 같은 결정이라 사용자 몫으로 남긴다.
+
+### 증거
+
+- `npx tsc --noEmit` exit 0 · `cargo check` exit 0 (13.53s, 경고 0).
+- 계약 테스트 7파일 **40 pass / 0 fail** — `shell-layering`의 단정 둘 포함.
+- `npx vite build` exit 0 (76 모듈) · `verify-tokens.mjs` 110파일 리터럴 0 ·
+  `./gradlew -p i3/mod --offline test jacocoTestCoverageVerification` BUILD SUCCESSFUL.
+- `node launcher/scripts/_sitejs.mjs` → 15/15 ok, `site interaction layer: all clean`.
+- `node scripts/verify.mjs` 라이브 → 14샷,
+  `FULLMOON LAUNCHER VERIFICATION COMPLETED SUCCESSFULLY`. 해결한 충돌을 덮는 4장을
+  `i3/docs/evidence/merge-*.png`로 남겼다 — 백드롭 레이어링, HUD 에디터, `--surface`,
+  `--warning`.
